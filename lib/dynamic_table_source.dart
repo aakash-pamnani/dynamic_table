@@ -282,6 +282,7 @@ class DynamicTableSource extends DataTableSource {
               cells.map((e) {
                 return e.value;
               }).toList());
+          _selectedCount -= data[row].selected ? 1 : 0;
           data.removeAt(row);
           notifyListeners();
         },

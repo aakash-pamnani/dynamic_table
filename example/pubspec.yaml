@@ -1,5 +1,5 @@
 name: dynamic_table_example
-description: A new Flutter project.
+description: This is the example app for dynamic_table package for flutter.
 publish_to: "none"
 version: 0.1.0
 
@@ -11,6 +11,7 @@ dependencies:
     sdk: flutter
   dynamic_table:
     path: ../
+  url_launcher: ^6.1.11
 
 dev_dependencies:
   flutter_test:
@@ -19,3 +20,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/
