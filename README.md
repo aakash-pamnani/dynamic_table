@@ -14,6 +14,8 @@ See Example here [https://dynamic-table-example.web.app/](https://dynamic-table-
   <source src="video/dynamic-table.mp4" type="video/mp4">
 </video>
 
+https://github.com/aakash-pamnani/dynamic_table/assets/76067278/5960b3bf-2795-47b1-b478-dcd3f0f924a2
+
 ## Features
 
 - Add new values
