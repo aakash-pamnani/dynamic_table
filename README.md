@@ -8,8 +8,11 @@ It is build upon [PaginatedDataTable](https://api.flutter.dev/flutter/material/P
 
 To use Dynamic_Table just add DynamicTable Widget
 
-See Example here [URL]()
+See Example here [https://dynamic-table-example.web.app/](https://dynamic-table-example.web.app/)
 
+<video controls>
+  <source src="video/dynamic-table.mp4" type="video/mp4">
+</video>
 ## Features
 
 - Add new values
