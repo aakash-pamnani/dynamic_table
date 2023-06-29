@@ -13,6 +13,7 @@ See Example here [https://dynamic-table-example.web.app/](https://dynamic-table-
 <video controls>
   <source src="video/dynamic-table.mp4" type="video/mp4">
 </video>
+
 ## Features
 
 - Add new values
