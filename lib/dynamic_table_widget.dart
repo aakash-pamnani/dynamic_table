@@ -48,7 +48,8 @@ class DynamicTable extends StatefulWidget {
     this.sortColumnIndex,
     this.sortAscending = true,
     this.onSelectAll,
-    this.dataRowHeight = kMinInteractiveDimension,
+    this.dataRowMinHeight = kMinInteractiveDimension,
+    this.dataRowMaxHeight = kMinInteractiveDimension,
     this.headingRowHeight = 56.0,
     this.horizontalMargin = 24.0,
     this.columnSpacing = 56.0,
@@ -134,11 +135,17 @@ class DynamicTable extends StatefulWidget {
   /// See [DataTable.onSelectAll].
   final ValueSetter<bool?>? onSelectAll;
 
-  /// The height of each row (excluding the row that contains column headings).
+  /// The minimum height of each row (excluding the row that contains column headings).
+  ///
+  /// This value is optional and defaults to [kMinInteractiveDimension] if not
+  /// specified.
+  final double dataRowMinHeight;
+
+  /// The maximum height of each row (excluding the row that contains column headings).
   ///
   /// This value is optional and defaults to kMinInteractiveDimension if not
   /// specified.
-  final double dataRowHeight;
+  final double dataRowMaxHeight;
 
   /// The height of the heading row.
   ///
@@ -231,13 +238,80 @@ class DynamicTable extends StatefulWidget {
   final bool? primary;
 
   /// Called when the user clicks on the edit icon of a row.
-  final void Function(int index, List<dynamic> row)? onRowEdit;
+  ///
+  /// Return true to allow the edit action, false to prevent it.
+  /// If the action is allowed, the row will be editable.
+  ///
+  /// ```dart
+  /// bool onRowEdit(int index, List<dynamic> row){
+  /// //Do some validation on row and return false if validation fails
+  /// if (index%2==1) {
+  ///   ScaffoldMessenger.of(context).showSnackBar(
+  ///    const SnackBar(
+  ///     content: Text("Cannot edit odd rows"),
+  ///   ),
+  /// );
+  /// return false; // The row will not open in editable mode
+  /// }
+  /// return true; // The row will open in editable mode
+  /// }
+  /// ```
+  final bool Function(int index, List<dynamic> row)? onRowEdit;
 
   /// Called when the user clicks on the delete icon of a row.
-  final void Function(int index, List<dynamic> row)? onRowDelete;
+  ///
+  /// Return true to allow the delete action, false to prevent it.
+  ///
+  /// If the delete action is allowed, the row will be deleted from the table.
+  ///
+  /// ```dart
+  /// bool onRowDelete(int index, List<dynamic> row){
+  /// //Do some validation on row and return false if validation fails
+  /// if (row[0] == null) {
+  ///    ScaffoldMessenger.of(context).showSnackBar(
+  ///     const SnackBar(
+  ///      content: Text("Name cannot be null"),
+  ///     ),
+  ///   );
+  ///  return false;
+  /// }
+  /// return true;
+  /// }
+  /// ```
+  final bool Function(int index, List<dynamic> row)? onRowDelete;
 
   /// Called when the user clicks on the save icon of a row.
-  final void Function(
+  ///
+  /// Return List<dynamic> [newValue] to allow the save action, null to prevent it.
+  ///
+  /// The [newValue] must be a list of the same length as the column.
+  ///
+  /// If the save action is allowed, the row will be saved to the table.
+  ///
+  /// The [oldValue] is the value of the row before the edit.
+  /// The [newValue] is the value of the row after the edit.
+  ///
+  /// ```dart
+  ///
+  /// List<dynamic>? onRowSave(int index, List<dynamic> oldValue, List<dynamic> newValue) {
+  /// //Do some validation on new value and return null if validation fails
+  /// if (newValue[0] == null) {
+  ///     ScaffoldMessenger.of(context).showSnackBar(
+  ///       const SnackBar(
+  ///         content: Text("Name cannot be null"),
+  ///          ),
+  ///     );
+  ///   return null;
+  ///}
+  /// // Do some modification to `newValue` and return `newValue`
+  /// newValue[0] = newValue[0].toString().toUpperCase(); // Convert name to uppercase
+  /// // Save new data to you list
+  /// myData[index] = newValue;
+  /// return newValue;
+  /// }
+  /// ```
+  ///
+  final List<dynamic>? Function(
       int index, List<dynamic> oldValue, List<dynamic> newValue)? onRowSave;
 
   /// The data for the rows of the table.
@@ -311,6 +385,14 @@ class DynamicTableState extends State<DynamicTable> {
 
   void updateAllRows(List<List<dynamic>> values) {
     _source.updateAllRows(values);
+  }
+
+  void selectRow(int index, bool isSelected) {
+    _source.selectRow(index, isSelected);
+  }
+
+  void selectAllRows(bool isSelected) {
+    _source.selectAllRows(isSelected);
   }
 
   @override
@@ -390,8 +472,12 @@ class DynamicTableState extends State<DynamicTable> {
       columns: _getTableColumns(),
       sortColumnIndex: widget.sortColumnIndex,
       sortAscending: widget.sortAscending,
-      onSelectAll: widget.onSelectAll,
-      dataRowHeight: widget.dataRowHeight,
+      onSelectAll: (value) {
+        selectAllRows(value ?? false);
+        widget.onSelectAll?.call(value);
+      },
+      dataRowMinHeight: widget.dataRowMinHeight,
+      dataRowMaxHeight: widget.dataRowMaxHeight,
       headingRowHeight: widget.headingRowHeight,
       horizontalMargin: widget.horizontalMargin,
       columnSpacing: widget.columnSpacing,

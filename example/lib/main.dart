@@ -1,10 +1,9 @@
-import 'package:dynamic_table_example/editable_table.dart';
-import 'package:dynamic_table_example/sortable_table_custom_actions.dart';
-import 'package:dynamic_table_example/using_methods.dart';
-import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'dart:math';
 
-import 'non_editable_table.dart';
+import 'package:dynamic_table/dynamic_table.dart';
+import 'package:flutter/material.dart';
+
+import 'dummy_data.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,130 +19,228 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  int _currentTable = 0;
-  final List<Widget> _tables = [
-    const NonEditableTable(),
-    const EditableTable(),
-    const UsingMethods(),
-    const SortableTable()
-  ];
-  final List<String> titles = [
-    "Non Editable Table",
-    "Editable Table",
-    "Using Methods",
-    "Sortable Table"
-  ];
-  final List<String> urls = [
-    "https://github.com/aakash-pamnani/dynamic_table/blob/master/example/lib/non_editable_table.dart",
-    "https://github.com/aakash-pamnani/dynamic_table/blob/master/example/lib/editable_table.dart",
-    "https://github.com/aakash-pamnani/dynamic_table/blob/master/example/lib/using_methods.dart",
-    "https://github.com/aakash-pamnani/dynamic_table/blob/master/example/lib/sortable_table_custom_actions.dart",
-  ];
+  var tableKey = GlobalKey<DynamicTableState>();
+  var myData = dummyData.toList();
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Builder(builder: (context) {
-        bool isDesktop = MediaQuery.of(context).size.width > 800;
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text("Dynamic Table Example (Soon on pub.dev)"),
-            actions: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  canLaunchUrl(Uri.parse(
-                          "https://github.com/aakash-pamnani/dynamic_table/"))
-                      .then(
-                    (value) => launchUrl(
-                      Uri.parse(
-                          "https://github.com/aakash-pamnani/dynamic_table/"),
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text("Dynamic Table Example"),
+        ),
+        body: Builder(builder: (context) {
+          return SizedBox(
+            width: MediaQuery.of(context).size.width * 0.8,
+            child: DynamicTable(
+              key: tableKey,
+              header: const Text("Person Table"),
+              onRowEdit: (index, row) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Row Edited index:$index row:$row"),
+                  ),
+                );
+                myData[index] = row;
+                return true;
+              },
+              onRowDelete: (index, row) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Row Deleted index:$index row:$row"),
+                  ),
+                );
+                myData.removeAt(index);
+                return true;
+              },
+              onRowSave: (index, old, newValue) {
+                // ScaffoldMessenger.of(context).showSnackBar(
+                //   SnackBar(
+                //     content:
+                //         Text("Row Saved index:$index old:$old new:$newValue"),
+                //   ),
+                // );
+                if (newValue[0] == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Name cannot be null"),
                     ),
                   );
-                },
-                icon: Image.asset("assets/github.png"),
-                label: const Text("Github"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                ),
-              )
-            ],
-          ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-          floatingActionButton: FloatingActionButton.extended(
-            icon: const Icon(Icons.code),
-            label: Text(titles[_currentTable]),
-            onPressed: () async {
-              await canLaunchUrl(Uri.parse(urls[_currentTable])).then((value) {
-                if (value) launchUrl(Uri.parse(urls[_currentTable]));
-              });
-            },
-          ),
-          bottomNavigationBar: isDesktop
-              ? null
-              : BottomNavigationBar(
-                  currentIndex: _currentTable,
-                  onTap: (index) {
-                    setState(() {
-                      _currentTable = index;
-                    });
+                  return null;
+                }
+
+                if (newValue[0].toString().length < 3) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Name must be atleast 3 characters long"),
+                    ),
+                  );
+                  return null;
+                }
+                if (newValue[0].toString().length > 20) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content:
+                          Text("Name must be less than 20 characters long"),
+                    ),
+                  );
+                  return null;
+                }
+                if (newValue[1] == null) {
+                  //If newly added row then add unique ID
+                  newValue[1] = Random()
+                      .nextInt(500)
+                      .toString(); // to add Unique ID because it is not editable
+                }
+                myData[index] = newValue; // Update data
+                if (newValue[0] == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Name cannot be null"),
+                    ),
+                  );
+                  return null;
+                }
+                return newValue;
+              },
+              showActions: true,
+              showAddRowButton: true,
+              showDeleteAction: true,
+              rowsPerPage: 5,
+              showFirstLastButtons: true,
+              availableRowsPerPage: const [
+                5,
+                10,
+                15,
+                20,
+              ],
+              dataRowMinHeight: 60,
+              dataRowMaxHeight: 60,
+              columnSpacing: 60,
+              actionColumnTitle: "My Action Title",
+              showCheckboxColumn: true,
+              onSelectAll: (value) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: value ?? false
+                        ? const Text("All Rows Selected")
+                        : const Text("All Rows Unselected"),
+                  ),
+                );
+              },
+              onRowsPerPageChanged: (value) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Rows Per Page Changed to $value"),
+                  ),
+                );
+              },
+              actions: [
+                IconButton(
+                  onPressed: () {
+                    for (var i = 0; i < myData.length; i += 2) {
+                      tableKey.currentState?.selectRow(i, true);
+                    }
                   },
-                  selectedItemColor: Colors.blue,
-                  unselectedItemColor: Colors.grey,
-                  items: const [
-                    BottomNavigationBarItem(
-                        icon: Icon(Icons.table_rows_rounded),
-                        label: "Non Editable Table"),
-                    BottomNavigationBarItem(
-                        icon: Icon(Icons.edit), label: "Editable Table"),
-                    BottomNavigationBarItem(
-                        icon: Icon(Icons.code), label: "Using Methods"),
-                    BottomNavigationBarItem(
-                        icon: Icon(Icons.sort), label: "Sortable Table"),
-                  ],
+                  icon: const Icon(Icons.select_all),
+                  tooltip: "Select all odd Values",
                 ),
-          body: Row(
-            children: [
-              if (isDesktop)
-                NavigationRail(
-                  extended: true,
-                  destinations: const [
-                    NavigationRailDestination(
-                      icon: Icon(Icons.table_rows_rounded),
-                      label: Text("Non Editable Table"),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.edit),
-                      label: Text("Editable Table"),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.code),
-                      label: Text("Using Methods"),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.sort),
-                      label: Text("Sortable Table"),
-                    ),
-                  ],
-                  selectedIndex: _currentTable,
-                  onDestinationSelected: (index) {
-                    setState(() {
-                      _currentTable = index;
-                    });
+                IconButton(
+                  onPressed: () {
+                    for (var i = 0; i < myData.length; i += 2) {
+                      tableKey.currentState?.selectRow(i, false);
+                    }
                   },
+                  icon: const Icon(Icons.deselect_outlined),
+                  tooltip: "Unselect all odd Values",
                 ),
-              Expanded(
-                child: Column(
-                  children: [
-                    SingleChildScrollView(
-                      child: _tables[_currentTable],
+              ],
+              rows: List.generate(
+                myData.length,
+                (index) => DynamicTableDataRow(
+                  onSelectChanged: (value) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: value ?? false
+                            ? Text("Row Selected index:$index")
+                            : Text("Row Unselected index:$index"),
+                      ),
+                    );
+                  },
+                  index: index,
+                  cells: List.generate(
+                    myData[index].length,
+                    (cellIndex) => DynamicTableDataCell(
+                      value: myData[index][cellIndex],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ],
-          ),
-        );
-      }),
+              columns: [
+                DynamicTableDataColumn(
+                    label:
+                        Container(color: Colors.red, child: const Text("Name")),
+                    onSort: (columnIndex, ascending) {},
+                    dynamicTableInputType: DynamicTableInputType.text()),
+                DynamicTableDataColumn(
+                    label: const Text("Unique ID"),
+                    onSort: (columnIndex, ascending) {},
+                    isEditable: false,
+                    dynamicTableInputType: DynamicTableInputType.text()),
+                DynamicTableDataColumn(
+                  label: const Text("Birth Date"),
+                  onSort: (columnIndex, ascending) {},
+                  dynamicTableInputType: DynamicTableInputType.date(
+                    context: context,
+                    decoration: const InputDecoration(
+                        hintText: "Select Birth Date",
+                        suffixIcon: Icon(Icons.date_range),
+                        border: OutlineInputBorder()),
+                    initialDate: DateTime(1900),
+                    lastDate: DateTime.now().add(
+                      const Duration(days: 365),
+                    ),
+                  ),
+                ),
+                DynamicTableDataColumn(
+                  label: const Text("Gender"),
+                  dynamicTableInputType: DynamicTableInputType.dropDown<String>(
+                    items: genderDropdown,
+                    selectedItemBuilder: (context) {
+                      return genderDropdown
+                          .map((e) => Text(e))
+                          .toList(growable: false);
+                    },
+                    decoration: const InputDecoration(
+                        hintText: "Select Gender",
+                        border: OutlineInputBorder()),
+                    displayBuilder: (value) =>
+                        value ??
+                        "", // How the string will be displayed in non editing mode
+                    itemBuilder: (value) {
+                      return DropdownMenuItem(
+                        value: value,
+                        child: Text(value),
+                      );
+                    },
+                  ),
+                ),
+                DynamicTableDataColumn(
+                  label: const Text("Other Info"),
+                  onSort: (columnIndex, ascending) {},
+                  dynamicTableInputType: DynamicTableInputType.text(
+                    decoration: const InputDecoration(
+                      hintText: "Enter Other Info",
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 100,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
       debugShowCheckedModeBanner: false,
     );
   }
