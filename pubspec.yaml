@@ -1,6 +1,6 @@
 name: dynamic_table
-description: A fully customized data table for your flutter project in which you can edit, delete, add and update values in the table./nIt is build upon [PaginatedDataTable](https://api.flutter.dev/flutter/material/PaginatedDataTable-class.html)
-version: 0.0.1
+description: A fully customized data table for your flutter project in which you can edit, delete, add and update values in the table.
+version: 0.0.1-beta
 homepage: https://github.com/aakash-pamnani/dynamic_table
 repository: https://github.com/aakash-pamnani/dynamic_table
 issue_tracker: https://github.com/aakash-pamnani/dynamic_table/issues

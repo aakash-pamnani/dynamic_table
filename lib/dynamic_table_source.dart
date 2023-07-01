@@ -13,9 +13,9 @@ class DynamicTableSource extends DataTableSource {
   final bool showActions;
   final String actionColumnTitle;
   final bool showDeleteAction;
-  final void Function(int index, List<dynamic> row)? onRowEdit;
-  final void Function(int index, List<dynamic> row)? onRowDelete;
-  final void Function(
+  final bool Function(int index, List<dynamic> row)? onRowEdit;
+  final bool Function(int index, List<dynamic> row)? onRowDelete;
+  final List<dynamic>? Function(
       int index, List<dynamic> oldValue, List<dynamic> newValue)? onRowSave;
   int _selectedCount = 0;
 
@@ -45,16 +45,16 @@ class DynamicTableSource extends DataTableSource {
   }
 
   void insertRow(int index, List<dynamic> values, {bool isEditing = false}) {
-    assert(values.length == columns.length, 'Values length must match columns');
-    assert(() {
-      if (isEditing && !showActions) {
-        return false;
-      } else {
-        return true;
-      }
-    }(),
-        'Show actions must be true to make row editable either set isEditing false or set showActions to true');
-    assert(index >= 0 && index <= data.length, 'Index out of bounds');
+    if (values.length != columns.length) {
+      throw Exception('Values length must match columns');
+    }
+    if (isEditing && !showActions) {
+      throw Exception(
+          'Show actions must be true to make row editable either set isEditing false or set showActions to true');
+    }
+    if (index < 0 || index > data.length) {
+      throw Exception('Index out of bounds');
+    }
     data.insert(
         index,
         DynamicTableDataRow(
@@ -63,7 +63,6 @@ class DynamicTableSource extends DataTableSource {
           cells: columns.map((e) {
             return DynamicTableDataCell(
               value: values[columns.indexOf(e)],
-              // dynamicTableInputType: e.dynamicTableInputType,
             );
           }).toList(),
         ));
@@ -71,8 +70,10 @@ class DynamicTableSource extends DataTableSource {
   }
 
   void addRow() {
-    assert(showActions,
-        'Show actions must be true to make row editable either use addRowWithValues or set showActions to true');
+    if (!showActions) {
+      throw Exception(
+          'Show actions must be true to make row editable either use addRowWithValues or set showActions to true');
+    }
     data.insert(
       0,
       DynamicTableDataRow(
@@ -95,7 +96,9 @@ class DynamicTableSource extends DataTableSource {
   }
 
   void deleteRow(int index) {
-    assert(index >= 0 && index < data.length, 'Index out of bounds');
+    if (index < 0 || index > data.length) {
+      throw Exception('Index out of bounds');
+    }
     _selectedCount -= data[index].selected ? 1 : 0;
     data.removeAt(index);
     notifyListeners();
@@ -114,7 +117,9 @@ class DynamicTableSource extends DataTableSource {
   }
 
   List<dynamic> getRowByIndex(int index) {
-    assert(index >= 0 && index < data.length, 'Index out of bounds');
+    if (index < 0 || index > data.length) {
+      throw Exception('Index out of bounds');
+    }
     return data[index].cells.map((e) {
       return e.value;
     }).toList();
@@ -137,6 +142,9 @@ class DynamicTableSource extends DataTableSource {
   }
 
   void updateRow(int index, List<dynamic> values) {
+    if (values.length != columns.length) {
+      throw Exception('Values length must match columns');
+    }
     for (int i = 0; i < columns.length; i++) {
       data[index].cells[i].value = values[i];
     }
@@ -144,20 +152,36 @@ class DynamicTableSource extends DataTableSource {
   }
 
   void updateAllRows(List<List<dynamic>> values) {
-    assert(values.length == data.length,
-        'Values length must match data rows length');
-    assert(() {
-      for (int i = 0; i < values.length; i++) {
-        if (values[i].length != columns.length) {
-          return false;
-        }
+    if (values.length != data.length) {
+      throw Exception('Values length must match data rows length');
+    }
+    for (int i = 0; i < values.length; i++) {
+      if (values[i].length != columns.length) {
+        throw Exception('Values length must match columns');
       }
-      return true;
-    }(), 'Values length must match columns');
+    }
     for (int i = 0; i < values.length; i++) {
       updateRow(i, values[i]);
     }
     notifyListeners();
+  }
+
+  void selectRow(int index, bool isSelected) {
+    if (index < 0 || index > data.length) {
+      throw Exception('Index out of bounds');
+    }
+    if (data[index].selected != isSelected) {
+      _selectedCount += isSelected ? 1 : -1;
+      assert(_selectedCount >= 0);
+      data[index].selected = isSelected;
+      notifyListeners();
+    }
+  }
+
+  void selectAllRows(bool isSeleted) {
+    for (int i = 0; i < data.length; i++) {
+      selectRow(i, isSeleted);
+    }
   }
 
   @override
@@ -204,13 +228,15 @@ class DynamicTableSource extends DataTableSource {
         DynamicTableActionEdit(
           showOnlyOnEditing: false,
           onPressed: () {
-            data[row].isEditing = !data[row].isEditing;
-            notifyListeners();
-            onRowEdit?.call(
+            var response = onRowEdit?.call(
                 row,
                 data[row].cells.map((e) {
                   return e.value;
                 }).toList());
+            if (response == null || response) {
+              data[row].isEditing = !data[row].isEditing;
+              notifyListeners();
+            }
           },
         ),
       );
@@ -219,42 +245,32 @@ class DynamicTableSource extends DataTableSource {
         DynamicTableActionSave(
           showOnlyOnEditing: true,
           onPressed: () {
-            data[row].isEditing = !data[row].isEditing;
             List newValue = [];
-            // = editingValues[row] ??
-            //     cells.map((e) {
-            //       return e.value;
-            // }).toList();
-            List oldRow = cells.map((e) {
+            List oldValue = cells.map((e) {
               return e.value;
             }).toList();
 
-            // if (editingValues[row] == null) {
-            //   newValue = cells.map((e) {
-            //     return e.value;
-            //   }).toList();
-            // } else {
-            //   int index = -1;
-            //   newValue = editingValues[row]!.map((e) {
-            //     index++;
-            //     return e ?? oldRow[index];
-            //   }).toList();
-            // }
-
             for (int i = 0; i < columns.length; i++) {
               if (columns[i].isEditable) {
-                newValue
-                    .add(editingCellsInput[row]?[i]?.editingValue ?? oldRow[i]);
+                newValue.add(
+                    editingCellsInput[row]?[i]?.editingValue ?? oldValue[i]);
               } else {
-                newValue.add(oldRow[i]);
+                newValue.add(oldValue[i]);
               }
             }
 
+            var response = onRowSave?.call(row, oldValue, newValue);
+            if (onRowSave != null && response == null) {
+              return;
+            }
+            if (response != null) {
+              newValue = response;
+            }
             for (int i = 0; i < cells.length; i++) {
               data[row].cells[i].value = newValue[i];
             }
+            data[row].isEditing = !data[row].isEditing;
             notifyListeners();
-            onRowSave?.call(row, oldRow, newValue);
             editingCellsInput[row]?.forEach((key, value) {
               value.dispose();
             });
@@ -277,14 +293,16 @@ class DynamicTableSource extends DataTableSource {
         showOnlyOnEditing: !showDeleteAction,
         // showAlways: true,
         onPressed: () {
-          onRowDelete?.call(
+          var response = onRowDelete?.call(
               row,
               cells.map((e) {
                 return e.value;
               }).toList());
-          _selectedCount -= data[row].selected ? 1 : 0;
-          data.removeAt(row);
-          notifyListeners();
+          if (response == null || response) {
+            _selectedCount -= data[row].selected ? 1 : 0;
+            data.removeAt(row);
+            notifyListeners();
+          }
         },
       ));
     }
