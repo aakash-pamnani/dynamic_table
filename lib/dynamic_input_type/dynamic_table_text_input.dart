@@ -1,4 +1,4 @@
-part of 'dynamic_input_type.dart';
+part of 'dynamic_table_input_type.dart';
 
 class DynamicTableTextInput extends DynamicTableInputType<String> {
   DynamicTableTextInput({
@@ -127,14 +127,11 @@ class DynamicTableTextInput extends DynamicTableInputType<String> {
       Function(String? value, int row, int column)? onChanged,
       int row,
       int column) {
-    editingValue = value;
-
     return TextFormField(
-      initialValue: value,
       onChanged: (value) {
         onChanged?.call(value, row, column);
-        editingValue = value;
       },
+      controller: TextEditingController(text: value),
       decoration: _decoration ??
           const InputDecoration(
             border: OutlineInputBorder(),

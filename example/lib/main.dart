@@ -139,7 +139,7 @@ class _MyAppState extends State<MyApp> {
                 IconButton(
                   onPressed: () {
                     for (var i = 0; i < myData.length; i += 2) {
-                      tableKey.currentState?.selectRow(i, true);
+                      tableKey.currentState?.selectRow(i, isSelected: true);
                     }
                   },
                   icon: const Icon(Icons.select_all),
@@ -148,7 +148,7 @@ class _MyAppState extends State<MyApp> {
                 IconButton(
                   onPressed: () {
                     for (var i = 0; i < myData.length; i += 2) {
-                      tableKey.currentState?.selectRow(i, false);
+                      tableKey.currentState?.selectRow(i, isSelected: false);
                     }
                   },
                   icon: const Icon(Icons.deselect_outlined),
@@ -205,7 +205,12 @@ class _MyAppState extends State<MyApp> {
                 DynamicTableDataColumn(
                   label: const Text("Gender"),
                   dynamicTableInputType: DynamicTableInputType.dropDown<String>(
-                    items: genderDropdown,
+                    items: genderDropdown
+                        .map((e) => DropdownMenuItem(
+                              value: e,
+                              child: Text(e),
+                            ))
+                        .toList(growable: false),
                     selectedItemBuilder: (context) {
                       return genderDropdown
                           .map((e) => Text(e))
@@ -217,12 +222,6 @@ class _MyAppState extends State<MyApp> {
                     displayBuilder: (value) =>
                         value ??
                         "", // How the string will be displayed in non editing mode
-                    itemBuilder: (value) {
-                      return DropdownMenuItem(
-                        value: value,
-                        child: Text(value),
-                      );
-                    },
                   ),
                 ),
                 DynamicTableDataColumn(

@@ -1,4 +1,4 @@
-part of 'dynamic_input_type.dart';
+part of 'dynamic_table_input_type.dart';
 
 class DynamicTableActionsInput
     extends DynamicTableInputType<List<DynamicTableAction>> {

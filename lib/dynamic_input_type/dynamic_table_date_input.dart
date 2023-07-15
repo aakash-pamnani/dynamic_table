@@ -1,4 +1,4 @@
-part of 'dynamic_input_type.dart';
+part of 'dynamic_table_input_type.dart';
 
 class DynamicTableDateInput extends DynamicTableInputType<DateTime> {
   DynamicTableDateInput({
@@ -59,7 +59,7 @@ class DynamicTableDateInput extends DynamicTableInputType<DateTime> {
 
   @override
   Widget displayWidget(DateTime? value) {
-    return Text(formatDate!(value!));
+    return Text(value == null ? "" : formatDate!(value));
   }
 
   TextEditingController? controller;
@@ -70,8 +70,7 @@ class DynamicTableDateInput extends DynamicTableInputType<DateTime> {
       int row,
       int column) {
     controller =
-        TextEditingController(text: formatDate!(value ?? DateTime.now()));
-    editingValue = value ?? DateTime.now();
+        TextEditingController(text: value == null ? "" : formatDate!(value));
 
     return TextFormField(
       controller: controller,
@@ -82,7 +81,6 @@ class DynamicTableDateInput extends DynamicTableInputType<DateTime> {
           onTap: () {
             _showPicker(value ?? DateTime.now()).then((value) {
               onChanged?.call(value, row, column);
-              editingValue = value;
               controller?.text = formatDate!(value);
             });
           },

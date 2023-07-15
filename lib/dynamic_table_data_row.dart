@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'dynamic_table_data_cell.dart';
+import 'package:dynamic_table/dynamic_table_data_cell.dart';
 
 /// Row configuration and cell data for a [DynamicTable].
 ///

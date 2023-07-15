@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'dynamic_table.dart';
+import 'package:dynamic_table/dynamic_table.dart';
 
 @immutable
 class DynamicTableDataColumn {

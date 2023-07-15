@@ -1,4 +1,4 @@
-import '../dynamic_table.dart';
+import 'package:dynamic_table/dynamic_table.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -6,17 +6,20 @@ part 'dynamic_table_date_input.dart';
 part 'dynamic_table_text_input.dart';
 part 'dynamic_table_dropdown_input.dart';
 part 'dynamic_table_actions_input.dart';
+part 'dynamic_table_autocomplete_input.dart';
+part 'dynamic_table_dependent_dropdown.dart';
 
-///
-abstract class DynamicTableInputType<T> {
+abstract class DynamicTableInputType<T extends Object> {
   /// The value to display when the value is null (currently not usign this).
   static String emptyValue = "N/A";
 
-  /// The value to return when the user saves the row. The value changes from editing widget.
-  T? editingValue;
+  int? dependentOn;
 
-  Widget getChild(bool isEditing, T? value,
-      {Function(T? value, int row, int column)? onChanged,
+  Type typeOf() => T;
+
+  Widget getChild(T? value,
+      {required bool isEditing,
+      Function(T? value, int row, int column)? onChanged,
       required int row,
       required int column}) {
     if (isEditing) {
@@ -32,11 +35,6 @@ abstract class DynamicTableInputType<T> {
 
   /// This is the widget which will be displayed when the [DynamicTableDataRow.isEditing] is false.
   Widget displayWidget(T? value);
-
-  /// This is the value which will be returned when the user saves the row.
-  T? getEditingValue() {
-    return editingValue;
-  }
 
   void dispose();
 
@@ -175,14 +173,13 @@ abstract class DynamicTableInputType<T> {
   /// [selectedItemBuilder],[hint],[disabledHint],[elevation],[style],[icon],[iconDisabledColor],[iconEnabledColor],[iconSize],[isDense],[isExpanded],[itemHeight],[focusColor],[focusNode],[autofocus],[dropdownColor],[decoration],[menuMaxHeight],[enableFeedback],[alignment],[borderRadius]
   /// all this properties will be aplied to the [DropdownButton] widget which will be shown while editing.
   ///
-  /// [items] is the list of items which will be shown in the dropdown.
-  /// [displayBuilder] is a function which will be used to format the selected value to string.
-  /// [itemBuilder] is a function which will be used to build the dropdown items.
+  /// `items` is the list of items which will be shown in the dropdown.
   ///
-  static DynamicTableDropDownInput<T> dropDown<T>({
-    required List<T> items,
+  /// `displayBuilder` is a function which will be used to format the selected value to string.
+  ///
+  static DynamicTableDropDownInput<T> dropDown<T extends Object>({
+    required List<DropdownMenuItem<T>> items,
     required String Function(T?) displayBuilder,
-    required DropdownMenuItem<T> Function(T value) itemBuilder,
     List<Widget> Function(BuildContext context)? selectedItemBuilder,
     Widget? hint,
     Widget? disabledHint,
@@ -208,7 +205,6 @@ abstract class DynamicTableInputType<T> {
     return DynamicTableDropDownInput<T>(
       items: items,
       displayBuilder: displayBuilder,
-      itemBuilder: itemBuilder,
       selectedItemBuilder: selectedItemBuilder,
       hint: hint,
       disabledHint: disabledHint,
@@ -230,6 +226,40 @@ abstract class DynamicTableInputType<T> {
       enableFeedback: enableFeedback,
       alignment: alignment,
       borderRadius: borderRadius,
+    );
+  }
+
+  /// Autocomplete Input for the [DynamicTable].
+  ///
+  /// [optionsBuilder],[displayStringForOption],[fieldViewBuilder],[displayBuilder],[onSelected],[optionsMaxHeight],[optionsViewBuilder]
+  ///
+  /// [optionsBuilder] is a function which will be used to build the options for the autocomplete.
+  ///
+  /// [displayStringForOption] is a function which will be used to format the selected value to string.
+  ///
+  /// [fieldViewBuilder] is a function which will be used to build the field view for the autocomplete.
+  ///
+  /// [displayBuilder] is a function which will be used to format the selected value to string.
+  ///
+
+  static DynamicTableAutocompleteInput autocompleteInput({
+    required AutocompleteOptionsBuilder<String> optionsBuilder,
+    AutocompleteOptionToString<String> displayStringForOption =
+        RawAutocomplete.defaultStringForOption,
+    AutocompleteFieldViewBuilder? fieldViewBuilder,
+    String Function(String? value)? displayBuilder,
+    AutocompleteOnSelected<String>? onSelected,
+    double optionsMaxHeight = 200.0,
+    AutocompleteOptionsViewBuilder<String>? optionsViewBuilder,
+  }) {
+    return DynamicTableAutocompleteInput(
+      optionsBuilder: optionsBuilder,
+      displayStringForOption: displayStringForOption,
+      fieldViewBuilder: fieldViewBuilder,
+      displayBuilder: displayBuilder,
+      onSelected: onSelected,
+      optionsMaxHeight: optionsMaxHeight,
+      optionsViewBuilder: optionsViewBuilder,
     );
   }
 }

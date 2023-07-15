@@ -1,9 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-import 'dynamic_table_data_column.dart';
-import 'dynamic_table_data_row.dart';
-import 'dynamic_table_source.dart';
+import 'package:dynamic_table/dynamic_table_data_column.dart';
+import 'package:dynamic_table/dynamic_table_data_row.dart';
+import 'package:dynamic_table/dynamic_table_source.dart';
 
 class DynamicTable extends StatefulWidget {
   /// Creates a widget describing a paginated [DataTable] on a [Card].
@@ -387,12 +387,12 @@ class DynamicTableState extends State<DynamicTable> {
     _source.updateAllRows(values);
   }
 
-  void selectRow(int index, bool isSelected) {
-    _source.selectRow(index, isSelected);
+  void selectRow(int index, {required bool isSelected}) {
+    _source.selectRow(index, isSelected: isSelected);
   }
 
-  void selectAllRows(bool isSelected) {
-    _source.selectAllRows(isSelected);
+  void selectAllRows({required bool isSelected}) {
+    _source.selectAllRows(isSelected: isSelected);
   }
 
   @override
@@ -407,7 +407,7 @@ class DynamicTableState extends State<DynamicTable> {
 
   List<DynamicTableDataColumn> _columns = [];
 
-  _buildColumns() {
+  void _buildColumns() {
     _columns = [...widget.columns];
   }
 
@@ -473,7 +473,7 @@ class DynamicTableState extends State<DynamicTable> {
       sortColumnIndex: widget.sortColumnIndex,
       sortAscending: widget.sortAscending,
       onSelectAll: (value) {
-        selectAllRows(value ?? false);
+        selectAllRows(isSelected: value ?? false);
         widget.onSelectAll?.call(value);
       },
       dataRowMinHeight: widget.dataRowMinHeight,

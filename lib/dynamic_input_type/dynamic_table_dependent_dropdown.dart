@@ -1,9 +1,10 @@
 part of 'dynamic_table_input_type.dart';
 
-class DynamicTableDropDownInput<T extends Object>
+class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
     extends DynamicTableInputType<T> {
-  DynamicTableDropDownInput({
-    required items,
+  DynamicTableDependentDropDownInput({
+    required List<DropdownMenuItem<T>> Function(W dependentValue) itemsBuilder,
+    required int dependentOnColumn,
 
     /// The value to display when the row is not editing.
     String Function(T? value)? displayBuilder,
@@ -28,8 +29,9 @@ class DynamicTableDropDownInput<T extends Object>
     bool? enableFeedback,
     AlignmentGeometry alignment = AlignmentDirectional.centerStart,
     BorderRadius? borderRadius,
-  })  : _displayBuilder = displayBuilder,
-        _items = items,
+  })  : _itemsBuilder = itemsBuilder,
+        _dependentOnColumn = dependentOnColumn,
+        _displayBuilder = displayBuilder,
         _selectedItemBuilder = selectedItemBuilder,
         _hint = hint,
         _disabledHint = disabledHint,
@@ -53,26 +55,16 @@ class DynamicTableDropDownInput<T extends Object>
         _borderRadius = borderRadius,
         super(
         // dynamicTableInput: DynamicTableInput.dropdown,
-        );
+        ) {
+    dependentOn = _dependentOnColumn;
+  }
   @override
   Widget displayWidget(T? value) {
-    assert(
-      _items.isEmpty ||
-          value == null ||
-          _items.where((DropdownMenuItem<T> item) {
-                return item.value == value;
-              }).length ==
-              1,
-      "There should be exactly one item with [DropdownButton]'s value: "
-      '$value. \n'
-      'Either zero or 2 or more [DropdownMenuItem]s were detected '
-      'with the same value',
-    );
     return Text((_displayBuilder ?? _defaultDisplayBuilder).call(value));
   }
 
   final String Function(T?)? _displayBuilder;
-  final List<DropdownMenuItem<T>> _items;
+  final List<DropdownMenuItem<T>> Function(W dependentValue) _itemsBuilder;
   final List<Widget> Function(BuildContext)? _selectedItemBuilder;
   final Widget? _hint;
   final Widget? _disabledHint;
@@ -95,6 +87,12 @@ class DynamicTableDropDownInput<T extends Object>
   final AlignmentGeometry _alignment;
   final BorderRadius? _borderRadius;
 
+  W? dependentValue;
+  int _dependentOnColumn;
+  List<DropdownMenuItem<T>> _items = [];
+
+  int get dependentOnColumn => _dependentOnColumn;
+
   String _defaultDisplayBuilder(T? value) {
     return value.toString();
   }
@@ -114,9 +112,12 @@ class DynamicTableDropDownInput<T extends Object>
       'Either zero or 2 or more [DropdownMenuItem]s were detected '
       'with the same value',
     );
+    _items =
+        dependentValue == null ? [] : _itemsBuilder(dependentValue!).toList();
+    // ?? _items.first.value;
 
     return DropdownButtonFormField<T>(
-      value: value ?? _items.first.value,
+      value: value,
       onChanged: (value) {
         onChanged?.call(value as T, row, column);
       },
