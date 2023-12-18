@@ -100,7 +100,12 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
   @override
   Widget editingWidget(T? value,
       Function(T value, int row, int column)? onChanged, int row, int column) {
-    assert(
+    
+    _items =
+        dependentValue == null ? [] : _itemsBuilder(dependentValue!).toList();
+    // ?? _items.first.value;
+
+      assert(
       _items.isEmpty ||
           value == null ||
           _items.where((DropdownMenuItem<T> item) {
@@ -112,9 +117,6 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
       'Either zero or 2 or more [DropdownMenuItem]s were detected '
       'with the same value',
     );
-    _items =
-        dependentValue == null ? [] : _itemsBuilder(dependentValue!).toList();
-    // ?? _items.first.value;
 
     return DropdownButtonFormField<T>(
       value: value,
