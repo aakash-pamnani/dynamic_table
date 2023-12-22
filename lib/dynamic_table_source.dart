@@ -7,8 +7,6 @@ import 'package:dynamic_table/dynamic_table_data_column.dart';
 import 'package:dynamic_table/dynamic_table_data_row.dart';
 
 class DynamicTableSource extends DataTableSource {
-  final List<DynamicTableDataRow> data;
-  final List<DynamicTableDataColumn> columns;
   final bool showActions;
   final String actionColumnTitle;
   final bool showDeleteAction;
@@ -16,14 +14,18 @@ class DynamicTableSource extends DataTableSource {
   final bool Function(int index, List<dynamic> row)? onRowDelete;
   final List<dynamic>? Function(
       int index, List<dynamic> oldValue, List<dynamic> newValue)? onRowSave;
-  int _selectedCount = 0;
-  Map<int, List<int>> dependentOn = {};
-  //{1:[3,4]} 3 and 4th column are dependent on 1st column
 
+  final List<DynamicTableDataRow> data;
+  final List<DynamicTableDataColumn> columns;
   Map<int, List<dynamic>> _editingValues = {};
-  Map<int, Map<int, DynamicTableInputType>> _editingCellsInput = {};
-
+  //freshly added rows that are not save yet even once
   List<int> _unsavedRows = [];
+
+  //{1:[3,4]} 3 and 4th column are dependent on 1st column
+  Map<int, List<int>> dependentOn = {};
+  Map<int, Map<int, DynamicTableInputType>> _editingCellsInput = {};
+  int _selectedCount = 0;
+
   DynamicTableSource({
     this.showActions = false,
     this.showDeleteAction = true,
@@ -47,6 +49,7 @@ class DynamicTableSource extends DataTableSource {
       }
     }
   }
+
   @override
   void dispose() {
     super.dispose();
@@ -80,8 +83,8 @@ class DynamicTableSource extends DataTableSource {
             );
           }).toList(),
         ));
-    _editingValues[index] = values;
     _shiftValues(index, 1);
+    _editingValues[index] = values;
     if (isEditing) {
       _unsavedRows.add(index);
     }
@@ -89,12 +92,12 @@ class DynamicTableSource extends DataTableSource {
   }
 
   void addRow() {
-    if (!showActions) {
-      throw Exception(
-          'Show actions must be true to make row editable either use addRowWithValues or set showActions to true');
-    }
     insertRow(0, List.filled(columns.length, null), isEditing: true);
   }
+
+  void addRowLast() {
+    insertRow(data.length, List.filled(columns.length, null), isEditing: true);
+  } 
 
   void addRowWithValues(List<dynamic> values, {bool isEditing = false}) {
     insertRow(0, values, isEditing: isEditing);
@@ -144,13 +147,18 @@ class DynamicTableSource extends DataTableSource {
     }).toList();
 
     _editingValues = _editingValues.map((key, value) {
-      if (key > index) {
+      if (shiftBy < 0 && key > index) {
+        return MapEntry(key + shiftBy, value);
+      } else if (shiftBy > 0 && key >= index) {
         return MapEntry(key + shiftBy, value);
       }
       return MapEntry(key, value);
     });
+
     _editingCellsInput = _editingCellsInput.map((key, value) {
-      if (key > index) {
+      if (shiftBy < 0 && key > index) {
+        return MapEntry(key + shiftBy, value);
+      } else if (shiftBy > 0 && key >= index) {
         return MapEntry(key + shiftBy, value);
       }
       return MapEntry(key, value);
@@ -172,6 +180,22 @@ class DynamicTableSource extends DataTableSource {
         return e.value;
       }).toList();
     }).toList();
+  }
+
+  List<DataTableDataCell> getEditingRows() {
+    return data.where((element) => element.isEditing);
+  }
+
+  int getEditingRowsCount() {
+    return getEditingRows().length;
+  }
+
+  bool isEditingRowsCountZero() {
+    return getEditingRowsCount()==0;
+  }
+
+  bool autoSaveRows() {
+    return getEditingRows().map((e) { return deleteRow(e.index); }).every((e) { return e; });
   }
 
   List<List<dynamic>> getAllRows() {
@@ -209,6 +233,53 @@ class DynamicTableSource extends DataTableSource {
     notifyListeners();
   }
 
+  void editRow(int row) {
+    var response = onRowEdit?.call(
+      row,
+      data[row].cells.map((e) {
+        return e.value;
+    }).toList());
+    if ((response) && !data[row].isEditing) {
+      data[row].isEditing = !data[row].isEditing;
+      _editingValues[row] = data[row].cells.map((e) {
+        return e.value;
+      }).toList();
+      notifyListeners();
+      return;
+    }
+  }
+
+  bool saveRow(int row) {
+    List newValue = [];
+    List oldValue = data[row].cells.map((e) {
+      return e.value;
+    }).toList();
+
+    for (int i = 0; i < columns.length; i++) {
+      if (columns[i].isEditable) {
+        newValue.add(_editingValues[row]?[i] ?? oldValue[i]);
+      } else {
+        newValue.add(oldValue[i]);
+      }
+    }
+
+    var response = onRowSave?.call(row, oldValue, newValue);
+    if (onRowSave != null && response == null) {
+      return false;
+    }
+    if (response != null) {
+      newValue = response;
+    }
+    for (int i = 0; i < data[row].cells.length; i++) {
+      data[row].cells[i].value = newValue[i];
+    }
+    data[row].isEditing = !data[row].isEditing;
+    _unsavedRows.remove(row);
+    _disposeInputAt(row);
+    notifyListeners();
+    return true;
+  }
+
   void selectRow(int index, {required bool isSelected}) {
     if (index < 0 || index > data.length) {
       throw Exception('Index out of bounds');
@@ -241,6 +312,10 @@ class DynamicTableSource extends DataTableSource {
   @override
   int get selectedRowCount => _selectedCount;
 
+  int getActionsColumn(int row) {
+    return data[row].length;
+  }
+
   DataRow? _buildRow(int index) {
     var datarow = DataRow.byIndex(
       index: index,
@@ -251,13 +326,12 @@ class DynamicTableSource extends DataTableSource {
       },
       onLongPress: data[index].onLongPress,
       color: data[index].color,
-      cells: _buildRowCells(data[index].cells, index),
+      cells: _buildRowCells(index),
     );
     return datarow;
   }
 
-  List<DataCell> _addActionsInCell(
-      List<DynamicTableDataCell> cells, int row, int column) {
+  List<DataCell> _addActionsInCell(int row) {
     List<DynamicTableAction> actions = [];
     List<DataCell> cellsList = [];
 
@@ -266,18 +340,7 @@ class DynamicTableSource extends DataTableSource {
         DynamicTableActionEdit(
           showOnlyOnEditing: false,
           onPressed: () {
-            var response = onRowEdit?.call(
-                row,
-                data[row].cells.map((e) {
-                  return e.value;
-                }).toList());
-            if (response == null || response) {
-              data[row].isEditing = !data[row].isEditing;
-              _editingValues[row] = data[row].cells.map((e) {
-                return e.value;
-              }).toList();
-              notifyListeners();
-            }
+            editRow(row);
           },
         ),
       );
@@ -286,33 +349,7 @@ class DynamicTableSource extends DataTableSource {
         DynamicTableActionSave(
           showOnlyOnEditing: true,
           onPressed: () {
-            List newValue = [];
-            List oldValue = cells.map((e) {
-              return e.value;
-            }).toList();
-
-            for (int i = 0; i < columns.length; i++) {
-              if (columns[i].isEditable) {
-                newValue.add(_editingValues[row]?[i] ?? oldValue[i]);
-              } else {
-                newValue.add(oldValue[i]);
-              }
-            }
-
-            var response = onRowSave?.call(row, oldValue, newValue);
-            if (onRowSave != null && response == null) {
-              return;
-            }
-            if (response != null) {
-              newValue = response;
-            }
-            for (int i = 0; i < cells.length; i++) {
-              data[row].cells[i].value = newValue[i];
-            }
-            data[row].isEditing = !data[row].isEditing;
-            _unsavedRows.remove(row);
-            _disposeInputAt(row);
-            notifyListeners();
+            saveRow(row);
           },
         ),
       );
@@ -336,7 +373,7 @@ class DynamicTableSource extends DataTableSource {
         onPressed: () {
           var response = onRowDelete?.call(
               row,
-              cells.map((e) {
+              data[row].cells.map((e) {
                 return e.value;
               }).toList());
           if (response == null || response) {
@@ -366,7 +403,7 @@ class DynamicTableSource extends DataTableSource {
             }).toList(),
             isEditing: data[row].isEditing,
             row: row,
-            column: ++column,
+            column: getActionsColumn(),
           ),
         ),
       );
@@ -396,14 +433,14 @@ class DynamicTableSource extends DataTableSource {
     });
   }
 
-  List<DataCell> _buildRowCells(List<DynamicTableDataCell> cells, int row) {
+  List<DataCell> _buildRowCells(int row) {
     int column = -1;
-    List<DataCell> cellsList = cells.map((e) {
+    List<DataCell> cellsList = data[row].map((e) {
       column++;
       var showEditingWidget = data[row].isEditing && columns[column].isEditable;
       return _buildDataCell(e, row, column, showEditingWidget);
     }).toList();
-    cellsList.addAll(_addActionsInCell(cells, row, column));
+    cellsList.addAll(_addActionsInCell(row));
     return cellsList;
   }
 

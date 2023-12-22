@@ -92,7 +92,13 @@ class DynamicTable extends StatefulWidget {
             return true;
           }
         }(),
-            "showActions cannot be false if showAddRowButton is true, because the actions column is required to save the new row");
+            "showActions cannot be false if showAddRowButton is true, because the actions column is required to save the new row"),
+        assert(() {
+          if (!editOneByOne && autoSaveRows) {
+            return false;
+          }
+          return true;
+        }(), 'autoSaveRows cannot be true if editOneByOne is false');
 
   /// The table card's optional header.
   ///
@@ -322,11 +328,6 @@ class DynamicTable extends StatefulWidget {
   /// Defaults to "Actions"
   final String actionColumnTitle;
 
-  /// Whether to show the add row button.
-  /// Defaults to true.
-  /// If set to true and [showActions] is set to false, exception will be thrown because the actions column is required to save the new row.
-  final bool showAddRowButton;
-
   /// Whether to show the actions column.
   /// Defaults to true.
   /// If set to true and [showDeleteAction] is set to false, the actions column will be displayed but the delete action will not be displayed.
@@ -337,6 +338,30 @@ class DynamicTable extends StatefulWidget {
   /// Defaults to true.
   /// If set to true and [showActions] is set to false, the delete action will be displayed but the actions column will not be displayed.
   final bool showDeleteAction;
+
+  /// Whether to show the add row button.
+  /// Defaults to true.
+  /// If set to true and [showActions] is set to false, exception will be thrown because the actions column is required to save the new row.
+  final bool showAddRowButton;
+
+  /// Whether to add the new row beyond all existing rows, when add row button is clicked
+  /// Defaults to false
+  /// By default the new row becomes the first row
+  final bool addRowAtTheEnd;
+
+  /// Whether to allow only one row to be editable at any particular time
+  /// Defaults to false
+  /// By default multiple rows can be editable simultaneously
+  final bool editOneByOne;
+
+  /// Whether to save the rows automatically as the user moves focus out of the current editing row to another one
+  /// Defaults to false
+  /// This option requires edit one by one be enabled
+  final bool autoSaveRows;
+
+  /// Whether to edit a row cell by tapping on it, save a row when a user completes editing a row (the last cell of a row) and add a row when the user completes editing the last row
+  /// Defaults to false
+  final bool touchMode;
 
   @override
   State<DynamicTable> createState() => DynamicTableState();
@@ -349,6 +374,10 @@ class DynamicTableState extends State<DynamicTable> {
 
   void addRow() {
     _source.addRow();
+  }
+
+  void addRowLast() {
+    _source.addRowLast();
   }
 
   void addRowWithValues(List<dynamic> values, {bool isEditing = false}) {
@@ -436,7 +465,16 @@ class DynamicTableState extends State<DynamicTable> {
       showActions: widget.showActions,
       showDeleteAction: widget.showDeleteAction,
       actionColumnTitle: widget.actionColumnTitle,
-      onRowEdit: widget.onRowEdit,
+      onRowEdit: () {
+        if (widget.editOneByOne) if(!_source.isEditingRowsCountZero()) {
+          if (widget.autoSaveRows) if(_source.autoSaveRows())
+          else
+            return false;
+          else
+            return false;
+        }
+        return widget.onRowEdit();
+      },
       onRowDelete: widget.onRowDelete,
       onRowSave: widget.onRowSave,
     );
@@ -464,7 +502,18 @@ class DynamicTableState extends State<DynamicTable> {
             icon: const Icon(Icons.add),
             label: const Text("Add Row"),
             onPressed: () {
-              addRow();
+              if (widget.editOneByOne) if(!_source.isEditingRowsCountZero()) {
+                if (widget.autoSaveRows) if(_source.autoSaveRows())
+                else
+                  return;
+                else
+                  return;
+              }
+
+              if (widget.addRowAtTheEnd)
+                addRowLast();
+              else
+                addRow();
             },
           ),
         ...?widget.actions,
