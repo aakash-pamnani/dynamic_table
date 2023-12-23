@@ -33,6 +33,9 @@ class _MyAppState extends State<MyApp> {
           return SizedBox(
             width: MediaQuery.of(context).size.width * 0.8,
             child: DynamicTable(
+              editOneByOne: true,
+              autoSaveRows: true,
+              addRowAtTheEnd: true,
               key: tableKey,
               header: const Text("Person Table"),
               onRowEdit: (index, row) {
@@ -92,7 +95,7 @@ class _MyAppState extends State<MyApp> {
                       .nextInt(500)
                       .toString(); // to add Unique ID because it is not editable
                 }
-                myData[index] = newValue; // Update data
+                myData.insert(index, newValue); // Update data
                 if (newValue[0] == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
