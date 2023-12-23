@@ -77,6 +77,10 @@ class DynamicTable extends StatefulWidget {
     this.onRowSave,
     this.showDeleteAction = false,
     this.showAddRowButton = false,
+    this.addRowAtTheEnd = false,
+    this.editOneByOne = false,
+    this.autoSaveRows = false,
+    this.touchMode = false
   })  : assert(() {
           if ((onRowEdit == null && onRowSave != null) ||
               (onRowEdit != null && onRowSave == null)) {
@@ -465,15 +469,18 @@ class DynamicTableState extends State<DynamicTable> {
       showActions: widget.showActions,
       showDeleteAction: widget.showDeleteAction,
       actionColumnTitle: widget.actionColumnTitle,
-      onRowEdit: () {
+      onRowEdit: (index, value) {
         if (widget.editOneByOne) if(!_source.isEditingRowsCountZero()) {
-          if (widget.autoSaveRows) if(_source.autoSaveRows())
+          if (widget.autoSaveRows) if(_source.autoSaveRows()) {}
           else
             return false;
           else
             return false;
         }
-        return widget.onRowEdit();
+        if (widget.onRowEdit != null)
+          return widget.onRowEdit!(index, value);
+        else
+          return true;
       },
       onRowDelete: widget.onRowDelete,
       onRowSave: widget.onRowSave,
@@ -503,7 +510,7 @@ class DynamicTableState extends State<DynamicTable> {
             label: const Text("Add Row"),
             onPressed: () {
               if (widget.editOneByOne) if(!_source.isEditingRowsCountZero()) {
-                if (widget.autoSaveRows) if(_source.autoSaveRows())
+                if (widget.autoSaveRows) if(_source.autoSaveRows()) {}
                 else
                   return;
                 else

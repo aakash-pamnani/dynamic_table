@@ -182,8 +182,8 @@ class DynamicTableSource extends DataTableSource {
     }).toList();
   }
 
-  List<DataTableDataCell> getEditingRows() {
-    return data.where((element) => element.isEditing);
+  List<DynamicTableDataRow> getEditingRows() {
+    return data.where((element) => element.isEditing).toList();
   }
 
   int getEditingRowsCount() {
@@ -195,7 +195,7 @@ class DynamicTableSource extends DataTableSource {
   }
 
   bool autoSaveRows() {
-    return getEditingRows().map((e) { return deleteRow(e.index); }).every((e) { return e; });
+    return getEditingRows().map((e) { return saveRow(e.index); }).every((e) => e);
   }
 
   List<List<dynamic>> getAllRows() {
@@ -238,7 +238,7 @@ class DynamicTableSource extends DataTableSource {
       row,
       data[row].cells.map((e) {
         return e.value;
-    }).toList());
+    }).toList()) ?? false;
     if ((response) && !data[row].isEditing) {
       data[row].isEditing = !data[row].isEditing;
       _editingValues[row] = data[row].cells.map((e) {
@@ -313,7 +313,7 @@ class DynamicTableSource extends DataTableSource {
   int get selectedRowCount => _selectedCount;
 
   int getActionsColumn(int row) {
-    return data[row].length;
+    return data[row].cells.length;
   }
 
   DataRow? _buildRow(int index) {
@@ -403,7 +403,7 @@ class DynamicTableSource extends DataTableSource {
             }).toList(),
             isEditing: data[row].isEditing,
             row: row,
-            column: getActionsColumn(),
+            column: getActionsColumn(row),
           ),
         ),
       );
@@ -435,7 +435,7 @@ class DynamicTableSource extends DataTableSource {
 
   List<DataCell> _buildRowCells(int row) {
     int column = -1;
-    List<DataCell> cellsList = data[row].map((e) {
+    List<DataCell> cellsList = data[row].cells.map((e) {
       column++;
       var showEditingWidget = data[row].isEditing && columns[column].isEditable;
       return _buildDataCell(e, row, column, showEditingWidget);
