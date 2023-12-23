@@ -7,9 +7,10 @@ import 'package:dynamic_table/dynamic_table_data_column.dart';
 import 'package:dynamic_table/dynamic_table_data_row.dart';
 
 class DynamicTableSource extends DataTableSource {
-  final bool showActions;
   final String actionColumnTitle;
+  final bool showActions;
   final bool showDeleteAction;
+  final bool selectable;
   final bool Function(int index, List<dynamic> row)? onRowEdit;
   final bool Function(int index, List<dynamic> row)? onRowDelete;
   final List<dynamic>? Function(
@@ -27,11 +28,12 @@ class DynamicTableSource extends DataTableSource {
   int _selectedCount = 0;
 
   DynamicTableSource({
-    this.showActions = false,
-    this.showDeleteAction = true,
+    required this.actionColumnTitle,
     required this.data,
     required this.columns,
-    required this.actionColumnTitle,
+    this.showActions = false,
+    this.showDeleteAction = true,
+    this.selectable = true,
     this.onRowEdit,
     this.onRowDelete,
     this.onRowSave,
@@ -284,6 +286,9 @@ class DynamicTableSource extends DataTableSource {
     if (index < 0 || index > data.length) {
       throw Exception('Index out of bounds');
     }
+    if (!selectable) {
+      return;
+    }
     if (data[index].selected != isSelected) {
       _selectedCount += isSelected ? 1 : -1;
       assert(_selectedCount >= 0, 'Selected count cannot be less than 0');
@@ -320,10 +325,10 @@ class DynamicTableSource extends DataTableSource {
     var datarow = DataRow.byIndex(
       index: index,
       selected: data[index].selected,
-      onSelectChanged: (value) {
+      onSelectChanged: selectable? (value) {
         selectRow(index, isSelected: value ?? false);
         data[index].onSelectChanged?.call(value);
-      },
+      } : null,
       onLongPress: data[index].onLongPress,
       color: data[index].color,
       cells: _buildRowCells(index),

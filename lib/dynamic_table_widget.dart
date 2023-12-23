@@ -39,49 +39,50 @@ class DynamicTable extends StatefulWidget {
   ///
   ///
 
-  DynamicTable({
-    super.key,
-    this.showActions = false,
-    this.header,
-    this.actions,
-    required this.columns,
-    this.sortColumnIndex,
-    this.sortAscending = true,
-    this.onSelectAll,
-    this.dataRowMinHeight = kMinInteractiveDimension,
-    this.dataRowMaxHeight = kMinInteractiveDimension,
-    this.headingRowHeight = 56.0,
-    this.horizontalMargin = 24.0,
-    this.columnSpacing = 56.0,
-    this.showCheckboxColumn = true,
-    this.showFirstLastButtons = false,
-    this.initialFirstRowIndex = 0,
-    this.onPageChanged,
-    this.rowsPerPage = defaultRowsPerPage,
-    this.availableRowsPerPage = const <int>[
-      defaultRowsPerPage,
-      defaultRowsPerPage * 2,
-      defaultRowsPerPage * 5,
-      defaultRowsPerPage * 10
-    ],
-    this.onRowsPerPageChanged,
-    this.dragStartBehavior = DragStartBehavior.start,
-    this.arrowHeadColor,
-    this.checkboxHorizontalMargin,
-    this.controller,
-    this.primary,
-    this.onRowEdit,
-    required this.rows,
-    this.actionColumnTitle = "Actions",
-    this.onRowDelete,
-    this.onRowSave,
-    this.showDeleteAction = false,
-    this.showAddRowButton = false,
-    this.addRowAtTheEnd = false,
-    this.editOneByOne = false,
-    this.autoSaveRows = false,
-    this.touchMode = false
-  })  : assert(() {
+  DynamicTable(
+      {super.key,
+      this.header,
+      this.sortColumnIndex,
+      this.sortAscending = true,
+      this.dataRowMinHeight = kMinInteractiveDimension,
+      this.dataRowMaxHeight = kMinInteractiveDimension,
+      this.headingRowHeight = 56.0,
+      this.horizontalMargin = 24.0,
+      this.columnSpacing = 56.0,
+      this.showFirstLastButtons = false,
+      this.initialFirstRowIndex = 0,
+      this.onPageChanged,
+      this.rowsPerPage = defaultRowsPerPage,
+      this.availableRowsPerPage = const <int>[
+        defaultRowsPerPage,
+        defaultRowsPerPage * 2,
+        defaultRowsPerPage * 5,
+        defaultRowsPerPage * 10
+      ],
+      this.onRowsPerPageChanged,
+      this.dragStartBehavior = DragStartBehavior.start,
+      this.arrowHeadColor,
+      this.checkboxHorizontalMargin,
+      this.controller,
+      this.primary,
+      this.actionColumnTitle = "Actions",
+      this.onSelectAll,
+      bool showCheckboxColumn = false,
+      bool selectable = true,
+      this.actions,
+      required this.columns,
+      required this.rows,
+      this.onRowEdit,
+      this.onRowDelete,
+      this.onRowSave,
+      this.showActions = false,
+      this.showDeleteAction = false,
+      this.showAddRowButton = false,
+      this.addRowAtTheEnd = false,
+      this.editOneByOne = false,
+      this.autoSaveRows = false,
+      this.touchMode = false})
+      : assert(() {
           if ((onRowEdit == null && onRowSave != null) ||
               (onRowEdit != null && onRowSave == null)) {
             return false;
@@ -102,7 +103,9 @@ class DynamicTable extends StatefulWidget {
             return false;
           }
           return true;
-        }(), 'autoSaveRows cannot be true if editOneByOne is false');
+        }(), 'autoSaveRows cannot be true if editOneByOne is false'),
+        this.selectable = selectable,
+        this.showCheckboxColumn = selectable && showCheckboxColumn;
 
   /// The table card's optional header.
   ///
@@ -116,18 +119,6 @@ class DynamicTable extends StatefulWidget {
 
   final Widget? header;
 
-  /// Icon buttons to show at the top end side of the table. The [header] must
-  /// not be null to show the actions.
-  ///
-  /// Typically, the exact actions included in this list will vary based on
-  /// whether any rows are selected or not.
-  ///
-  /// These should be size 24.0 with default padding (8.0).
-  final List<Widget>? actions;
-
-  /// The configuration and labels for the columns in the table.
-  final List<DynamicTableDataColumn> columns;
-
   /// The current primary sort key's column.
   ///
   /// See [DataTable.sortColumnIndex].
@@ -138,12 +129,6 @@ class DynamicTable extends StatefulWidget {
   ///
   /// See [DataTable.sortAscending].
   final bool sortAscending;
-
-  /// Invoked when the user selects or unselects every row, using the
-  /// checkbox in the heading row.
-  ///
-  /// See [DataTable.onSelectAll].
-  final ValueSetter<bool?>? onSelectAll;
 
   /// The minimum height of each row (excluding the row that contains column headings).
   ///
@@ -179,9 +164,6 @@ class DynamicTable extends StatefulWidget {
   ///
   /// This value defaults to 56.0 to adhere to the Material Design specifications.
   final double columnSpacing;
-
-  /// {@macro flutter.material.dataTable.showCheckboxColumn}
-  final bool showCheckboxColumn;
 
   /// Flag to display the pagination buttons to go to the first and last pages.
   final bool showFirstLastButtons;
@@ -246,6 +228,24 @@ class DynamicTable extends StatefulWidget {
 
   /// {@macro flutter.widgets.scroll_view.primary}
   final bool? primary;
+
+  /// The title of the last column of the table.
+  /// This is used to display the actions.
+  /// Defaults to "Actions"
+  final String actionColumnTitle;
+
+  /// Invoked when the user selects or unselects every row, using the
+  /// checkbox in the heading row.
+  ///
+  /// See [DataTable.onSelectAll].
+  final ValueSetter<bool?>? onSelectAll;
+
+  /// {@macro flutter.material.dataTable.showCheckboxColumn}
+  /// Only when selectable is true show checkbox column can be true
+  final bool showCheckboxColumn;
+
+  /// Whether the table should be selectable
+  final bool selectable;
 
   /// Called when the user clicks on the edit icon of a row.
   ///
@@ -324,13 +324,20 @@ class DynamicTable extends StatefulWidget {
   final List<dynamic>? Function(
       int index, List<dynamic> oldValue, List<dynamic> newValue)? onRowSave;
 
+  /// Icon buttons to show at the top end side of the table. The [header] must
+  /// not be null to show the actions.
+  ///
+  /// Typically, the exact actions included in this list will vary based on
+  /// whether any rows are selected or not.
+  ///
+  /// These should be size 24.0 with default padding (8.0).
+  final List<Widget>? actions;
+
+  /// The configuration and labels for the columns in the table.
+  final List<DynamicTableDataColumn> columns;
+
   /// The data for the rows of the table.
   final List<DynamicTableDataRow> rows;
-
-  /// The title of the last column of the table.
-  /// This is used to display the actions.
-  /// Defaults to "Actions"
-  final String actionColumnTitle;
 
   /// Whether to show the actions column.
   /// Defaults to true.
@@ -464,15 +471,16 @@ class DynamicTableState extends State<DynamicTable> {
 
   void _buildSource() {
     _source = DynamicTableSource(
+      actionColumnTitle: widget.actionColumnTitle,
       data: widget.rows,
       columns: _columns,
+      selectable: widget.selectable,
       showActions: widget.showActions,
       showDeleteAction: widget.showDeleteAction,
-      actionColumnTitle: widget.actionColumnTitle,
       onRowEdit: (index, value) {
-        if (widget.editOneByOne) if(!_source.isEditingRowsCountZero()) {
-          if (widget.autoSaveRows) if(_source.autoSaveRows()) {}
-          else
+        if (widget.editOneByOne) if (!_source.isEditingRowsCountZero()) {
+          if (widget.autoSaveRows) if (_source.autoSaveRows()) {
+          } else
             return false;
           else
             return false;
@@ -509,9 +517,9 @@ class DynamicTableState extends State<DynamicTable> {
             icon: const Icon(Icons.add),
             label: const Text("Add Row"),
             onPressed: () {
-              if (widget.editOneByOne) if(!_source.isEditingRowsCountZero()) {
-                if (widget.autoSaveRows) if(_source.autoSaveRows()) {}
-                else
+              if (widget.editOneByOne) if (!_source.isEditingRowsCountZero()) {
+                if (widget.autoSaveRows) if (_source.autoSaveRows()) {
+                } else
                   return;
                 else
                   return;
