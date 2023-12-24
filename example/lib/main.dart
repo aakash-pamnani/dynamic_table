@@ -235,7 +235,7 @@ class _MyAppState extends State<MyApp> {
                       hintText: "Enter Other Info",
                       border: OutlineInputBorder(),
                     ),
-                    maxLines: 100,
+                    maxLines: 5,
                   ),
                 ),
               ],

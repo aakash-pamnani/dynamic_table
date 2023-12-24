@@ -490,6 +490,16 @@ class DynamicTableState extends State<DynamicTable> {
         else
           return true;
       },
+      onRowAdd: (index) {
+        if (widget.editOneByOne) if (!_source.isEditingRowsCountZero()) {
+          if (widget.autoSaveRows) if (_source.autoSaveRows()) {
+          } else
+            return false;
+          else
+            return false;
+        }
+        return true;
+      },
       onRowDelete: widget.onRowDelete,
       onRowSave: widget.onRowSave,
     );
@@ -517,14 +527,6 @@ class DynamicTableState extends State<DynamicTable> {
             icon: const Icon(Icons.add),
             label: const Text("Add Row"),
             onPressed: () {
-              if (widget.editOneByOne) if (!_source.isEditingRowsCountZero()) {
-                if (widget.autoSaveRows) if (_source.autoSaveRows()) {
-                } else
-                  return;
-                else
-                  return;
-              }
-
               if (widget.addRowAtTheEnd)
                 addRowLast();
               else

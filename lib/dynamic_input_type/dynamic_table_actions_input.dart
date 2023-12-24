@@ -18,6 +18,7 @@ class DynamicTableActionsInput
 
   @override
   Widget editingWidget(List<DynamicTableAction>? value, Function? onChanged,
+      void Function(int row, int column)? onEditComplete,
       int row, int column) {
     return displayWidget(value);
   }

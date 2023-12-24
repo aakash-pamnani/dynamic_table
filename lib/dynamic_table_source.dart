@@ -12,6 +12,7 @@ class DynamicTableSource extends DataTableSource {
   final bool showDeleteAction;
   final bool selectable;
   final bool Function(int index, List<dynamic> row)? onRowEdit;
+  final bool Function(int index)? onRowAdd;
   final bool Function(int index, List<dynamic> row)? onRowDelete;
   final List<dynamic>? Function(
       int index, List<dynamic> oldValue, List<dynamic> newValue)? onRowSave;
@@ -35,6 +36,7 @@ class DynamicTableSource extends DataTableSource {
     this.showDeleteAction = true,
     this.selectable = true,
     this.onRowEdit,
+    this.onRowAdd,
     this.onRowDelete,
     this.onRowSave,
   }) {
@@ -73,6 +75,9 @@ class DynamicTableSource extends DataTableSource {
     if (index < 0 || index > data.length) {
       throw Exception('Index out of bounds');
     }
+
+    if (!(onRowAdd?.call(index)??true))
+      return;
 
     data.insert(
         index,
@@ -492,10 +497,23 @@ class DynamicTableSource extends DataTableSource {
             notifyListeners();
           }
         },
+        onEditComplete: (row, column) {
+          if(column < (columns.length - 1))
+            return;
+          if (column == (columns.length - 1)) {
+            saveRow(row);
+            if (row == (data.length - 1))
+              addRowLast();
+          }
+        },
       ),
       placeholder: cell.placeholder,
       showEditIcon: cell.showEditIcon,
-      onTap: cell.onTap,
+      onTap: () {
+        if (!showEditingWidget && columns[columnIndex].isEditable)
+          editRow(index);
+        cell.onTap?.call();
+      },
       onLongPress: cell.onLongPress,
       onTapDown: cell.onTapDown,
       onDoubleTap: cell.onDoubleTap,

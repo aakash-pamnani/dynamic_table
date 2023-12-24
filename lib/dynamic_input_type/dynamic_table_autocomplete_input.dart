@@ -56,6 +56,7 @@ class DynamicTableAutocompleteInput extends DynamicTableInputType<String> {
   Widget editingWidget(
       String? value,
       Function(String value, int row, int column)? onChanged,
+      void Function(int row, int column)? onEditComplete,
       int row,
       int column) {
     return Autocomplete<String>(
@@ -69,10 +70,25 @@ class DynamicTableAutocompleteInput extends DynamicTableInputType<String> {
         textEditingController.addListener(() {
           onChanged?.call(textEditingController.text, row, column);
         });
+
+        focusNode.onKeyEvent = (node, event) {
+          if (onEditComplete != null &&
+              (event.logicalKey == LogicalKeyboardKey.enter ||
+                  event.logicalKey == LogicalKeyboardKey.tab)) if (event
+              is KeyDownEvent) {
+            onEditComplete.call(row, column);
+            return KeyEventResult.handled;
+          } else
+            return KeyEventResult.handled;
+          return KeyEventResult.ignored;
+        };
         return _fieldViewBuilder!(
             context, textEditingController, focusNode, onFieldSubmitted);
       },
-      onSelected: _onSelected,
+      onSelected: (value) {
+        _onSelected?.call(value);
+        onEditComplete?.call(row, column);
+      },
       optionsMaxHeight: _optionsMaxHeight,
       optionsViewBuilder: _optionsViewBuilder,
     );

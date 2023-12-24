@@ -1,4 +1,5 @@
 import 'package:dynamic_table/dynamic_table.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -20,10 +21,11 @@ abstract class DynamicTableInputType<T extends Object> {
   Widget getChild(T? value,
       {required bool isEditing,
       Function(T? value, int row, int column)? onChanged,
+      void Function(int row, int column)? onEditComplete,
       required int row,
       required int column}) {
     if (isEditing) {
-      return editingWidget(value, onChanged, row, column);
+      return editingWidget(value, onChanged, onEditComplete, row, column);
     } else {
       return displayWidget(value);
     }
@@ -31,7 +33,8 @@ abstract class DynamicTableInputType<T extends Object> {
 
   /// This is the widget which will be displayed when the [DynamicTableDataRow.isEditing] is true.
   Widget editingWidget(T? value,
-      Function(T? value, int row, int column)? onChanged, int row, int column);
+      Function(T? value, int row, int column)? onChanged,
+      void Function(int row, int column)? onEditComplete, int row, int column);
 
   /// This is the widget which will be displayed when the [DynamicTableDataRow.isEditing] is false.
   Widget displayWidget(T? value);
@@ -64,7 +67,7 @@ abstract class DynamicTableInputType<T extends Object> {
     SmartQuotesType? smartQuotesType,
     bool enableSuggestions = true,
     MaxLengthEnforcement? maxLengthEnforcement,
-    int? maxLines = 1,
+    int maxLines = 1,
     int? minLines,
     bool expands = false,
     int? maxLength,
@@ -151,6 +154,7 @@ abstract class DynamicTableInputType<T extends Object> {
     List<TextInputFormatter>? inputFormatters,
     bool? enabled,
     MouseCursor? mouseCursor,
+    bool readOnly = true
   }) {
     return DynamicTableDateInput(
       context: context,
@@ -165,6 +169,7 @@ abstract class DynamicTableInputType<T extends Object> {
       textAlignVertical: textAlignVertical,
       autofocus: autofocus,
       mouseCursor: mouseCursor,
+      readOnly: readOnly
     );
   }
 

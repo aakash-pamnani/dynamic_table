@@ -21,7 +21,7 @@ class DynamicTableTextInput extends DynamicTableInputType<String> {
     SmartQuotesType? smartQuotesType,
     bool enableSuggestions = true,
     MaxLengthEnforcement? maxLengthEnforcement,
-    int? maxLines = 1,
+    int maxLines = 1,
     int? minLines,
     bool expands = false,
     int? maxLength,
@@ -96,7 +96,7 @@ class DynamicTableTextInput extends DynamicTableInputType<String> {
   final SmartQuotesType? _smartQuotesType;
   final bool _enableSuggestions;
   final MaxLengthEnforcement? _maxLengthEnforcement;
-  final int? _maxLines;
+  final int _maxLines;
   final int? _minLines;
   final bool _expands;
   final int? _maxLength;
@@ -121,17 +121,39 @@ class DynamicTableTextInput extends DynamicTableInputType<String> {
     return Text(value ?? "");
   }
 
+  final TextEditingController textEditingController = TextEditingController();
+  final FocusNode focusNode = FocusNode();
+
   @override
   Widget editingWidget(
       String? value,
       Function(String? value, int row, int column)? onChanged,
+      void Function(int row, int column)? onEditComplete,
       int row,
       int column) {
+    textEditingController.text = value ?? "";
+    if (_keyboardType == TextInputType.multiline ||
+        (_keyboardType == null && _maxLines > 1))
+      focusNode.onKeyEvent = (node, event) {
+        if (onEditComplete != null &&
+            (event.logicalKey == LogicalKeyboardKey.enter ||
+                event.logicalKey == LogicalKeyboardKey.tab)) if ((event
+                    .logicalKey !=
+                LogicalKeyboardKey.enter) ||
+            (("\n".allMatches(textEditingController.text).length + 1) >=
+                _maxLines)) if (event is KeyDownEvent) {
+          onEditComplete.call(row, column);
+          return KeyEventResult.handled;
+        } else
+          return KeyEventResult.handled;
+        return KeyEventResult.ignored;
+      };
     return TextFormField(
+      focusNode: focusNode,
       onChanged: (value) {
         onChanged?.call(value, row, column);
       },
-      controller: TextEditingController(text: value),
+      controller: textEditingController,
       decoration: _decoration ??
           const InputDecoration(
             border: OutlineInputBorder(),
@@ -162,7 +184,9 @@ class DynamicTableTextInput extends DynamicTableInputType<String> {
       // onTap: onTap,
       // onTapOutside: onTapOutside,
       // validator: validator,
-      inputFormatters: _inputFormatters,
+      inputFormatters: [...?_inputFormatters,
+        TextInputFormatter.withFunction((oldValue, newValue) => ("\n".allMatches(newValue.text).length+1) <= _maxLines ? newValue : oldValue)
+      ],
       enabled: _enabled,
       cursorWidth: _cursorWidth,
       cursorHeight: _cursorHeight,
@@ -174,6 +198,7 @@ class DynamicTableTextInput extends DynamicTableInputType<String> {
       autofillHints: _autofillHints,
       autovalidateMode: _autovalidateMode,
       mouseCursor: _mouseCursor,
+      onEditingComplete: () => onEditComplete?.call(row, column),
     );
   }
 

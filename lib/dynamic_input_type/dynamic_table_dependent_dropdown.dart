@@ -45,7 +45,7 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
         _isExpanded = isExpanded,
         _itemHeight = itemHeight,
         _focusColor = focusColor,
-        _focusNode = focusNode,
+        _focusNode = focusNode ?? FocusNode(),
         _autofocus = autofocus,
         _dropdownColor = dropdownColor,
         _decoration = decoration,
@@ -78,7 +78,7 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
   final bool _isExpanded;
   final double? _itemHeight;
   final Color? _focusColor;
-  final FocusNode? _focusNode;
+  final FocusNode _focusNode;
   final bool _autofocus;
   final Color? _dropdownColor;
   final InputDecoration? _decoration;
@@ -99,7 +99,8 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
 
   @override
   Widget editingWidget(T? value,
-      Function(T value, int row, int column)? onChanged, int row, int column) {
+      Function(T value, int row, int column)? onChanged,
+      void Function(int row, int column)? onEditComplete, int row, int column) {
     
     _items =
         dependentValue == null ? [] : _itemsBuilder(dependentValue!).toList();
@@ -122,6 +123,7 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
       value: value,
       onChanged: (value) {
         onChanged?.call(value as T, row, column);
+        onEditComplete?.call(row, column);
       },
       items: _items,
       selectedItemBuilder: _selectedItemBuilder,
