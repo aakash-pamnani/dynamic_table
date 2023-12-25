@@ -20,7 +20,6 @@ class DynamicTableDropDownInput<T extends Object>
     bool isExpanded = false,
     double? itemHeight,
     Color? focusColor,
-    FocusNode? focusNode,
     bool autofocus = false,
     Color? dropdownColor,
     InputDecoration? decoration,
@@ -43,7 +42,6 @@ class DynamicTableDropDownInput<T extends Object>
         _isExpanded = isExpanded,
         _itemHeight = itemHeight,
         _focusColor = focusColor,
-        _focusNode = focusNode ?? FocusNode(),
         _autofocus = autofocus,
         _dropdownColor = dropdownColor,
         _decoration = decoration,
@@ -55,7 +53,7 @@ class DynamicTableDropDownInput<T extends Object>
         // dynamicTableInput: DynamicTableInput.dropdown,
         );
   @override
-  Widget displayWidget(T? value) {
+  Widget displayWidget(T? value, bool focused) {
     assert(
       _items.isEmpty ||
           value == null ||
@@ -68,7 +66,11 @@ class DynamicTableDropDownInput<T extends Object>
       'Either zero or 2 or more [DropdownMenuItem]s were detected '
       'with the same value',
     );
-    return Text((_displayBuilder ?? _defaultDisplayBuilder).call(value));
+    return DefaultDisplayWidget<T>(
+      displayBuilder: _displayBuilder,
+      value: value,
+      focused: focused,
+    );
   }
 
   final String Function(T?)? _displayBuilder;
@@ -86,7 +88,6 @@ class DynamicTableDropDownInput<T extends Object>
   final bool _isExpanded;
   final double? _itemHeight;
   final Color? _focusColor;
-  final FocusNode _focusNode;
   final bool _autofocus;
   final Color? _dropdownColor;
   final InputDecoration? _decoration;
@@ -95,56 +96,41 @@ class DynamicTableDropDownInput<T extends Object>
   final AlignmentGeometry _alignment;
   final BorderRadius? _borderRadius;
 
-  String _defaultDisplayBuilder(T? value) {
-    return value.toString();
-  }
-
   @override
-  Widget editingWidget(T? value,
-      Function(T value, int row, int column)? onChanged,
-      void Function(int row, int column)? onEditComplete, int row, int column) {
-    assert(
-      _items.isEmpty ||
-          value == null ||
-          _items.where((DropdownMenuItem<T> item) {
-                return item.value == value;
-              }).length ==
-              1,
-      "There should be exactly one item with [DropdownButton]'s value: "
-      '$value. \n'
-      'Either zero or 2 or more [DropdownMenuItem]s were detected '
-      'with the same value',
-    );
-
-    return DropdownButtonFormField<T>(
-      value: value ?? _items.first.value,
-      onChanged: (value) {
-        onChanged?.call(value as T, row, column);
-        onEditComplete?.call(row, column);
-      },
-      items: _items,
-      selectedItemBuilder: _selectedItemBuilder,
-      hint: _hint,
-      disabledHint: _disabledHint,
-      elevation: _elevation,
-      style: _style,
-      icon: _icon,
-      iconDisabledColor: _iconDisabledColor,
-      iconEnabledColor: _iconEnabledColor,
-      iconSize: _iconSize,
-      isDense: _isDense,
-      isExpanded: _isExpanded,
-      itemHeight: _itemHeight,
-      focusColor: _focusColor,
-      focusNode: _focusNode,
-      autofocus: _autofocus,
-      dropdownColor: _dropdownColor,
-      decoration: _decoration,
-      menuMaxHeight: _menuMaxHeight,
-      enableFeedback: _enableFeedback,
-      alignment: _alignment,
-      borderRadius: _borderRadius,
-    );
+  Widget editingWidget(
+      T? value,
+      Function(T? value, int row, int column)? onChanged,
+      void Function(int row, int column)? onEditComplete,
+      int row,
+      int column,
+      bool focused) {
+    return DynamicTableDropdownWidget<T>(
+        items: _items,
+        selectedItemBuilder: _selectedItemBuilder,
+        hint: _hint,
+        disabledHint: _disabledHint,
+        elevation: _elevation,
+        style: _style,
+        icon: _icon,
+        iconDisabledColor: _iconDisabledColor,
+        iconEnabledColor: _iconEnabledColor,
+        iconSize: _iconSize,
+        isDense: _isDense,
+        isExpanded: _isExpanded,
+        itemHeight: _itemHeight,
+        focusColor: _focusColor,
+        dropdownColor: _dropdownColor,
+        decoration: _decoration,
+        menuMaxHeight: _menuMaxHeight,
+        enableFeedback: _enableFeedback,
+        alignment: _alignment,
+        borderRadius: _borderRadius,
+        value: value,
+        onChanged: onChanged,
+        onEditComplete: onEditComplete,
+        row: row,
+        column: column,
+        focused: focused);
   }
 
   @override

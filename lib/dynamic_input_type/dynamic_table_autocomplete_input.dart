@@ -12,35 +12,35 @@ class DynamicTableAutocompleteInput extends DynamicTableInputType<String> {
     AutocompleteOptionsViewBuilder<String>? optionsViewBuilder,
   })  : _optionsBuilder = optionsBuilder,
         _displayStringForOption = displayStringForOption,
-        _fieldViewBuilder = fieldViewBuilder,
         _displayBuilder = displayBuilder,
         _onSelected = onSelected,
         _optionsMaxHeight = optionsMaxHeight,
         _optionsViewBuilder = optionsViewBuilder,
+        _fieldViewBuilder = fieldViewBuilder?? _defaultFieldViewBuilder,
         super(
         // dynamicTableInput: DynamicTableInput.dropdown,
         ) {
-    _fieldViewBuilder ??= _defaultFieldViewBuilder;
+    
   }
 
   final AutocompleteOptionsBuilder<String> _optionsBuilder;
   final AutocompleteOptionToString<String> _displayStringForOption;
-  AutocompleteFieldViewBuilder? _fieldViewBuilder;
+  final AutocompleteFieldViewBuilder _fieldViewBuilder;
   final String Function(String? value)? _displayBuilder;
   final AutocompleteOnSelected<String>? _onSelected;
   final double _optionsMaxHeight;
   final AutocompleteOptionsViewBuilder<String>? _optionsViewBuilder;
 
   @override
-  Widget displayWidget(String? value) {
-    return Text((_displayBuilder ?? _defaultDisplayBuilder).call(value));
+  Widget displayWidget(String? value, bool focused) {
+    return DefaultDisplayWidget<String>(
+      displayBuilder: _displayBuilder,
+      value: value,
+      focused: focused,
+    );
   }
 
-  String _defaultDisplayBuilder(String? value) {
-    return value.toString();
-  }
-
-  Widget _defaultFieldViewBuilder(
+  static Widget _defaultFieldViewBuilder(
       BuildContext context,
       TextEditingController textEditingController,
       FocusNode focusNode,
@@ -58,45 +58,23 @@ class DynamicTableAutocompleteInput extends DynamicTableInputType<String> {
       Function(String value, int row, int column)? onChanged,
       void Function(int row, int column)? onEditComplete,
       int row,
-      int column) {
-    return Autocomplete<String>(
-      // initialValue: TextEditingValue(
-      //     text: (_displayBuilder ?? _defaultDisplayBuilder).call(value)),
-      optionsBuilder: _optionsBuilder,
-      displayStringForOption: _displayStringForOption,
-      fieldViewBuilder:
-          (context, textEditingController, focusNode, onFieldSubmitted) {
-        textEditingController.text = value ?? "";
-        textEditingController.addListener(() {
-          onChanged?.call(textEditingController.text, row, column);
-        });
-
-        focusNode.onKeyEvent = (node, event) {
-          if (onEditComplete != null &&
-              (event.logicalKey == LogicalKeyboardKey.enter ||
-                  event.logicalKey == LogicalKeyboardKey.tab)) if (event
-              is KeyDownEvent) {
-            onEditComplete.call(row, column);
-            return KeyEventResult.handled;
-          } else
-            return KeyEventResult.handled;
-          return KeyEventResult.ignored;
-        };
-        return _fieldViewBuilder!(
-            context, textEditingController, focusNode, onFieldSubmitted);
-      },
-      onSelected: (value) {
-        _onSelected?.call(value);
-        onEditComplete?.call(row, column);
-      },
-      optionsMaxHeight: _optionsMaxHeight,
-      optionsViewBuilder: _optionsViewBuilder,
-    );
+      int column,
+      bool focused) {
+    return DynamicTableAutocompleteWidget(
+        optionsBuilder: _optionsBuilder,
+        displayStringForOption: _displayStringForOption,
+        fieldViewBuilder: _fieldViewBuilder,
+        onSelected: _onSelected,
+        optionsMaxHeight: _optionsMaxHeight,
+        optionsViewBuilder: _optionsViewBuilder,
+        value: value,
+        onChanged: onChanged,
+        onEditComplete: onEditComplete,
+        row: row,
+        column: column,
+        focused: focused);
   }
 
   @override
-  void dispose() {
-    // _textEditingController?.dispose();
-    // _textEditingController = null;
-  }
+  void dispose() {}
 }

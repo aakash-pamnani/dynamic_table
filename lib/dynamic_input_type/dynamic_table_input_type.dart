@@ -3,12 +3,28 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'dynamic_table_widget/default_display_widget.dart';
+import 'dynamic_table_widget/dynamic_table_autocomplete_widget.dart';
+import 'dynamic_table_widget/dynamic_table_date_input_widget.dart';
+import 'dynamic_table_widget/dynamic_table_dependent_dropdown_widget.dart';
+import 'dynamic_table_widget/dynamic_table_dropdown_widget.dart';
+import 'dynamic_table_widget/dynamic_table_text_input_widget.dart';
+
 part 'dynamic_table_date_input.dart';
 part 'dynamic_table_text_input.dart';
 part 'dynamic_table_dropdown_input.dart';
 part 'dynamic_table_actions_input.dart';
 part 'dynamic_table_autocomplete_input.dart';
 part 'dynamic_table_dependent_dropdown.dart';
+
+extension Focusing on FocusNode {
+  void focus(bool focused) {
+    if (focused)
+      this.requestFocus();
+    else
+      this.unfocus();
+  }
+}
 
 abstract class DynamicTableInputType<T extends Object> {
   /// The value to display when the value is null (currently not usign this).
@@ -23,21 +39,22 @@ abstract class DynamicTableInputType<T extends Object> {
       Function(T? value, int row, int column)? onChanged,
       void Function(int row, int column)? onEditComplete,
       required int row,
-      required int column}) {
+      required int column,
+      bool focused = false}) {
     if (isEditing) {
-      return editingWidget(value, onChanged, onEditComplete, row, column);
+      return editingWidget(value, onChanged, onEditComplete, row, column, focused);
     } else {
-      return displayWidget(value);
+      return displayWidget(value, focused);
     }
   }
 
   /// This is the widget which will be displayed when the [DynamicTableDataRow.isEditing] is true.
   Widget editingWidget(T? value,
       Function(T? value, int row, int column)? onChanged,
-      void Function(int row, int column)? onEditComplete, int row, int column);
+      void Function(int row, int column)? onEditComplete, int row, int column, bool focused);
 
   /// This is the widget which will be displayed when the [DynamicTableDataRow.isEditing] is false.
-  Widget displayWidget(T? value);
+  Widget displayWidget(T? value, bool focused);
 
   void dispose();
 
@@ -198,7 +215,6 @@ abstract class DynamicTableInputType<T extends Object> {
     bool isExpanded = false,
     double? itemHeight,
     Color? focusColor,
-    FocusNode? focusNode,
     bool autofocus = false,
     Color? dropdownColor,
     InputDecoration? decoration,
@@ -223,7 +239,6 @@ abstract class DynamicTableInputType<T extends Object> {
       isExpanded: isExpanded,
       itemHeight: itemHeight,
       focusColor: focusColor,
-      focusNode: focusNode,
       autofocus: autofocus,
       dropdownColor: dropdownColor,
       decoration: decoration,

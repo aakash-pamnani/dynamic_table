@@ -33,11 +33,16 @@ class _MyAppState extends State<MyApp> {
           return SizedBox(
             width: MediaQuery.of(context).size.width * 0.8,
             child: DynamicTable(
+              key: tableKey,
+              header: const Text("Person Table"),
               editOneByOne: true,
               autoSaveRows: true,
               addRowAtTheEnd: true,
-              key: tableKey,
-              header: const Text("Person Table"),
+              showActions: false,
+              showAddRowButton: true,
+              showDeleteOrCancelAction: true,
+              touchMode: true,
+              selectable: false,
               onRowEdit: (index, row) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -106,9 +111,6 @@ class _MyAppState extends State<MyApp> {
                 }
                 return newValue;
               },
-              showActions: true,
-              showAddRowButton: true,
-              showDeleteAction: true,
               rowsPerPage: 5,
               showFirstLastButtons: true,
               availableRowsPerPage: const [
@@ -121,7 +123,7 @@ class _MyAppState extends State<MyApp> {
               dataRowMaxHeight: 60,
               columnSpacing: 60,
               actionColumnTitle: "My Action Title",
-              showCheckboxColumn: true,
+              showCheckboxColumn: false,
               onSelectAll: (value) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

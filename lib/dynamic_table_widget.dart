@@ -77,11 +77,12 @@ class DynamicTable extends StatefulWidget {
       this.onRowSave,
       this.showActions = false,
       this.showDeleteAction = false,
+      this.showDeleteOrCancelAction = false,
+      this.touchMode = false,
       this.showAddRowButton = false,
       this.addRowAtTheEnd = false,
       this.editOneByOne = false,
-      this.autoSaveRows = false,
-      this.touchMode = false})
+      this.autoSaveRows = false})
       : assert(() {
           if ((onRowEdit == null && onRowSave != null) ||
               (onRowEdit != null && onRowSave == null)) {
@@ -91,13 +92,13 @@ class DynamicTable extends StatefulWidget {
           }
         }(), "onRowEdit and onRowSave must be both null or both non-null"),
         assert(() {
-          if (showAddRowButton == true && showActions == false) {
+          if (showAddRowButton == true && (showActions == false && touchMode == false)) {
             return false;
           } else {
             return true;
           }
         }(),
-            "showActions cannot be false if showAddRowButton is true, because the actions column is required to save the new row"),
+            "showActions or touchMode shall be true if showAddRowButton is true, because the actions column or touchMode is required to save the new row"),
         assert(() {
           if (!editOneByOne && autoSaveRows) {
             return false;
@@ -374,6 +375,11 @@ class DynamicTable extends StatefulWidget {
   /// Defaults to false
   final bool touchMode;
 
+  /// Whether to show delete or cancel actions
+  /// In view mode delete action is shown
+  /// In edit mode edit action is shown
+  final bool showDeleteOrCancelAction;
+
   @override
   State<DynamicTable> createState() => DynamicTableState();
 }
@@ -459,7 +465,7 @@ class DynamicTableState extends State<DynamicTable> {
           tooltip: e.tooltip,
           onSort: e.onSort);
     }).toList();
-    if (widget.showActions || widget.showDeleteAction) {
+    if (widget.showActions || widget.showDeleteOrCancelAction) {
       columnList.add(
         DataColumn(
           label: Text(widget.actionColumnTitle),
@@ -477,6 +483,8 @@ class DynamicTableState extends State<DynamicTable> {
       selectable: widget.selectable,
       showActions: widget.showActions,
       showDeleteAction: widget.showDeleteAction,
+      showDeleteAndCancelAction: widget.showDeleteOrCancelAction,
+      touchMode: widget.touchMode,
       onRowEdit: (index, value) {
         if (widget.editOneByOne) if (!_source.isEditingRowsCountZero()) {
           if (widget.autoSaveRows) if (_source.autoSaveRows()) {

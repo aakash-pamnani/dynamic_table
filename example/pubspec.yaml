@@ -12,6 +12,7 @@ dependencies:
   dynamic_table:
     path: ../
   url_launcher: ^6.1.11
+  provider: ^6.1.1
 
 dev_dependencies:
   flutter_test:

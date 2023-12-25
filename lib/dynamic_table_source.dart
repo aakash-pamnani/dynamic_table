@@ -1,3 +1,4 @@
+import 'package:dynamic_table/dynamic_table_focus.dart';
 import 'package:flutter/material.dart';
 
 import 'package:dynamic_table/dynamic_input_type/dynamic_table_input_type.dart';
@@ -10,6 +11,8 @@ class DynamicTableSource extends DataTableSource {
   final String actionColumnTitle;
   final bool showActions;
   final bool showDeleteAction;
+  final bool showDeleteAndCancelAction;
+  final bool touchMode;
   final bool selectable;
   final bool Function(int index, List<dynamic> row)? onRowEdit;
   final bool Function(int index)? onRowAdd;
@@ -22,6 +25,7 @@ class DynamicTableSource extends DataTableSource {
   Map<int, List<dynamic>> _editingValues = {};
   //freshly added rows that are not save yet even once
   List<int> _unsavedRows = [];
+  DynamicTableFocus focus = DynamicTableFocus(row: 0, column: 0);
 
   //{1:[3,4]} 3 and 4th column are dependent on 1st column
   Map<int, List<int>> dependentOn = {};
@@ -33,7 +37,9 @@ class DynamicTableSource extends DataTableSource {
     required this.data,
     required this.columns,
     this.showActions = false,
-    this.showDeleteAction = true,
+    this.showDeleteAction = false,
+    this.showDeleteAndCancelAction = true,
+    this.touchMode = true,
     this.selectable = true,
     this.onRowEdit,
     this.onRowAdd,
@@ -67,10 +73,6 @@ class DynamicTableSource extends DataTableSource {
   void insertRow(int index, List<dynamic> values, {bool isEditing = false}) {
     if (values.length != columns.length) {
       throw Exception('Values length must match columns');
-    }
-    if (isEditing && !showActions) {
-      throw Exception(
-          'Show actions must be true to make row editable either set isEditing false or set showActions to true');
     }
     if (index < 0 || index > data.length) {
       throw Exception('Index out of bounds');
@@ -345,7 +347,7 @@ class DynamicTableSource extends DataTableSource {
     List<DynamicTableAction> actions = [];
     List<DataCell> cellsList = [];
 
-    if (showActions) {
+    if (showActions)
       actions.add(
         DynamicTableActionEdit(
           showOnlyOnEditing: false,
@@ -355,6 +357,7 @@ class DynamicTableSource extends DataTableSource {
         ),
       );
 
+    if (showActions)
       actions.add(
         DynamicTableActionSave(
           showOnlyOnEditing: true,
@@ -363,6 +366,9 @@ class DynamicTableSource extends DataTableSource {
           },
         ),
       );
+
+    if (showActions
+    || showDeleteAndCancelAction)
       actions.add(DynamicTableActionCancel(
         showOnlyOnEditing: true,
         onPressed: () {
@@ -375,11 +381,12 @@ class DynamicTableSource extends DataTableSource {
           notifyListeners();
         },
       ));
-    }
-    if (showDeleteAction) {
+
+    if ((showActions && showDeleteAction)
+    || showDeleteAndCancelAction)
       actions.add(DynamicTableActionDelete(
         showOnlyOnEditing: false,
-        showAlways: true,
+        showAlways: !showDeleteAndCancelAction,
         onPressed: () {
           var response = onRowDelete?.call(
               row,
@@ -392,7 +399,6 @@ class DynamicTableSource extends DataTableSource {
           }
         },
       ));
-    }
 
     if (actions.isNotEmpty) {
       DynamicTableActionsInput actionsInput = DynamicTableActionsInput();
@@ -477,8 +483,10 @@ class DynamicTableSource extends DataTableSource {
         Cell value type: ${cell.value.runtimeType}
         Input type: ${dynamicTableInputType.typeOf()}
         Cell value: ${cell.value}''');
+
     return DataCell(
       dynamicTableInputType.getChild(
+        focused: touchMode? (focus.row == index && focus.column == columnIndex) : false,
         showEditingWidget ? (_editingValues[index]?[columnIndex]) : cell.value,
         isEditing: showEditingWidget,
         row: index,
@@ -497,21 +505,32 @@ class DynamicTableSource extends DataTableSource {
             notifyListeners();
           }
         },
-        onEditComplete: (row, column) {
-          if(column < (columns.length - 1))
+        onEditComplete: touchMode? (row, column) {
+          if(column < (columns.length - 1)) {
+            var i = 1;
+            while(!columns[columnIndex+i].isEditable) { i=i+1; };
+            focus = DynamicTableFocus(row: index, column: columnIndex+i);
+            notifyListeners();
             return;
+          }
           if (column == (columns.length - 1)) {
             saveRow(row);
-            if (row == (data.length - 1))
+            if (row == (data.length - 1)) {
               addRowLast();
+            }
+            focus = DynamicTableFocus(row: index+1, column: 0);
+            notifyListeners();
           }
-        },
+        } : null,
       ),
       placeholder: cell.placeholder,
       showEditIcon: cell.showEditIcon,
       onTap: () {
-        if (!showEditingWidget && columns[columnIndex].isEditable)
+        if (touchMode) if (!showEditingWidget && columns[columnIndex].isEditable) {
           editRow(index);
+          focus = DynamicTableFocus(row: index, column: columnIndex);
+          notifyListeners();
+        }
         cell.onTap?.call();
       },
       onLongPress: cell.onLongPress,

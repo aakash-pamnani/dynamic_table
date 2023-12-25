@@ -117,91 +117,16 @@ class DynamicTableTextInput extends DynamicTableInputType<String> {
   final MouseCursor? _mouseCursor;
 
   @override
-  Widget displayWidget(String? value) {
-    return Text(value ?? "");
-  }
-
-  final TextEditingController textEditingController = TextEditingController();
-  final FocusNode focusNode = FocusNode();
-
-  @override
-  Widget editingWidget(
-      String? value,
-      Function(String? value, int row, int column)? onChanged,
-      void Function(int row, int column)? onEditComplete,
-      int row,
-      int column) {
-    textEditingController.text = value ?? "";
-    if (_keyboardType == TextInputType.multiline ||
-        (_keyboardType == null && _maxLines > 1))
-      focusNode.onKeyEvent = (node, event) {
-        if (onEditComplete != null &&
-            (event.logicalKey == LogicalKeyboardKey.enter ||
-                event.logicalKey == LogicalKeyboardKey.tab)) if ((event
-                    .logicalKey !=
-                LogicalKeyboardKey.enter) ||
-            (("\n".allMatches(textEditingController.text).length + 1) >=
-                _maxLines)) if (event is KeyDownEvent) {
-          onEditComplete.call(row, column);
-          return KeyEventResult.handled;
-        } else
-          return KeyEventResult.handled;
-        return KeyEventResult.ignored;
-      };
-    return TextFormField(
-      focusNode: focusNode,
-      onChanged: (value) {
-        onChanged?.call(value, row, column);
-      },
-      controller: textEditingController,
-      decoration: _decoration ??
-          const InputDecoration(
-            border: OutlineInputBorder(),
-            labelText: "Enter a value",
-          ),
-      keyboardType: _keyboardType,
-      textCapitalization: _textCapitalization,
-      textInputAction: _textInputAction,
-      style: _style,
-      strutStyle: _strutStyle,
-      textDirection: _textDirection,
-      textAlign: _textAlign,
-      textAlignVertical: _textAlignVertical,
-      autofocus: _autofocus,
-      readOnly: _readOnly,
-      showCursor: _showCursor,
-      obscuringCharacter: _obscuringCharacter,
-      obscureText: _obscureText,
-      autocorrect: _autocorrect,
-      smartDashesType: _smartDashesType,
-      smartQuotesType: _smartQuotesType,
-      enableSuggestions: _enableSuggestions,
-      maxLengthEnforcement: _maxLengthEnforcement,
-      maxLines: _maxLines,
-      minLines: _minLines,
-      expands: _expands,
-      maxLength: _maxLength,
-      // onTap: onTap,
-      // onTapOutside: onTapOutside,
-      // validator: validator,
-      inputFormatters: [...?_inputFormatters,
-        TextInputFormatter.withFunction((oldValue, newValue) => ("\n".allMatches(newValue.text).length+1) <= _maxLines ? newValue : oldValue)
-      ],
-      enabled: _enabled,
-      cursorWidth: _cursorWidth,
-      cursorHeight: _cursorHeight,
-      cursorRadius: _cursorRadius,
-      cursorColor: _cursorColor,
-      keyboardAppearance: _keyboardAppearance,
-      scrollPadding: _scrollPadding,
-      scrollPhysics: _scrollPhysics,
-      autofillHints: _autofillHints,
-      autovalidateMode: _autovalidateMode,
-      mouseCursor: _mouseCursor,
-      onEditingComplete: () => onEditComplete?.call(row, column),
-    );
+  Widget displayWidget(String? value, bool focused) {
+    return DefaultDisplayWidget<String>(value: value, focused: focused,);
   }
 
   @override
-  void dispose() {}
+  Widget editingWidget(String? value, Function(String? value, int row, int column)? onChanged, void Function(int row, int column)? onEditComplete, int row, int column, bool focused) {
+    return DynamicTableTextInputWidget(keyboardType: _keyboardType, maxLines: _maxLines, decoration: _decoration, textCapitalization: _textCapitalization, textInputAction: _textInputAction, style: _style, strutStyle: _strutStyle, textDirection: _textDirection, textAlign: _textAlign, textAlignVertical: _textAlignVertical, readOnly: _readOnly, showCursor: _showCursor, obscuringCharacter: _obscuringCharacter, obscureText: _obscureText, autocorrect: _autocorrect, smartDashesType: _smartDashesType, smartQuotesType: _smartQuotesType, enableSuggestions: _enableSuggestions, maxLengthEnforcement: _maxLengthEnforcement, minLines: _minLines, expands: _expands, maxLength: _maxLength, inputFormatters: _inputFormatters, enabled: _enabled, cursorWidth: _cursorWidth, cursorHeight: _cursorHeight, cursorRadius: _cursorRadius, cursorColor: _cursorColor, keyboardAppearance: _keyboardAppearance, scrollPadding: _scrollPadding, scrollPhysics: _scrollPhysics, autofillHints: _autofillHints, autovalidateMode: _autovalidateMode, mouseCursor: _mouseCursor, value: value, onChanged: onChanged, onEditComplete: onEditComplete, row: row, column: column, focused: focused);
+  }
+
+  @override
+  void dispose() {
+  }
 }
