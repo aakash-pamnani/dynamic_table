@@ -232,6 +232,7 @@ class _MyAppState extends State<MyApp> {
                 DynamicTableDataColumn(
                   label: const Text("Other Info"),
                   onSort: (columnIndex, ascending) {},
+                  isEditable: false,
                   dynamicTableInputType: DynamicTableInputType.text(
                     decoration: const InputDecoration(
                       hintText: "Enter Other Info",

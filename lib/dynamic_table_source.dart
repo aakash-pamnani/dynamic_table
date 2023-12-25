@@ -462,6 +462,35 @@ class DynamicTableSource extends DataTableSource {
 
   DataCell _buildDataCell(DynamicTableDataCell cell, int index, int columnIndex,
       bool showEditingWidget) {
+    void focusNextRow(int row) {
+      saveRow(row);
+      //checking if last row
+      if (row == (data.length - 1)) {
+        addRowLast();
+      }
+      focus = DynamicTableFocus(row: row+1, column: 0);
+      notifyListeners();
+    }
+
+    void focusNextField(int row, int column) {
+      var i = 1;
+      while(((column+i) < columns.length) && !columns[column+i].isEditable) { i=i+1; };
+      //checking if there are no more editable columns
+      if ((column+i) == columns.length) {
+        focusNextRow(row);
+        return;
+      }
+
+      focus = DynamicTableFocus(row: row, column: column+i);
+      notifyListeners();
+    }
+    
+    void tapToEdit(int row, int column) {
+      editRow(row);
+      focus = DynamicTableFocus(row: row, column: column);
+      notifyListeners();
+    }
+
     var dynamicTableInputType = columns[columnIndex].dynamicTableInputType;
     if (showEditingWidget) {
       if (_editingCellsInput[index] == null) {
@@ -507,19 +536,12 @@ class DynamicTableSource extends DataTableSource {
         },
         onEditComplete: touchMode? (row, column) {
           if(column < (columns.length - 1)) {
-            var i = 1;
-            while(!columns[columnIndex+i].isEditable) { i=i+1; };
-            focus = DynamicTableFocus(row: index, column: columnIndex+i);
-            notifyListeners();
+            focusNextField(row, column);
             return;
           }
           if (column == (columns.length - 1)) {
-            saveRow(row);
-            if (row == (data.length - 1)) {
-              addRowLast();
-            }
-            focus = DynamicTableFocus(row: index+1, column: 0);
-            notifyListeners();
+            focusNextRow(row);
+            return;
           }
         } : null,
       ),
@@ -527,9 +549,7 @@ class DynamicTableSource extends DataTableSource {
       showEditIcon: cell.showEditIcon,
       onTap: () {
         if (touchMode) if (!showEditingWidget && columns[columnIndex].isEditable) {
-          editRow(index);
-          focus = DynamicTableFocus(row: index, column: columnIndex);
-          notifyListeners();
+          tapToEdit(index, columnIndex);
         }
         cell.onTap?.call();
       },
