@@ -60,7 +60,7 @@ class DynamicTableSource extends DataTableSource {
       }
     }
     for (int row in source?._unsavedRows??[]) {
-      insertRow(row, List.filled(columns.length, null), isEditing: false);
+      _insertRow(row, List.filled(columns.length, null), isEditing: false);
     }
   }
 
@@ -74,7 +74,7 @@ class DynamicTableSource extends DataTableSource {
     });
   }
 
-  void insertRow(int index, List<dynamic> values, {bool isEditing = false}) {
+  void _insertRow(int index, List<dynamic> values, {bool isEditing = false}) {
     if (values.length != columns.length) {
       throw Exception('Values length must match columns');
     }
@@ -101,6 +101,10 @@ class DynamicTableSource extends DataTableSource {
     if (isEditing) {
       _unsavedRows.add(index);
     }
+  }
+
+  void insertRow(int index, List<dynamic> values, {bool isEditing = false}) {
+    insertRow(index, values, isEditing: isEditing);
     notifyListeners();
   }
 
