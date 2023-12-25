@@ -15,7 +15,7 @@ class DynamicTableSource extends DataTableSource {
   final bool touchMode;
   final bool selectable;
   final bool Function(int index, List<dynamic> row)? onRowEdit;
-  final bool Function(int index)? onRowAdd;
+  final bool Function(int index, bool isEditing)? onRowAdd;
   final bool Function(int index, List<dynamic> row)? onRowDelete;
   final List<dynamic>? Function(
       int index, List<dynamic> oldValue, List<dynamic> newValue)? onRowSave;
@@ -45,8 +45,8 @@ class DynamicTableSource extends DataTableSource {
     this.onRowAdd,
     this.onRowDelete,
     this.onRowSave,
-    DynamicTableSource? source,
-  }) : _focus = source?._focus??DynamicTableFocus(row: 0, column: 0) {
+    DynamicTableSource? lastSource,
+  }) : _focus = lastSource?._focus??DynamicTableFocus(row: 0, column: 0) {
     _selectedCount = data.where((element) => element.selected).length;
     for (int i = 0; i < columns.length; i++) {
       if (columns[i].dynamicTableInputType.dependentOn != null) {
@@ -59,7 +59,8 @@ class DynamicTableSource extends DataTableSource {
         dependentOn[dependent]!.add(i);
       }
     }
-    for (int row in source?._unsavedRows??[]) {
+    lastSource?._unsavedRows.sort((a, b) => a.compareTo(b));
+    for (int row in lastSource?._unsavedRows??[]) {
       _insertRow(row, List.filled(columns.length, null), isEditing: false);
     }
   }
@@ -75,16 +76,6 @@ class DynamicTableSource extends DataTableSource {
   }
 
   void _insertRow(int index, List<dynamic> values, {bool isEditing = false}) {
-    if (values.length != columns.length) {
-      throw Exception('Values length must match columns');
-    }
-    if (index < 0 || index > data.length) {
-      throw Exception('Index out of bounds');
-    }
-
-    if (!(onRowAdd?.call(index)??true))
-      return;
-
     data.insert(
         index,
         DynamicTableDataRow(
@@ -98,13 +89,22 @@ class DynamicTableSource extends DataTableSource {
         ));
     _shiftValues(index, 1);
     _editingValues[index] = values;
-    if (isEditing) {
-      _unsavedRows.add(index);
-    }
+    _unsavedRows.add(index);
   }
 
   void insertRow(int index, List<dynamic> values, {bool isEditing = false}) {
+    if (values.length != columns.length) {
+      throw Exception('Values length must match columns');
+    }
+    if (index < 0 || index > data.length) {
+      throw Exception('Index out of bounds');
+    }
+
+    if (!(onRowAdd?.call(index, isEditing)??true))
+      return;
+
     _insertRow(index, values, isEditing: isEditing);
+    
     notifyListeners();
   }
 

@@ -470,7 +470,7 @@ class DynamicTableState extends State<DynamicTable> {
 
   void _buildSource({DynamicTableSource? source}) {
     _source = DynamicTableSource(
-      source: source,
+      lastSource: source,
       actionColumnTitle: widget.actionColumnTitle,
       data: widget.rows,
       columns: _columns,
@@ -492,8 +492,8 @@ class DynamicTableState extends State<DynamicTable> {
         else
           return true;
       },
-      onRowAdd: (index) {
-        if (widget.editOneByOne) if (!_source.isEditingRowsCountZero()) {
+      onRowAdd: (index, isEditing) {
+        if (isEditing && widget.editOneByOne) if (!_source.isEditingRowsCountZero()) {
           if (widget.autoSaveRows) if (_source.autoSaveRows()) {
           } else
             return false;
