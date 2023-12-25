@@ -104,7 +104,7 @@ class DynamicTableSource extends DataTableSource {
   }
 
   void insertRow(int index, List<dynamic> values, {bool isEditing = false}) {
-    insertRow(index, values, isEditing: isEditing);
+    _insertRow(index, values, isEditing: isEditing);
     notifyListeners();
   }
 
