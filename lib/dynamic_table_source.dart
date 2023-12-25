@@ -25,7 +25,7 @@ class DynamicTableSource extends DataTableSource {
   Map<int, List<dynamic>> _editingValues = {};
   //freshly added rows that are not save yet even once
   List<int> _unsavedRows = [];
-  DynamicTableFocus _focus;
+  DynamicTableFocus? _focus;
 
   //{1:[3,4]} 3 and 4th column are dependent on 1st column
   Map<int, List<int>> dependentOn = {};
@@ -46,7 +46,7 @@ class DynamicTableSource extends DataTableSource {
     this.onRowDelete,
     this.onRowSave,
     DynamicTableSource? lastSource,
-  }) : _focus = lastSource?._focus??DynamicTableFocus(row: 0, column: 0) {
+  }) : _focus = lastSource?._focus {
     _selectedCount = data.where((element) => element.selected).length;
     for (int i = 0; i < columns.length; i++) {
       if (columns[i].dynamicTableInputType.dependentOn != null) {
@@ -470,6 +470,27 @@ class DynamicTableSource extends DataTableSource {
 
   DataCell _buildDataCell(DynamicTableDataCell cell, int index, int columnIndex,
       bool showEditingWidget) {
+    DynamicTableFocus resetFocus(DynamicTableFocus? focus) {
+      if (focus==null)
+        return DynamicTableFocus(row: 0, column: -1);
+
+      var isRowOutOfFocus = () => !(focus.row >= 0 && focus.row < data.length);
+      var isColumnOutOfFocus = () => !(focus.column >= -1 && focus.column < columns.length);
+
+      if (isRowOutOfFocus() && isColumnOutOfFocus())
+        return DynamicTableFocus(row: 0, column: -1);
+
+      //resetting row focus if it is out of focus
+      if (isRowOutOfFocus())
+        return DynamicTableFocus(row: 0, column: focus.column);
+
+      //resetting column focus if it is out of focus
+      if (isColumnOutOfFocus())
+        return DynamicTableFocus(row: focus.row, column: -1);
+
+      return focus;
+    }
+
     void focusNextRow(int row) {
       saveRow(row);
       //checking if last row
@@ -481,15 +502,22 @@ class DynamicTableSource extends DataTableSource {
     }
 
     void focusNextField(int row, int column) {
+      var focus = resetFocus(DynamicTableFocus(row: row, column: column));
+
+      //moving to the next editable column
       var i = 1;
-      while(((column+i) < columns.length) && !columns[column+i].isEditable) { i=i+1; };
+      while (
+          ((focus.column + i) < columns.length) && !columns[focus.column + i].isEditable) {
+        i = i + 1;
+      }
+
       //checking if there are no more editable columns
-      if ((column+i) == columns.length) {
-        focusNextRow(row);
+      if ((focus.column + i) == columns.length) {
+        focusNextRow(focus.row);
         return;
       }
 
-      _focus = DynamicTableFocus(row: row, column: column+i);
+      _focus = DynamicTableFocus(row: focus.row, column: focus.column + i);
       notifyListeners();
     }
 
@@ -521,9 +549,10 @@ class DynamicTableSource extends DataTableSource {
         Input type: ${dynamicTableInputType.typeOf()}
         Cell value: ${cell.value}''');
 
+    var focus = resetFocus(_focus);
     return DataCell(
       dynamicTableInputType.getChild(
-        focused: touchMode? (_focus.row == index && _focus.column == columnIndex) : false,
+        focused: touchMode? (focus.row == index && focus.column == columnIndex) : false,
         showEditingWidget ? (_editingValues[index]?[columnIndex]) : cell.value,
         isEditing: showEditingWidget,
         row: index,
@@ -543,10 +572,7 @@ class DynamicTableSource extends DataTableSource {
           }
         },
         onEditComplete: touchMode? (row, column) {
-          if(column < (columns.length - 1)) {
             focusNextField(row, column);
-            return;
-          }
         } : null,
       ),
       placeholder: cell.placeholder,
