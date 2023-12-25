@@ -1,3 +1,4 @@
+import 'package:dynamic_table/dynamic_table_focus.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -441,14 +442,6 @@ class DynamicTableState extends State<DynamicTable> {
     _source.selectAllRows(isSelected: isSelected);
   }
 
-  @override
-  void initState() {
-    _buildColumns();
-    _buildSource();
-    _rowsPerPage = widget.rowsPerPage;
-    super.initState();
-  }
-
   late DynamicTableSource _source;
 
   List<DynamicTableDataColumn> _columns = [];
@@ -475,8 +468,9 @@ class DynamicTableState extends State<DynamicTable> {
     return columnList;
   }
 
-  void _buildSource() {
+  void _buildSource({DynamicTableFocus? focus}) {
     _source = DynamicTableSource(
+      focus: focus,
       actionColumnTitle: widget.actionColumnTitle,
       data: widget.rows,
       columns: _columns,
@@ -514,11 +508,19 @@ class DynamicTableState extends State<DynamicTable> {
   }
 
   @override
+  void initState() {
+    _buildColumns();
+    _buildSource();
+    _rowsPerPage = widget.rowsPerPage;
+    super.initState();
+  }
+
+  @override
   void didUpdateWidget(covariant DynamicTable oldWidget) {
     if (oldWidget.columns != widget.columns ||
         oldWidget.rows != widget.rows ||
         oldWidget.showActions != widget.showActions) {
-      _buildSource();
+      _buildSource(focus:_source.focus);
     }
     super.didUpdateWidget(oldWidget);
   }

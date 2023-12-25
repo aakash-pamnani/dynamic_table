@@ -25,12 +25,14 @@ class DynamicTableSource extends DataTableSource {
   Map<int, List<dynamic>> _editingValues = {};
   //freshly added rows that are not save yet even once
   List<int> _unsavedRows = [];
-  DynamicTableFocus focus = DynamicTableFocus(row: 0, column: 0);
+  DynamicTableFocus _focus;
 
   //{1:[3,4]} 3 and 4th column are dependent on 1st column
   Map<int, List<int>> dependentOn = {};
   Map<int, Map<int, DynamicTableInputType>> _editingCellsInput = {};
   int _selectedCount = 0;
+
+  DynamicTableFocus get focus => _focus;
 
   DynamicTableSource({
     required this.actionColumnTitle,
@@ -45,7 +47,8 @@ class DynamicTableSource extends DataTableSource {
     this.onRowAdd,
     this.onRowDelete,
     this.onRowSave,
-  }) {
+    DynamicTableFocus? focus,
+  }) : _focus = focus??DynamicTableFocus(row: 0, column: 0) {
     _selectedCount = data.where((element) => element.selected).length;
     for (int i = 0; i < columns.length; i++) {
       if (columns[i].dynamicTableInputType.dependentOn != null) {
@@ -468,7 +471,7 @@ class DynamicTableSource extends DataTableSource {
       if (row == (data.length - 1)) {
         addRowLast();
       }
-      focus = DynamicTableFocus(row: row+1, column: 0);
+      _focus = DynamicTableFocus(row: row+1, column: 0);
       notifyListeners();
     }
 
@@ -481,13 +484,13 @@ class DynamicTableSource extends DataTableSource {
         return;
       }
 
-      focus = DynamicTableFocus(row: row, column: column+i);
+      _focus = DynamicTableFocus(row: row, column: column+i);
       notifyListeners();
     }
-    
+
     void tapToEdit(int row, int column) {
       editRow(row);
-      focus = DynamicTableFocus(row: row, column: column);
+      _focus = DynamicTableFocus(row: row, column: column);
       notifyListeners();
     }
 
@@ -515,7 +518,7 @@ class DynamicTableSource extends DataTableSource {
 
     return DataCell(
       dynamicTableInputType.getChild(
-        focused: touchMode? (focus.row == index && focus.column == columnIndex) : false,
+        focused: touchMode? (_focus.row == index && _focus.column == columnIndex) : false,
         showEditingWidget ? (_editingValues[index]?[columnIndex]) : cell.value,
         isEditing: showEditingWidget,
         row: index,
@@ -537,10 +540,6 @@ class DynamicTableSource extends DataTableSource {
         onEditComplete: touchMode? (row, column) {
           if(column < (columns.length - 1)) {
             focusNextField(row, column);
-            return;
-          }
-          if (column == (columns.length - 1)) {
-            focusNextRow(row);
             return;
           }
         } : null,
