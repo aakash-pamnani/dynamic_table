@@ -468,9 +468,9 @@ class DynamicTableState extends State<DynamicTable> {
     return columnList;
   }
 
-  void _buildSource({DynamicTableFocus? focus}) {
+  void _buildSource({DynamicTableSource? source}) {
     _source = DynamicTableSource(
-      focus: focus,
+      source: source,
       actionColumnTitle: widget.actionColumnTitle,
       data: widget.rows,
       columns: _columns,
@@ -520,7 +520,7 @@ class DynamicTableState extends State<DynamicTable> {
     if (oldWidget.columns != widget.columns ||
         oldWidget.rows != widget.rows ||
         oldWidget.showActions != widget.showActions) {
-      _buildSource(focus:_source.focus);
+      _buildSource(source: _source);
     }
     super.didUpdateWidget(oldWidget);
   }

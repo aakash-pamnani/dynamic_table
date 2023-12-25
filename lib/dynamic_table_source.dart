@@ -32,8 +32,6 @@ class DynamicTableSource extends DataTableSource {
   Map<int, Map<int, DynamicTableInputType>> _editingCellsInput = {};
   int _selectedCount = 0;
 
-  DynamicTableFocus get focus => _focus;
-
   DynamicTableSource({
     required this.actionColumnTitle,
     required this.data,
@@ -47,8 +45,8 @@ class DynamicTableSource extends DataTableSource {
     this.onRowAdd,
     this.onRowDelete,
     this.onRowSave,
-    DynamicTableFocus? focus,
-  }) : _focus = focus??DynamicTableFocus(row: 0, column: 0) {
+    DynamicTableSource? source,
+  }) : _focus = source?._focus??DynamicTableFocus(row: 0, column: 0) {
     _selectedCount = data.where((element) => element.selected).length;
     for (int i = 0; i < columns.length; i++) {
       if (columns[i].dynamicTableInputType.dependentOn != null) {
@@ -60,6 +58,9 @@ class DynamicTableSource extends DataTableSource {
         }
         dependentOn[dependent]!.add(i);
       }
+    }
+    for (int row in source?._unsavedRows??[]) {
+      insertRow(row, List.filled(columns.length, null), isEditing: false);
     }
   }
 
