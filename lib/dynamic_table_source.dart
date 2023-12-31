@@ -512,12 +512,12 @@ class DynamicTableSource extends DataTableSource {
       if (row == (data.length - 1)) {
         addRowLast();
       }
-      _focus = DynamicTableFocus(row: row+1, column: 0);
+      _focus = DynamicTableFocus(row: row+1, column: -1);
       notifyListeners();
     }
 
     void focusNextField(int row, int column) {
-      var focus = moveToNextEditableColumn(resetFocus(DynamicTableFocus(row: row, column: column)));
+      var focus = moveToNextEditableColumn(DynamicTableFocus(row: row, column: column));
 
       //checking if there are no more editable columns
       if ((focus.column) == columns.length) {
