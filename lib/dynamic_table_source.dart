@@ -470,6 +470,8 @@ class DynamicTableSource extends DataTableSource {
 
   DataCell _buildDataCell(DynamicTableDataCell cell, int index, int columnIndex,
       bool showEditingWidget) {
+    //TODO: in move to next editable column skip also the dropdown columns having no selection values.
+    //TODO: disallow all edit functionality if the data table has no editable columns.
     DynamicTableFocus resetFocus(DynamicTableFocus? focus) {
       if (focus==null)
         return DynamicTableFocus(row: 0, column: -1);
@@ -488,7 +490,20 @@ class DynamicTableSource extends DataTableSource {
       if (isColumnOutOfFocus())
         return DynamicTableFocus(row: focus.row, column: -1);
 
+      if (focus.column == -1)
+        focus = moveToNextEditableColumn(focus);
+
       return focus;
+    }
+
+    DynamicTableFocus moveToNextEditableColumn(DynamicTableFocus focus) {
+      //moving to the next editable column
+      var i = 1;
+      while (
+          ((focus.column + i) < columns.length) && !columns[focus.column + i].isEditable) {
+        i = i + 1;
+      }
+      return DynamicTableFocus(row: focus.row, column: focus.column + i);
     }
 
     void focusNextRow(int row) {
@@ -502,22 +517,15 @@ class DynamicTableSource extends DataTableSource {
     }
 
     void focusNextField(int row, int column) {
-      var focus = resetFocus(DynamicTableFocus(row: row, column: column));
-
-      //moving to the next editable column
-      var i = 1;
-      while (
-          ((focus.column + i) < columns.length) && !columns[focus.column + i].isEditable) {
-        i = i + 1;
-      }
+      var focus = moveToNextEditableColumn(resetFocus(DynamicTableFocus(row: row, column: column)));
 
       //checking if there are no more editable columns
-      if ((focus.column + i) == columns.length) {
+      if ((focus.column) == columns.length) {
         focusNextRow(focus.row);
         return;
       }
 
-      _focus = DynamicTableFocus(row: focus.row, column: focus.column + i);
+      _focus = focus;
       notifyListeners();
     }
 
