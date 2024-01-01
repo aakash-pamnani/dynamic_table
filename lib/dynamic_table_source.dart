@@ -490,10 +490,19 @@ class DynamicTableSource extends DataTableSource {
       if (isColumnOutOfFocus())
         return DynamicTableFocus(row: focus.row, column: -1);
 
+      return focus;
+    }
+
+    DynamicTableFocus getFocus() {
+      var focus = resetFocus(_focus);
       if (focus.column == -1)
         focus = moveToNextEditableColumn(focus);
-
       return focus;
+    }
+
+    bool checkFocus(int row, int column) {
+      var focus = getFocus();
+      return focus.row == row && focus.column == column;
     }
 
     DynamicTableFocus moveToNextEditableColumn(DynamicTableFocus focus) {
@@ -557,10 +566,9 @@ class DynamicTableSource extends DataTableSource {
         Input type: ${dynamicTableInputType.typeOf()}
         Cell value: ${cell.value}''');
 
-    var focus = resetFocus(_focus);
     return DataCell(
       dynamicTableInputType.getChild(
-        focused: touchMode? (focus.row == index && focus.column == columnIndex) : false,
+        focused: touchMode? checkFocus(index, columnIndex) : false,
         showEditingWidget ? (_editingValues[index]?[columnIndex]) : cell.value,
         isEditing: showEditingWidget,
         row: index,
