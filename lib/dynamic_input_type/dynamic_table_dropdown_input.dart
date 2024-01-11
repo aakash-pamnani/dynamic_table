@@ -96,6 +96,10 @@ class DynamicTableDropDownInput<T extends Object>
   final AlignmentGeometry _alignment;
   final BorderRadius? _borderRadius;
 
+  T? getFirstValue() {
+    return _items.first.value;
+  }
+
   @override
   Widget editingWidget(
       T? value,

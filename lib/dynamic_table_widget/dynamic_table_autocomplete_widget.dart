@@ -1,4 +1,5 @@
 import 'package:dynamic_table/dynamic_table.dart';
+import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 

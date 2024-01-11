@@ -1,4 +1,5 @@
 import 'package:dynamic_table/dynamic_table.dart';
+import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -62,35 +63,6 @@ class _DynamicTableDateInputWidgetState
   FocusNode? focusNode;
   FocusNode? datePickerIconFocusNode;
 
-  @override
-  void initState() {
-    controller = TextEditingController();
-    focusNode = FocusNode();
-    datePickerIconFocusNode = FocusNode();
-    super.initState();
-  }
-
-  @override
-  void didUpdateWidget(DynamicTableDateInputWidget oldWidget) {
-    controller = TextEditingController();
-    focusNode = FocusNode();
-    datePickerIconFocusNode = FocusNode();
-    super.didUpdateWidget(oldWidget);
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    focusNode?.unfocus();
-    datePickerIconFocusNode?.unfocus();
-    controller?.dispose();
-    focusNode?.dispose();
-    datePickerIconFocusNode?.dispose();
-    controller = null;
-    focusNode = null;
-    datePickerIconFocusNode = null;
-  }
-
   Future<DateTime> _showPicker(DateTime selectedDate) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -104,21 +76,20 @@ class _DynamicTableDateInputWidgetState
     return selectedDate;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    void showPicker() {
-      _showPicker(widget.value ?? DateTime.now()).then((value) {
-        widget.onChanged?.call(value, widget.row, widget.column);
-        widget.onEditComplete?.call(widget.row, widget.column);
-        controller?.text = widget.displayBuilder(value);
-      });
-    };
+  void showPicker() {
+    _showPicker(widget.value ?? DateTime.now()).then((value) {
+      widget.onChanged?.call(value, widget.row, widget.column);
+      widget.onEditComplete?.call(widget.row, widget.column);
+      controller?.text = widget.displayBuilder(value);
+    });
+  }
 
-    controller?.text = widget.displayBuilder(widget.value);
-    if (!widget._readOnly)
-      focusNode?.focus(widget.focused);
-    else
-      datePickerIconFocusNode?.focus(widget.focused);
+  @override
+  void initState() {
+    super.initState();
+    controller = TextEditingController();
+    focusNode = FocusNode();
+    datePickerIconFocusNode = FocusNode();
 
     focusNode?.onKeyEvent = (node, event) {
       if (widget.onEditComplete != null &&
@@ -142,6 +113,38 @@ class _DynamicTableDateInputWidgetState
       return KeyEventResult.ignored;
     };
 
+    controller?.text = widget.displayBuilder(widget.value);
+    if (!widget._readOnly)
+      focusNode?.focus(widget.focused);
+    else
+      datePickerIconFocusNode?.focus(widget.focused);
+  }
+
+  @override
+  void didUpdateWidget(DynamicTableDateInputWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    controller?.text = widget.displayBuilder(widget.value);
+    if (!widget._readOnly)
+      focusNode?.focus(widget.focused);
+    else
+      datePickerIconFocusNode?.focus(widget.focused);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    focusNode?.unfocus();
+    datePickerIconFocusNode?.unfocus();
+    controller?.dispose();
+    focusNode?.dispose();
+    datePickerIconFocusNode?.dispose();
+    controller = null;
+    focusNode = null;
+    datePickerIconFocusNode = null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
       focusNode: focusNode,

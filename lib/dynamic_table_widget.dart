@@ -1,10 +1,9 @@
-import 'package:dynamic_table/dynamic_table_focus.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-import 'package:dynamic_table/dynamic_table_data_column.dart';
-import 'package:dynamic_table/dynamic_table_data_row.dart';
-import 'package:dynamic_table/dynamic_table_source.dart';
+import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_column.dart';
+import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_row.dart';
+import 'package:dynamic_table/dynamic_table_source/dynamic_table_source.dart';
 
 class DynamicTable extends StatefulWidget {
   /// Creates a widget describing a paginated [DataTable] on a [Card].
@@ -386,86 +385,19 @@ class DynamicTable extends StatefulWidget {
 }
 
 class DynamicTableState extends State<DynamicTable> {
-  void insertRow(int index, List<dynamic> values, {bool isEditing = false}) {
-    _source.insertRow(index, values, isEditing: isEditing);
-  }
-
-  void addRow() {
-    _source.addRow();
-  }
-
-  void addRowLast() {
-    _source.addRowLast();
-  }
-
-  void addRowWithValues(List<dynamic> values, {bool isEditing = false}) {
-    _source.addRowWithValues(values, isEditing: isEditing);
-  }
-
-  void deleteRow(int index) {
-    _source.deleteRow(index);
-  }
-
-  void deleteAllRows() {
-    _source.deleteAllRows();
-  }
-
-  void deleteSelectedRows() {
-    _source.deleteSelectedRows();
-  }
-
-  List<dynamic> getRowByIndex(int index) {
-    return _source.getRowByIndex(index);
-  }
-
-  List<List<dynamic>> getSelectedRows() {
-    return _source.getSelectedRows();
-  }
-
-  List<List<dynamic>> getAllRows() {
-    return _source.getAllRows();
-  }
-
-  void updateRow(int index, List<dynamic> values) {
-    _source.updateRow(index, values);
-  }
-
-  void updateAllRows(List<List<dynamic>> values) {
-    _source.updateAllRows(values);
-  }
-
-  void selectRow(int index, {required bool isSelected}) {
-    _source.selectRow(index, isSelected: isSelected);
-  }
-
-  void selectAllRows({required bool isSelected}) {
-    _source.selectAllRows(isSelected: isSelected);
-  }
 
   late DynamicTableSource _source;
 
   List<DynamicTableDataColumn> _columns = [];
 
-  void _buildColumns() {
-    _columns = [...widget.columns];
+  int _rowsPerPage = 10;
+
+  void selectRow(int index, {bool isSelected = true}) {
+    _source.selectRow(index, isSelected: isSelected);
   }
 
-  List<DataColumn> _getTableColumns() {
-    List<DataColumn> columnList = _columns.map((e) {
-      return DataColumn(
-          label: e.label,
-          numeric: e.numeric,
-          tooltip: e.tooltip,
-          onSort: e.onSort);
-    }).toList();
-    if (widget.showActions || widget.showDeleteOrCancelAction) {
-      columnList.add(
-        DataColumn(
-          label: Text(widget.actionColumnTitle),
-        ),
-      );
-    }
-    return columnList;
+  void _buildColumns() {
+    _columns = [...widget.columns];
   }
 
   void _buildSource({DynamicTableSource? source}) {
@@ -477,31 +409,11 @@ class DynamicTableState extends State<DynamicTable> {
       selectable: widget.selectable,
       showActions: widget.showActions,
       showDeleteAction: widget.showDeleteAction,
-      showDeleteAndCancelAction: widget.showDeleteOrCancelAction,
+      showDeleteOrCancelAction: widget.showDeleteOrCancelAction,
+      editOneByOne: widget.editOneByOne,
+      autoSaveRowsEnabled: widget.autoSaveRows,
       touchMode: widget.touchMode,
-      onRowEdit: (index, value) {
-        if (widget.editOneByOne) if (!_source.isEditingRowsCountZero()) {
-          if (widget.autoSaveRows) if (_source.autoSaveRows()) {
-          } else
-            return false;
-          else
-            return false;
-        }
-        if (widget.onRowEdit != null)
-          return widget.onRowEdit!(index, value);
-        else
-          return true;
-      },
-      onRowAdd: (index, isEditing) {
-        if (isEditing && widget.editOneByOne) if (!_source.isEditingRowsCountZero()) {
-          if (widget.autoSaveRows) if (_source.autoSaveRows()) {
-          } else
-            return false;
-          else
-            return false;
-        }
-        return true;
-      },
+      onRowEdit: widget.onRowEdit,
       onRowDelete: widget.onRowDelete,
       onRowSave: widget.onRowSave,
     );
@@ -509,23 +421,21 @@ class DynamicTableState extends State<DynamicTable> {
 
   @override
   void initState() {
+    super.initState();
     _buildColumns();
     _buildSource();
     _rowsPerPage = widget.rowsPerPage;
-    super.initState();
   }
 
   @override
   void didUpdateWidget(covariant DynamicTable oldWidget) {
+    super.didUpdateWidget(oldWidget);
     if (oldWidget.columns != widget.columns ||
         oldWidget.rows != widget.rows ||
         oldWidget.showActions != widget.showActions) {
       _buildSource(source: _source);
     }
-    super.didUpdateWidget(oldWidget);
   }
-
-  int _rowsPerPage = 10;
 
   @override
   Widget build(BuildContext context) {
@@ -538,18 +448,18 @@ class DynamicTableState extends State<DynamicTable> {
             label: const Text("Add Row"),
             onPressed: () {
               if (widget.addRowAtTheEnd)
-                addRowLast();
+                _source.addRowLast();
               else
-                addRow();
+                _source.addRow();
             },
           ),
         ...?widget.actions,
       ],
-      columns: _getTableColumns(),
+      columns: _source.getTableColumns(),
       sortColumnIndex: widget.sortColumnIndex,
       sortAscending: widget.sortAscending,
       onSelectAll: (value) {
-        selectAllRows(isSelected: value ?? false);
+        _source.selectAllRows(isSelected: value ?? false);
         widget.onSelectAll?.call(value);
       },
       dataRowMinHeight: widget.dataRowMinHeight,

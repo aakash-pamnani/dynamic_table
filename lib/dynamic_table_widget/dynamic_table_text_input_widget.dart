@@ -1,4 +1,5 @@
 import 'package:dynamic_table/dynamic_table.dart';
+import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -99,32 +100,9 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
 
   @override
   void initState() {
-    textEditingController = TextEditingController();
-    focusNode = FocusNode();
     super.initState();
-  }
-
-  @override
-  void didUpdateWidget(DynamicTableTextInputWidget oldWidget){
     textEditingController = TextEditingController();
     focusNode = FocusNode();
-    super.didUpdateWidget(oldWidget);
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    focusNode?.unfocus();
-    textEditingController?.dispose();
-    focusNode?.dispose();
-    textEditingController = null;
-    focusNode = null;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    focusNode?.focus(widget.focused);
-    textEditingController?.text = widget.value ?? "";
 
     focusNode?.onKeyEvent = (node, event) {
       if (widget._keyboardType == TextInputType.multiline ||
@@ -150,7 +128,30 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
 
       return KeyEventResult.ignored;
     };
+    
+    focusNode?.focus(widget.focused);
+    textEditingController?.text = widget.value ?? "";
+  }
 
+  @override
+  void didUpdateWidget(DynamicTableTextInputWidget oldWidget){
+    super.didUpdateWidget(oldWidget);
+    focusNode?.focus(widget.focused);
+    textEditingController?.text = widget.value ?? "";
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    focusNode?.unfocus();
+    textEditingController?.dispose();
+    focusNode?.dispose();
+    textEditingController = null;
+    focusNode = null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return TextFormField(
       focusNode: focusNode,
       onChanged: (value) {

@@ -56,6 +56,14 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
         ) {
     dependentOn = _dependentOnColumn;
   }
+
+  T? getFirstValue() {
+    if (dependentValue == null) {
+      return null;
+    }
+    return _itemsBuilder(dependentValue!).first.value;
+  }
+
   @override
   Widget displayWidget(T? value, bool focused) {
     return DefaultDisplayWidget<T>(

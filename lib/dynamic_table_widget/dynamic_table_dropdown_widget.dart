@@ -1,4 +1,5 @@
 import 'package:dynamic_table/dynamic_table.dart';
+import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -90,14 +91,27 @@ class _DynamicTableDropdownWidgetState<T>
 
   @override
   void initState() {
-    _focusNode = FocusNode();
     super.initState();
+    _focusNode = FocusNode();
+
+    _focusNode?.onKeyEvent = (node, event) {
+      if (widget.onEditComplete != null &&
+          (event.logicalKey ==
+              LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
+        widget.onEditComplete?.call(widget.row, widget.column);
+        return KeyEventResult.handled;
+      } else
+        return KeyEventResult.handled;
+      return KeyEventResult.ignored;
+    };
+
+    _focusNode?.focus(widget.focused);
   }
 
   @override
   void didUpdateWidget(DynamicTableDropdownWidget<T> oldWidget) {
-    _focusNode = FocusNode();
     super.didUpdateWidget(oldWidget);
+    _focusNode?.focus(widget.focused);
   }
 
   @override
@@ -123,27 +137,19 @@ class _DynamicTableDropdownWidgetState<T>
       'with the same value',
     );
 
-    _focusNode?.focus(widget.focused);
-
-    _focusNode?.onKeyEvent = (node, event) {
-      if (widget.onEditComplete != null &&
-          (event.logicalKey ==
-              LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
-        widget.onEditComplete?.call(widget.row, widget.column);
-        return KeyEventResult.handled;
-      } else
-        return KeyEventResult.handled;
-      return KeyEventResult.ignored;
-    };
-
     return DropdownButtonFormField<T>(
-      value: widget.value ?? widget._items.first.value,
+      value: widget.value,
       onChanged: (value) {
         widget.onChanged?.call(value as T, widget.row, widget.column);
         widget.onEditComplete?.call(widget.row, widget.column);
       },
       items: widget._items,
-      selectedItemBuilder: widget._selectedItemBuilder,
+      selectedItemBuilder: (context) {
+        return widget._selectedItemBuilder?.call(context) ??
+            widget._items
+                .where((element) => (element.value == widget.value))
+                .toList();
+      },
       hint: widget._hint,
       disabledHint: widget._disabledHint,
       elevation: widget._elevation,

@@ -1,4 +1,5 @@
 import 'package:dynamic_table/dynamic_table.dart';
+import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -73,14 +74,25 @@ class _DynamicTableDependentDropdownWidgetState<T, W> extends State<DynamicTable
 
   @override
   void initState() {
-    _focusNode = FocusNode();
     super.initState();
+    _focusNode = FocusNode();
+    _focusNode?.onKeyEvent = (node, event) {
+      if (widget.onEditComplete != null &&
+          (event.logicalKey == LogicalKeyboardKey.tab)) if (event
+          is KeyDownEvent) {
+        widget.onEditComplete?.call(widget.row, widget.column);
+        return KeyEventResult.handled;
+      } else
+        return KeyEventResult.handled;
+      return KeyEventResult.ignored;
+    };
+    _focusNode?.focus(widget.focused);
   }
 
   @override
   void didUpdateWidget(DynamicTableDependentDropdownWidget<T, W> oldWidget) {
-    _focusNode = FocusNode();
     super.didUpdateWidget(oldWidget);
+    _focusNode?.focus(widget.focused);
   }
 
   @override
@@ -111,19 +123,6 @@ class _DynamicTableDependentDropdownWidgetState<T, W> extends State<DynamicTable
       'Either zero or 2 or more [DropdownMenuItem]s were detected '
       'with the same value',
     );
-
-    _focusNode?.focus(widget.focused);
-
-    _focusNode?.onKeyEvent = (node, event) {
-      if (widget.onEditComplete != null &&
-          (event.logicalKey == LogicalKeyboardKey.tab)) if (event
-          is KeyDownEvent) {
-        widget.onEditComplete?.call(widget.row, widget.column);
-        return KeyEventResult.handled;
-      } else
-        return KeyEventResult.handled;
-      return KeyEventResult.ignored;
-    };
 
     return DropdownButtonFormField<T>(
       value: widget.value,

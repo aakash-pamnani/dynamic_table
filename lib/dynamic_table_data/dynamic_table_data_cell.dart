@@ -6,7 +6,7 @@ import 'package:flutter/gestures.dart';
 /// in the [DynamicTable], in the new [DynamicTableDataRow] constructor's `cells`
 /// argument.
 class DynamicTableDataCell {
-  dynamic value;
+  Comparable<dynamic>? value;
 
   /// If this is true, the default text style for the cell is changed
   /// to be appropriate for placeholder text.

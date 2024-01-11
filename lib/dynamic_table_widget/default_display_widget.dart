@@ -1,4 +1,5 @@
 import 'package:dynamic_table/dynamic_table.dart';
+import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
 import 'package:flutter/material.dart';
 
 class DefaultDisplayWidget<T> extends StatefulWidget {
@@ -28,14 +29,15 @@ class _DefaultDisplayWidgetState<T> extends State<DefaultDisplayWidget<T>> {
 
   @override
   void initState() {
-    focusNode = new FocusNode();
     super.initState();
+    focusNode = new FocusNode();
+    focusNode?.focus(widget._focused);
   }
 
   @override
   void didUpdateWidget(DefaultDisplayWidget<T> oldWidget) {
-    focusNode = new FocusNode();
     super.didUpdateWidget(oldWidget);
+    focusNode?.focus(widget._focused);
   }
 
   @override
@@ -48,7 +50,6 @@ class _DefaultDisplayWidgetState<T> extends State<DefaultDisplayWidget<T>> {
 
   @override
   Widget build(BuildContext context) {
-    focusNode?.focus(widget._focused);
     return Focus(child: Text((widget._displayBuilder ?? _defaultDisplayBuilder).call(widget._value)), focusNode: focusNode,);
   }
 }

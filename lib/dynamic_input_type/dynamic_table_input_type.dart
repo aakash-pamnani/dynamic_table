@@ -3,12 +3,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'dynamic_table_widget/default_display_widget.dart';
-import 'dynamic_table_widget/dynamic_table_autocomplete_widget.dart';
-import 'dynamic_table_widget/dynamic_table_date_input_widget.dart';
-import 'dynamic_table_widget/dynamic_table_dependent_dropdown_widget.dart';
-import 'dynamic_table_widget/dynamic_table_dropdown_widget.dart';
-import 'dynamic_table_widget/dynamic_table_text_input_widget.dart';
+import '../dynamic_table_widget/default_display_widget.dart';
+import '../dynamic_table_widget/dynamic_table_autocomplete_widget.dart';
+import '../dynamic_table_widget/dynamic_table_date_input_widget.dart';
+import '../dynamic_table_widget/dynamic_table_dependent_dropdown_widget.dart';
+import '../dynamic_table_widget/dynamic_table_dropdown_widget.dart';
+import '../dynamic_table_widget/dynamic_table_text_input_widget.dart';
 
 part 'dynamic_table_date_input.dart';
 part 'dynamic_table_text_input.dart';
@@ -16,15 +16,6 @@ part 'dynamic_table_dropdown_input.dart';
 part 'dynamic_table_actions_input.dart';
 part 'dynamic_table_autocomplete_input.dart';
 part 'dynamic_table_dependent_dropdown.dart';
-
-extension Focusing on FocusNode {
-  void focus(bool focused) {
-    if (focused)
-      this.requestFocus();
-    else
-      this.unfocus();
-  }
-}
 
 abstract class DynamicTableInputType<T extends Object> {
   /// The value to display when the value is null (currently not usign this).

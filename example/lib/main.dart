@@ -20,7 +20,12 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   var tableKey = GlobalKey<DynamicTableState>();
-  var myData = dummyData.toList();
+  Map<String, List<dynamic>> myData = dummyData.asMap().map((key, value) => MapEntry(value[1], value),);
+  List<dynamic> viewData() {
+    var result = myData.values.toList();
+    result.sort(((a, b) => a[1].compareTo(b[1])));
+    return result;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +54,6 @@ class _MyAppState extends State<MyApp> {
                     content: Text("Row Edited index:$index row:$row"),
                   ),
                 );
-                myData[index] = row;
                 return true;
               },
               onRowDelete: (index, row) {
@@ -58,7 +62,8 @@ class _MyAppState extends State<MyApp> {
                     content: Text("Row Deleted index:$index row:$row"),
                   ),
                 );
-                myData.removeAt(index);
+                if (myData.containsKey(row[1]))
+                  myData.remove(row[1]);
                 return true;
               },
               onRowSave: (index, old, newValue) {
@@ -96,11 +101,17 @@ class _MyAppState extends State<MyApp> {
                 }
                 if (newValue[1] == null) {
                   //If newly added row then add unique ID
-                  newValue[1] = Random()
-                      .nextInt(500)
+                  newValue[1] = (Random()
+                      .nextInt(500)+100)
                       .toString(); // to add Unique ID because it is not editable
+
+                  while(myData.containsKey(newValue[1])) {
+                    newValue[1] = (Random()
+                      .nextInt(500)+100)
+                      .toString();
+                  }
                 }
-                myData.insert(index, newValue); // Update data
+                myData.putIfAbsent(newValue[1], () => newValue); // Update data
                 if (newValue[0] == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -162,7 +173,9 @@ class _MyAppState extends State<MyApp> {
               ],
               rows: List.generate(
                 myData.length,
-                (index) => DynamicTableDataRow(
+                (index) {
+                  final data = viewData();
+                  return DynamicTableDataRow(
                   onSelectChanged: (value) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -174,13 +187,12 @@ class _MyAppState extends State<MyApp> {
                   },
                   index: index,
                   cells: List.generate(
-                    myData[index].length,
+                    data[index].length,
                     (cellIndex) => DynamicTableDataCell(
-                      value: myData[index][cellIndex],
+                      value: data[index][cellIndex],
                     ),
                   ),
-                ),
-              ),
+                );}),
               columns: [
                 DynamicTableDataColumn(
                     label:
