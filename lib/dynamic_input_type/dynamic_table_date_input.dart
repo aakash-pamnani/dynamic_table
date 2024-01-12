@@ -45,11 +45,14 @@ class DynamicTableDateInput extends DynamicTableInputType<DateTime> {
   final String Function(DateTime?) _displayBuilder;
 
   @override
-  Widget displayWidget(DateTime? value, bool focused) {
+  Widget displayWidget(DateTime? value, bool focused, void Function(int row, int column)? onEditComplete, int row, int column) {
     return DefaultDisplayWidget<DateTime>(
       value: value,
       focused: focused,
       displayBuilder: _displayBuilder,
+      onEditComplete: onEditComplete,
+      row: row,
+      column: column
     );
   }
 
@@ -57,10 +60,11 @@ class DynamicTableDateInput extends DynamicTableInputType<DateTime> {
       DateTime? value,
       Function(DateTime? value, int row, int column)? onChanged,
       void Function(int row, int column)? onEditComplete,
+      void Function(int row, int column)? focusThisField,
       int row,
       int column,
       bool focused) {
-    return DynamicTableDateInputWidget(initialDate: _initialDate, lastDate: _lastDate, readOnly: _readOnly, decoration: _decoration, style: _style, strutStyle: _strutStyle, textDirection: _textDirection, textAlign: _textAlign, textAlignVertical: _textAlignVertical, mouseCursor: _mouseCursor, value: value, onChanged: onChanged, onEditComplete: onEditComplete, row: row, column: column, focused: focused, displayBuilder: _displayBuilder);
+    return DynamicTableDateInputWidget(initialDate: _initialDate, lastDate: _lastDate, readOnly: _readOnly, decoration: _decoration, style: _style, strutStyle: _strutStyle, textDirection: _textDirection, textAlign: _textAlign, textAlignVertical: _textAlignVertical, mouseCursor: _mouseCursor, value: value, onChanged: onChanged, onEditComplete: onEditComplete, focusThisField: focusThisField, row: row, column: column, focused: focused, displayBuilder: _displayBuilder);
   }
 
   @override

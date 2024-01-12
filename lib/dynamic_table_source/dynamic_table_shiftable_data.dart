@@ -1,5 +1,6 @@
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_cell.dart';
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_row.dart';
+import 'package:dynamic_table/dynamic_table_source/shifting_map.dart';
 
 /**
  * data has the saved values for each row, state information such as isEditing, isSaved and isSelected are also contained in data
@@ -9,12 +10,23 @@ import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_row.dart';
 
 class DynamicTableShiftableData {
   DynamicTableShiftableData(List<DynamicTableDataRow> data,
-      {void Function(Map<int, int> shiftData)? onShift})
-      : _data = data;
+      {void Function(Map<int, int> shiftData)? onShift, required this.keyColumnIndex})
+      : _data = data {
+        data.asMap().forEach((row, values) { cacheIndexKeyMapping(row, (column) => values.cells[column].value); });
+      }
 
   final List<DynamicTableDataRow> _data;
+  final int keyColumnIndex;
+
+  final Map<int, dynamic> indexKeyMap = {};
 
   void Function(Map<int, int> shiftData)? onShift;
+
+  void cacheIndexKeyMapping(int row, dynamic getValueByColumn(int column)) {
+    if (getValueByColumn(keyColumnIndex) != null) {
+      indexKeyMap[row] = getValueByColumn(keyColumnIndex);
+    }
+  }
 
   void shift() {
     int getNewIndex(DynamicTableDataRow row) => _data.indexOf(row);
@@ -30,6 +42,7 @@ class DynamicTableShiftableData {
         updateToNewIndex(data);
       }
     }
+    indexKeyMap.shiftKeys(shiftData, getDataLength());
     onShift?.call(shiftData);
   }
 
@@ -56,6 +69,13 @@ class DynamicTableShiftableData {
     shift();
   }
 
+  void updateRow(int row, int columnsLength, List<dynamic> values) {
+    for (int index = 0; index < columnsLength; index++) {
+      _data[row].cells[index].value = values[index];
+    }
+    cacheIndexKeyMapping(row, (column) => values[column]);
+  }
+
   void markAsEditing(int index) {
     _data[index].isEditing = true;
   }
@@ -76,14 +96,13 @@ class DynamicTableShiftableData {
     return _data[index].selected;
   }
 
-  void updateRow(int row, int columnsLength, List<dynamic> values) {
-    for (int index = 0; index < columnsLength; index++) {
-      _data[row].cells[index].value = values[index];
-    }
-  }
-
   bool isEmpty(int row) {
     return _data[row].cells.every((cell) => cell.value == null);
+  }
+
+  int? getRowIndexOfKey(dynamic key) {
+    int row = indexKeyMap.keys.firstWhere((index) => indexKeyMap[index] == key, orElse: () => -1);
+    return row == -1? null: row;
   }
 
   dynamic getSavedValue(int row, int column) {

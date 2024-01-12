@@ -29,6 +29,7 @@ class DynamicTableDropdownWidget<T> extends StatefulWidget {
     this.value,
     this.onChanged,
     required this.onEditComplete,
+    required this.focusThisField,
     required this.row,
     required this.column,
     required this.focused,
@@ -76,6 +77,7 @@ class DynamicTableDropdownWidget<T> extends StatefulWidget {
   final T? value;
   final Function(T? value, int row, int column)? onChanged;
   final void Function(int row, int column)? onEditComplete;
+  final void Function(int row, int column)? focusThisField;
   final int row;
   final int column;
   final bool focused;
@@ -93,6 +95,11 @@ class _DynamicTableDropdownWidgetState<T>
   void initState() {
     super.initState();
     _focusNode = FocusNode();
+    _focusNode?.addListener(() {
+      if ((_focusNode?.hasFocus??false) && !widget.focused) {
+        widget.focusThisField?.call(widget.row, widget.column);
+      }
+    });
 
     _focusNode?.onKeyEvent = (node, event) {
       if (widget.onEditComplete != null &&

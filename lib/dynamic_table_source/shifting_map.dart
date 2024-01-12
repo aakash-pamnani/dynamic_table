@@ -1,10 +1,10 @@
-extension Shifting<T> on Map<num, T> {
-  void shiftKeys(Map<num, num> shiftData, int length,
+extension Shifting<T> on Map<int , T> {
+  void shiftKeys(Map<int , int > shiftData, int length,
       {void Function(T? value)? onRemoved}) {
-    List<num> removed = shiftData.values
+    List<int > removed = shiftData.values
         .where((index) => (!shiftData.keys.contains(index) && index < length))
         .toList();
-    for (num removedIndex in removed) {
+    for (int  removedIndex in removed) {
       onRemoved?.call(this[removedIndex]);
     }
     this.addAll(this.map(

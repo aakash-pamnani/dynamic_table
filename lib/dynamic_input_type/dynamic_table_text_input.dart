@@ -117,13 +117,17 @@ class DynamicTableTextInput extends DynamicTableInputType<String> {
   final MouseCursor? _mouseCursor;
 
   @override
-  Widget displayWidget(String? value, bool focused) {
-    return DefaultDisplayWidget<String>(value: value, focused: focused,);
+  Widget displayWidget(String? value, bool focused, void Function(int row, int column)? onEditComplete, int row, int column) {
+    return DefaultDisplayWidget<String>(value: value, focused: focused, onEditComplete: onEditComplete, row: row, column: column);
   }
 
   @override
-  Widget editingWidget(String? value, Function(String? value, int row, int column)? onChanged, void Function(int row, int column)? onEditComplete, int row, int column, bool focused) {
-    return DynamicTableTextInputWidget(keyboardType: _keyboardType, maxLines: _maxLines, decoration: _decoration, textCapitalization: _textCapitalization, textInputAction: _textInputAction, style: _style, strutStyle: _strutStyle, textDirection: _textDirection, textAlign: _textAlign, textAlignVertical: _textAlignVertical, readOnly: _readOnly, showCursor: _showCursor, obscuringCharacter: _obscuringCharacter, obscureText: _obscureText, autocorrect: _autocorrect, smartDashesType: _smartDashesType, smartQuotesType: _smartQuotesType, enableSuggestions: _enableSuggestions, maxLengthEnforcement: _maxLengthEnforcement, minLines: _minLines, expands: _expands, maxLength: _maxLength, inputFormatters: _inputFormatters, enabled: _enabled, cursorWidth: _cursorWidth, cursorHeight: _cursorHeight, cursorRadius: _cursorRadius, cursorColor: _cursorColor, keyboardAppearance: _keyboardAppearance, scrollPadding: _scrollPadding, scrollPhysics: _scrollPhysics, autofillHints: _autofillHints, autovalidateMode: _autovalidateMode, mouseCursor: _mouseCursor, value: value, onChanged: onChanged, onEditComplete: onEditComplete, row: row, column: column, focused: focused);
+  Widget editingWidget(String? value,
+      Function(String? value, int row, int column)? onChanged,
+      void Function(int row, int column)? onEditComplete, 
+      void Function(int row, int column)? focusThisField,
+      int row, int column, bool focused) {
+    return DynamicTableTextInputWidget(keyboardType: _keyboardType, maxLines: _maxLines, decoration: _decoration, textCapitalization: _textCapitalization, textInputAction: _textInputAction, style: _style, strutStyle: _strutStyle, textDirection: _textDirection, textAlign: _textAlign, textAlignVertical: _textAlignVertical, readOnly: _readOnly, showCursor: _showCursor, obscuringCharacter: _obscuringCharacter, obscureText: _obscureText, autocorrect: _autocorrect, smartDashesType: _smartDashesType, smartQuotesType: _smartQuotesType, enableSuggestions: _enableSuggestions, maxLengthEnforcement: _maxLengthEnforcement, minLines: _minLines, expands: _expands, maxLength: _maxLength, inputFormatters: _inputFormatters, enabled: _enabled, cursorWidth: _cursorWidth, cursorHeight: _cursorHeight, cursorRadius: _cursorRadius, cursorColor: _cursorColor, keyboardAppearance: _keyboardAppearance, scrollPadding: _scrollPadding, scrollPhysics: _scrollPhysics, autofillHints: _autofillHints, autovalidateMode: _autovalidateMode, mouseCursor: _mouseCursor, value: value, onChanged: onChanged, onEditComplete: onEditComplete, row: row, column: column, focused: focused, focusThisField: focusThisField);
   }
 
   @override

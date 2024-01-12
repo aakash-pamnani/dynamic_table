@@ -65,11 +65,14 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
   }
 
   @override
-  Widget displayWidget(T? value, bool focused) {
+  Widget displayWidget(T? value, bool focused, void Function(int row, int column)? onEditComplete, int row, int column) {
     return DefaultDisplayWidget<T>(
       displayBuilder: _displayBuilder,
       value: value,
       focused: focused,
+      onEditComplete: onEditComplete,
+      row: row,
+      column: column
     );
   }
 
@@ -78,6 +81,7 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
       T? value,
       Function(T? value, int row, int column)? onChanged,
       void Function(int row, int column)? onEditComplete,
+      void Function(int row, int column)? focusThisField,
       int row,
       int column,
       bool focused) {
@@ -106,6 +110,7 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
         value: value,
         onChanged: onChanged,
         onEditComplete: onEditComplete,
+        focusThisField: focusThisField,
         row: row,
         column: column,
         focused: focused);

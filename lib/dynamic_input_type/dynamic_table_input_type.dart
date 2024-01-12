@@ -29,23 +29,26 @@ abstract class DynamicTableInputType<T extends Object> {
       {required bool isEditing,
       Function(T? value, int row, int column)? onChanged,
       void Function(int row, int column)? onEditComplete,
+      void Function(int row, int column)? focusThisField,
       required int row,
       required int column,
       bool focused = false}) {
     if (isEditing) {
-      return editingWidget(value, onChanged, onEditComplete, row, column, focused);
+      return editingWidget(value, onChanged, onEditComplete, focusThisField, row, column, focused);
     } else {
-      return displayWidget(value, focused);
+      return displayWidget(value, focused, onEditComplete, row, column);
     }
   }
 
   /// This is the widget which will be displayed when the [DynamicTableDataRow.isEditing] is true.
   Widget editingWidget(T? value,
       Function(T? value, int row, int column)? onChanged,
-      void Function(int row, int column)? onEditComplete, int row, int column, bool focused);
+      void Function(int row, int column)? onEditComplete,
+      void Function(int row, int column)? focusThisField,
+      int row, int column, bool focused);
 
   /// This is the widget which will be displayed when the [DynamicTableDataRow.isEditing] is false.
-  Widget displayWidget(T? value, bool focused);
+  Widget displayWidget(T? value, bool focused, void Function(int row, int column)? onEditComplete, int row, int column);
 
   void dispose();
 

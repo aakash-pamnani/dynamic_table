@@ -52,8 +52,6 @@ mixin DynamicTableEditables
       throw Exception('Index out of bounds');
     }
 
-    if (!(onRowAdd?.call(index, isEditing) ?? true)) return;
-
     getData().insert(index, getColumnsLength());
     if (values != null) getEditingValues().cache(index, values);
     if (isEditing) editRow(index);
@@ -107,6 +105,14 @@ mixin DynamicTableEditables
     }
     getData().updateRow(index, getColumnsLength(), values);
     unmarkFromEditingAndClearEditingValues(index);
+  }
+
+  void updateRows(Map<dynamic, List<dynamic>> diff) {
+    for (dynamic key in diff.keys) {
+      int? row = getData().getRowIndexOfKey(key);
+      if (row == null || diff[key] == null) continue; //TODO: insert row if the row for the key not exists already
+      updateRow(row, diff[key]!);
+    }
   }
 
   void updateAllRows(List<List<dynamic>> values) {

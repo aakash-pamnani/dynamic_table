@@ -57,6 +57,8 @@ class DynamicTableDataColumn {
   /// Default value is true.
   final bool isEditable;
 
+  final bool isKeyColumn;
+
   /// Creates the configuration for a column of a [DynamicTable].
   ///
   /// The [label] argument must not be null.
@@ -68,5 +70,6 @@ class DynamicTableDataColumn {
       this.numeric = false,
       this.onSort,
       this.isEditable = true,
+      this.isKeyColumn = false,
       required this.dynamicTableInputType});
 }

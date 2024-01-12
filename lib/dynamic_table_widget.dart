@@ -72,6 +72,7 @@ class DynamicTable extends StatefulWidget {
       this.actions,
       required this.columns,
       required this.rows,
+      required this.diff,
       this.onRowEdit,
       this.onRowDelete,
       this.onRowSave,
@@ -106,7 +107,9 @@ class DynamicTable extends StatefulWidget {
           return true;
         }(), 'autoSaveRows cannot be true if editOneByOne is false'),
         this.selectable = selectable,
-        this.showCheckboxColumn = selectable && showCheckboxColumn;
+        this.showCheckboxColumn = selectable && showCheckboxColumn {
+          if (columns.where((column) => column.isKeyColumn).length != 1) throw Exception("One Column must be Key Column.");
+        }
 
   /// The table card's optional header.
   ///
@@ -340,6 +343,8 @@ class DynamicTable extends StatefulWidget {
   /// The data for the rows of the table.
   final List<DynamicTableDataRow> rows;
 
+  final Map<dynamic, List<dynamic>> diff;
+
   /// Whether to show the actions column.
   /// Defaults to true.
   /// If set to true and [showDeleteAction] is set to false, the actions column will be displayed but the delete action will not be displayed.
@@ -400,12 +405,11 @@ class DynamicTableState extends State<DynamicTable> {
     _columns = [...widget.columns];
   }
 
-  void _buildSource({DynamicTableSource? source}) {
+  void _buildSource() {
     _source = DynamicTableSource(
-      lastSource: source,
-      actionColumnTitle: widget.actionColumnTitle,
       data: widget.rows,
       columns: _columns,
+      actionColumnTitle: widget.actionColumnTitle,
       selectable: widget.selectable,
       showActions: widget.showActions,
       showDeleteAction: widget.showDeleteAction,
@@ -430,11 +434,20 @@ class DynamicTableState extends State<DynamicTable> {
   @override
   void didUpdateWidget(covariant DynamicTable oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.columns != widget.columns ||
-        oldWidget.rows != widget.rows ||
-        oldWidget.showActions != widget.showActions) {
-      _buildSource(source: _source);
-    }
+    _rowsPerPage = widget.rowsPerPage;
+    _source.updateConfig(
+      actionColumnTitle: widget.actionColumnTitle,
+      selectable: widget.selectable,
+      showActions: widget.showActions,
+      showDeleteAction: widget.showDeleteAction,
+      showDeleteOrCancelAction: widget.showDeleteOrCancelAction,
+      editOneByOne: widget.editOneByOne,
+      autoSaveRowsEnabled: widget.autoSaveRows,
+      touchMode: widget.touchMode,
+      onRowEdit: widget.onRowEdit,
+      onRowDelete: widget.onRowDelete,
+      onRowSave: widget.onRowSave,);
+    _source.updateRows(widget.diff);
   }
 
   @override

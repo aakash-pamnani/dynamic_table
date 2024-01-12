@@ -15,6 +15,7 @@ class DynamicTableAutocompleteWidget extends StatelessWidget {
     required this.value,
     required this.onChanged,
     required this.onEditComplete,
+    required this.focusThisField,
     required this.row,
     required this.column,
     required this.focused,
@@ -34,6 +35,7 @@ class DynamicTableAutocompleteWidget extends StatelessWidget {
   final String? value;
   final Function(String value, int row, int column)? onChanged;
   final void Function(int row, int column)? onEditComplete;
+  final void Function(int row, int column)? focusThisField;
   final int row;
   final int column;
   final bool focused;
@@ -48,6 +50,12 @@ class DynamicTableAutocompleteWidget extends StatelessWidget {
         textEditingController.text = value ?? "";
         textEditingController.addListener(() {
           onChanged?.call(textEditingController.text, row, column);
+        });
+
+        focusNode?.addListener(() {
+          if ((focusNode?.hasFocus??false) && !focused) {
+            focusThisField?.call(row, column);
+          }
         });
 
         focusNode.onKeyEvent = (node, event) {

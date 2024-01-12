@@ -4,26 +4,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class DynamicTableDateInputWidget extends StatefulWidget {
-  const DynamicTableDateInputWidget({
-    super.key,
-    required DateTime initialDate,
-    required DateTime lastDate,
-    required bool readOnly,
-    required InputDecoration? decoration,
-    required TextStyle? style,
-    required StrutStyle? strutStyle,
-    required TextDirection? textDirection,
-    required TextAlign textAlign,
-    required TextAlignVertical? textAlignVertical,
-    required MouseCursor? mouseCursor,
-    required this.value,
-    required this.onChanged,
-    required this.onEditComplete,
-    required this.row,
-    required this.column,
-    required this.focused,
-    required this.displayBuilder
-  })  : _initialDate = initialDate,
+  const DynamicTableDateInputWidget(
+      {super.key,
+      required DateTime initialDate,
+      required DateTime lastDate,
+      required bool readOnly,
+      required InputDecoration? decoration,
+      required TextStyle? style,
+      required StrutStyle? strutStyle,
+      required TextDirection? textDirection,
+      required TextAlign textAlign,
+      required TextAlignVertical? textAlignVertical,
+      required MouseCursor? mouseCursor,
+      required this.value,
+      required this.onChanged,
+      required this.onEditComplete,
+      required this.focusThisField,
+      required this.row,
+      required this.column,
+      required this.focused,
+      required this.displayBuilder})
+      : _initialDate = initialDate,
         _lastDate = lastDate,
         _readOnly = readOnly,
         _decoration = decoration,
@@ -47,6 +48,7 @@ class DynamicTableDateInputWidget extends StatefulWidget {
   final DateTime? value;
   final Function(DateTime? value, int row, int column)? onChanged;
   final void Function(int row, int column)? onEditComplete;
+  final void Function(int row, int column)? focusThisField;
   final int row;
   final int column;
   final bool focused;
@@ -55,6 +57,10 @@ class DynamicTableDateInputWidget extends StatefulWidget {
   @override
   State<DynamicTableDateInputWidget> createState() =>
       _DynamicTableDateInputWidgetState();
+}
+
+enum Completion {
+  Completed, Cancelled
 }
 
 class _DynamicTableDateInputWidgetState
@@ -70,7 +76,10 @@ class _DynamicTableDateInputWidgetState
       firstDate: widget._initialDate,
       lastDate: widget._lastDate,
     );
-    if (picked != null && picked != selectedDate) {
+    if (picked == null) {
+      return Future.error(Completion.Cancelled);
+    }
+    if (picked != selectedDate) {
       selectedDate = picked;
     }
     return selectedDate;
@@ -81,7 +90,7 @@ class _DynamicTableDateInputWidgetState
       widget.onChanged?.call(value, widget.row, widget.column);
       widget.onEditComplete?.call(widget.row, widget.column);
       controller?.text = widget.displayBuilder(value);
-    });
+    }, onError: (error) {if (error != Completion.Cancelled) throw error;});
   }
 
   @override
@@ -91,6 +100,19 @@ class _DynamicTableDateInputWidgetState
     focusNode = FocusNode();
     datePickerIconFocusNode = FocusNode();
 
+    focusNode?.addListener(() {
+      if ((focusNode?.hasFocus ?? false) &&
+          !widget.focused) {
+        widget.focusThisField?.call(widget.row, widget.column);
+      }
+    });
+    datePickerIconFocusNode?.addListener(() {
+      if ((focusNode?.hasFocus ?? false) &&
+          !widget.focused) {
+        widget.focusThisField?.call(widget.row, widget.column);
+      }
+    });
+
     focusNode?.onKeyEvent = (node, event) {
       if (widget.onEditComplete != null &&
           (event.logicalKey ==
@@ -99,14 +121,24 @@ class _DynamicTableDateInputWidgetState
         return KeyEventResult.handled;
       } else
         return KeyEventResult.handled;
-        
-      
+
       if ((event.logicalKey == LogicalKeyboardKey.enter)) if (event
           is KeyDownEvent) {
         if (!widget._readOnly)
           widget.onEditComplete?.call(widget.row, widget.column);
         else
           showPicker.call();
+        return KeyEventResult.handled;
+      } else
+        return KeyEventResult.handled;
+      return KeyEventResult.ignored;
+    };
+
+    datePickerIconFocusNode?.onKeyEvent = (node, event) {
+      if (widget.onEditComplete != null &&
+          (event.logicalKey ==
+              LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
+        widget.onEditComplete?.call(widget.row, widget.column);
         return KeyEventResult.handled;
       } else
         return KeyEventResult.handled;

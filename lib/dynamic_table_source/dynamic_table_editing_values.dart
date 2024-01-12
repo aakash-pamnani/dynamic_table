@@ -35,7 +35,7 @@ class DynamicTableEditingValues {
   }
 
   void cache(int index, List<dynamic> values) {
-    _editingValues.update(index, (oldValues) => values, ifAbsent: () => values);
+    setDefaultIfAbsent(index, currentValues: values);
   }
 
   void clear(int index) {

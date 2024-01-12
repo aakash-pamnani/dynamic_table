@@ -6,7 +6,9 @@ mixin DynamicTableFocus implements DynamicTableSourceView {
   void updateFocus(DynamicTableFocusData? focus);
 
   //TODO: in move to next editable column skip also the dropdown columns having no selection values.
-  //TODO: disallow all edit functionality if the data table has no editable columns.
+  //TODO: disallow touchMode if the data table has no editable columns.
+  //TODO: consider pagination when resetting focus and changing focus
+  //TODO: in editing cell if esc key is pressed then cancel the editing
   DynamicTableFocusData resetFocus(DynamicTableFocusData? focus) {
     if (focus == null) return DynamicTableFocusData(row: 0, column: -1);
 
@@ -19,7 +21,7 @@ mixin DynamicTableFocus implements DynamicTableSourceView {
 
     //resetting row focus if it is out of focus
     if (isRowOutOfFocus())
-      return DynamicTableFocusData(row: 0, column: focus.column);
+      return DynamicTableFocusData(row: 0, column: -1);
 
     //resetting column focus if it is out of focus
     if (isColumnOutOfFocus())
@@ -50,12 +52,12 @@ mixin DynamicTableFocus implements DynamicTableSourceView {
   }
 
   void focusNextRow(int row, { void onFocusNextRow(int oldRow)?, void onFocusLastRow()? }) {
+    updateFocus(DynamicTableFocusData(row: row + 1, column: -1));
     onFocusNextRow?.call(row);
     //checking if last row
     if (row == (getDataLength() - 1)) {
       onFocusLastRow?.call();
     }
-    updateFocus(DynamicTableFocusData(row: row + 1, column: -1));
   }
 
   void focusNextField(int row, int column, { void onFocusNextRow(int oldRow)?, void onFocusLastRow()? }) {
@@ -72,7 +74,7 @@ mixin DynamicTableFocus implements DynamicTableSourceView {
   }
 
   void focusThisField(int row, int column, { void onFocusThisField(int row)? }) {
-    onFocusThisField?.call(row);
     updateFocus(DynamicTableFocusData(row: row, column: column));
+    onFocusThisField?.call(row);
   }
 }

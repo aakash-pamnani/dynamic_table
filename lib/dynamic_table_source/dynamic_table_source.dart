@@ -16,11 +16,11 @@ abstract class DynamicTableSourceView {
   int getDataLength();
   int getColumnsLength();
   bool isColumnEditable(int column);
+  int getKeyColumnIndex();
 }
 
 abstract class DynamicTableSourceConfig {
   bool Function(int index, List<dynamic> row)? get onRowEdit;
-  bool Function(int index, bool isEditing)? get onRowAdd;
   bool Function(int index, List<dynamic> row)? get onRowDelete;
   List<dynamic>? Function(
       int index, List<dynamic> oldValue, List<dynamic> newValue)? get onRowSave;
@@ -32,18 +32,17 @@ abstract class DynamicTableSourceConfig {
 class DynamicTableSource extends DataTableSource
     with DynamicTableFocus, DynamicTableEditables
     implements DynamicTableSourceView, DynamicTableSourceConfig {
-  final String actionColumnTitle;
-  final bool showActions;
-  final bool showDeleteAction;
-  final bool showDeleteOrCancelAction;
-  final bool touchMode;
-  final bool selectable;
-  final bool editOneByOne;
-  final bool autoSaveRowsEnabled;
-  final bool Function(int index, List<dynamic> row)? onRowEdit;
-  final bool Function(int index, bool isEditing)? onRowAdd;
-  final bool Function(int index, List<dynamic> row)? onRowDelete;
-  final List<dynamic>? Function(
+  String actionColumnTitle;
+  bool showActions;
+  bool showDeleteAction;
+  bool showDeleteOrCancelAction;
+  bool touchMode;
+  bool selectable;
+  bool editOneByOne;
+  bool autoSaveRowsEnabled;
+  bool Function(int index, List<dynamic> row)? onRowEdit;
+  bool Function(int index, List<dynamic> row)? onRowDelete;
+  List<dynamic>? Function(
       int index, List<dynamic> oldValue, List<dynamic> newValue)? onRowSave;
 
   final List<DynamicTableDataColumn> columns;
@@ -52,10 +51,42 @@ class DynamicTableSource extends DataTableSource
 
   DynamicTableFocusData? _focus;
 
+  void updateConfig({
+    String? actionColumnTitle,
+    bool? showActions,
+    bool? showDeleteAction,
+    bool? showDeleteOrCancelAction,
+    bool? touchMode,
+    bool? selectable,
+    bool? editOneByOne,
+    bool? autoSaveRowsEnabled,
+    bool Function(int index, List<dynamic> row)? onRowEdit,
+    bool Function(int index, List<dynamic> row)? onRowDelete,
+    List<dynamic>? Function(
+      int index, List<dynamic> oldValue, List<dynamic> newValue)? onRowSave,}) {
+      if (actionColumnTitle != null) this.actionColumnTitle = actionColumnTitle;
+      if (showActions != null) this.showActions = showActions;
+      if (showDeleteAction != null) this.showDeleteAction = showDeleteAction;
+      if (showDeleteOrCancelAction != null) this.showDeleteOrCancelAction = showDeleteOrCancelAction;
+      if (touchMode != null) this.touchMode = touchMode;
+      if (selectable != null) this.selectable = selectable;
+      if (editOneByOne != null) this.editOneByOne = editOneByOne;
+      if (autoSaveRowsEnabled != null) this.autoSaveRowsEnabled = autoSaveRowsEnabled;
+      if (onRowEdit != null) this.onRowEdit = onRowEdit;
+      if (onRowDelete != null) this.onRowDelete = onRowDelete;
+      if (onRowSave != null) this.onRowSave = onRowSave;
+      notifyListeners();
+    }
+
+  void retainFocus(DynamicTableSource? lastSource) {
+    this._focus = lastSource?._focus;
+    notifyListeners();
+  }
+
   DynamicTableSource({
-    required this.actionColumnTitle,
     required List<DynamicTableDataRow> data,
     required this.columns,
+    required this.actionColumnTitle,
     this.showActions = false,
     this.showDeleteAction = false,
     this.showDeleteOrCancelAction = true,
@@ -64,14 +95,11 @@ class DynamicTableSource extends DataTableSource
     this.editOneByOne = true,
     this.autoSaveRowsEnabled = true,
     this.onRowEdit,
-    this.onRowAdd,
     this.onRowDelete,
     this.onRowSave,
-    DynamicTableSource? lastSource,
   }) {
-    this._focus = lastSource?._focus;
 
-    _data = DynamicTableShiftableData(data, onShift: onShift);
+    _data = DynamicTableShiftableData(data, onShift: onShift, keyColumnIndex: getKeyColumnIndex());
     _editingValues = DynamicTableEditingValues(columns: columns);
 
     /*lastSource?._unsavedRows.sort((a, b) => a.compareTo(b));
@@ -104,16 +132,16 @@ class DynamicTableSource extends DataTableSource
     return columns[column].isEditable;
   }
 
+  int getKeyColumnIndex() {
+    var column = columns.where((column) => column.isKeyColumn).first;
+    return columns.indexOf(column);
+  }
+
   @override
   DynamicTableShiftableData getData() => _data;
 
   @override
   DynamicTableEditingValues getEditingValues() => _editingValues;
-
-  @override
-  void unmarkFromEditing(int row) {
-    super.unmarkFromEditing(row);
-  }
 
   @override
   void insertRow(int index, {List<dynamic>? values, bool isEditing = false}) {
@@ -328,14 +356,23 @@ class DynamicTableSource extends DataTableSource
         },
         onEditComplete: touchMode
             ? (row, column) {
-                focusNextField(
-                  row,
-                  column,
-                  onFocusNextRow: (oldRow) => saveRow(row),
-                  onFocusLastRow: () => addRowLast(),
-                );
+                if (showEditingWidget) {
+                  focusNextField(
+                    row,
+                    column,
+                    onFocusNextRow: (oldRow) => saveRow(row),
+                    onFocusLastRow: () => addRowLast(),
+                  );
+                } else {
+                  focusNextField(
+                    row,
+                    column,
+                    onFocusLastRow: () => addRowLast(),
+                  );
+                }
               }
             : null,
+        focusThisField: (row, column) => focusThisField(row, column),
       ),
       //placeholder: cell.placeholder,
       //showEditIcon: cell.showEditIcon,
@@ -344,7 +381,7 @@ class DynamicTableSource extends DataTableSource
           focusThisField(row, column, onFocusThisField: (row) => editRow(row));
         }
 
-        if (touchMode) if (isColumnEditable(columnIndex)) {
+        if (touchMode && isColumnEditable(columnIndex)) {
           if (!showEditingWidget) {
             tapToEdit(index, columnIndex);
           } else {
