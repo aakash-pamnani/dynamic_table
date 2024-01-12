@@ -21,7 +21,6 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
     bool isExpanded = false,
     double? itemHeight,
     Color? focusColor,
-    FocusNode? focusNode,
     bool autofocus = false,
     Color? dropdownColor,
     InputDecoration? decoration,
@@ -45,7 +44,6 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
         _isExpanded = isExpanded,
         _itemHeight = itemHeight,
         _focusColor = focusColor,
-        _focusNode = focusNode,
         _autofocus = autofocus,
         _dropdownColor = dropdownColor,
         _decoration = decoration,
@@ -58,13 +56,68 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
         ) {
     dependentOn = _dependentOnColumn;
   }
-  @override
-  Widget displayWidget(T? value) {
-    return Text((_displayBuilder ?? _defaultDisplayBuilder).call(value));
+
+  T? getFirstValue() {
+    if (dependentValue == null) {
+      return null;
+    }
+    return _itemsBuilder(dependentValue!).first.value;
   }
 
-  final String Function(T?)? _displayBuilder;
+  @override
+  Widget displayWidget(T? value, bool focused, void Function(int row, int column)? onEditComplete, int row, int column) {
+    return DefaultDisplayWidget<T>(
+      displayBuilder: _displayBuilder,
+      value: value,
+      focused: focused,
+      onEditComplete: onEditComplete,
+      row: row,
+      column: column
+    );
+  }
+
+  @override
+  Widget editingWidget(
+      T? value,
+      Function(T? value, int row, int column)? onChanged,
+      void Function(int row, int column)? onEditComplete,
+      void Function(int row, int column)? focusThisField,
+      int row,
+      int column,
+      bool focused) {
+    return DynamicTableDependentDropdownWidget<T, W>(
+        dependentValue: dependentValue,
+        itemsBuilder: _itemsBuilder,
+        selectedItemBuilder: _selectedItemBuilder,
+        hint: _hint,
+        disabledHint: _disabledHint,
+        elevation: _elevation,
+        style: _style,
+        icon: _icon,
+        iconDisabledColor: _iconDisabledColor,
+        iconEnabledColor: _iconEnabledColor,
+        iconSize: _iconSize,
+        isDense: _isDense,
+        isExpanded: _isExpanded,
+        itemHeight: _itemHeight,
+        focusColor: _focusColor,
+        dropdownColor: _dropdownColor,
+        decoration: _decoration,
+        menuMaxHeight: _menuMaxHeight,
+        enableFeedback: _enableFeedback,
+        alignment: _alignment,
+        borderRadius: _borderRadius,
+        value: value,
+        onChanged: onChanged,
+        onEditComplete: onEditComplete,
+        focusThisField: focusThisField,
+        row: row,
+        column: column,
+        focused: focused);
+  }
+
   final List<DropdownMenuItem<T>> Function(W dependentValue) _itemsBuilder;
+  final String Function(T?)? _displayBuilder;
   final List<Widget> Function(BuildContext)? _selectedItemBuilder;
   final Widget? _hint;
   final Widget? _disabledHint;
@@ -78,7 +131,6 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
   final bool _isExpanded;
   final double? _itemHeight;
   final Color? _focusColor;
-  final FocusNode? _focusNode;
   final bool _autofocus;
   final Color? _dropdownColor;
   final InputDecoration? _decoration;
@@ -89,64 +141,8 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
 
   W? dependentValue;
   int _dependentOnColumn;
-  List<DropdownMenuItem<T>> _items = [];
 
   int get dependentOnColumn => _dependentOnColumn;
-
-  String _defaultDisplayBuilder(T? value) {
-    return value.toString();
-  }
-
-  @override
-  Widget editingWidget(T? value,
-      Function(T value, int row, int column)? onChanged, int row, int column) {
-    
-    _items =
-        dependentValue == null ? [] : _itemsBuilder(dependentValue!).toList();
-    // ?? _items.first.value;
-
-      assert(
-      _items.isEmpty ||
-          value == null ||
-          _items.where((DropdownMenuItem<T> item) {
-                return item.value == value;
-              }).length ==
-              1,
-      "There should be exactly one item with [DropdownButton]'s value: "
-      '$value. \n'
-      'Either zero or 2 or more [DropdownMenuItem]s were detected '
-      'with the same value',
-    );
-
-    return DropdownButtonFormField<T>(
-      value: value,
-      onChanged: (value) {
-        onChanged?.call(value as T, row, column);
-      },
-      items: _items,
-      selectedItemBuilder: _selectedItemBuilder,
-      hint: _hint,
-      disabledHint: _disabledHint,
-      elevation: _elevation,
-      style: _style,
-      icon: _icon,
-      iconDisabledColor: _iconDisabledColor,
-      iconEnabledColor: _iconEnabledColor,
-      iconSize: _iconSize,
-      isDense: _isDense,
-      isExpanded: _isExpanded,
-      itemHeight: _itemHeight,
-      focusColor: _focusColor,
-      focusNode: _focusNode,
-      autofocus: _autofocus,
-      dropdownColor: _dropdownColor,
-      decoration: _decoration,
-      menuMaxHeight: _menuMaxHeight,
-      enableFeedback: _enableFeedback,
-      alignment: _alignment,
-      borderRadius: _borderRadius,
-    );
-  }
 
   @override
   void dispose() {}

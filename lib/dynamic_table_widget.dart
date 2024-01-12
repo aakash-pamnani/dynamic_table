@@ -1,9 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-import 'package:dynamic_table/dynamic_table_data_column.dart';
-import 'package:dynamic_table/dynamic_table_data_row.dart';
-import 'package:dynamic_table/dynamic_table_source.dart';
+import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_column.dart';
+import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_row.dart';
+import 'package:dynamic_table/dynamic_table_source/dynamic_table_source.dart';
 
 class DynamicTable extends StatefulWidget {
   /// Creates a widget describing a paginated [DataTable] on a [Card].
@@ -39,45 +39,51 @@ class DynamicTable extends StatefulWidget {
   ///
   ///
 
-  DynamicTable({
-    super.key,
-    this.showActions = false,
-    this.header,
-    this.actions,
-    required this.columns,
-    this.sortColumnIndex,
-    this.sortAscending = true,
-    this.onSelectAll,
-    this.dataRowMinHeight = kMinInteractiveDimension,
-    this.dataRowMaxHeight = kMinInteractiveDimension,
-    this.headingRowHeight = 56.0,
-    this.horizontalMargin = 24.0,
-    this.columnSpacing = 56.0,
-    this.showCheckboxColumn = true,
-    this.showFirstLastButtons = false,
-    this.initialFirstRowIndex = 0,
-    this.onPageChanged,
-    this.rowsPerPage = defaultRowsPerPage,
-    this.availableRowsPerPage = const <int>[
-      defaultRowsPerPage,
-      defaultRowsPerPage * 2,
-      defaultRowsPerPage * 5,
-      defaultRowsPerPage * 10
-    ],
-    this.onRowsPerPageChanged,
-    this.dragStartBehavior = DragStartBehavior.start,
-    this.arrowHeadColor,
-    this.checkboxHorizontalMargin,
-    this.controller,
-    this.primary,
-    this.onRowEdit,
-    required this.rows,
-    this.actionColumnTitle = "Actions",
-    this.onRowDelete,
-    this.onRowSave,
-    this.showDeleteAction = false,
-    this.showAddRowButton = false,
-  })  : assert(() {
+  DynamicTable(
+      {super.key,
+      this.header,
+      this.sortColumnIndex,
+      this.sortAscending = true,
+      this.dataRowMinHeight = kMinInteractiveDimension,
+      this.dataRowMaxHeight = kMinInteractiveDimension,
+      this.headingRowHeight = 56.0,
+      this.horizontalMargin = 24.0,
+      this.columnSpacing = 56.0,
+      this.showFirstLastButtons = false,
+      this.initialFirstRowIndex = 0,
+      this.onPageChanged,
+      this.rowsPerPage = defaultRowsPerPage,
+      this.availableRowsPerPage = const <int>[
+        defaultRowsPerPage,
+        defaultRowsPerPage * 2,
+        defaultRowsPerPage * 5,
+        defaultRowsPerPage * 10
+      ],
+      this.onRowsPerPageChanged,
+      this.dragStartBehavior = DragStartBehavior.start,
+      this.arrowHeadColor,
+      this.checkboxHorizontalMargin,
+      this.controller,
+      this.primary,
+      this.actionColumnTitle = "Actions",
+      this.onSelectAll,
+      bool showCheckboxColumn = false,
+      bool selectable = true,
+      this.actions,
+      required this.columns,
+      required this.rows,
+      this.onRowEdit,
+      this.onRowDelete,
+      this.onRowSave,
+      this.showActions = false,
+      this.showDeleteAction = false,
+      this.showDeleteOrCancelAction = false,
+      this.touchMode = false,
+      this.showAddRowButton = false,
+      this.addRowAtTheEnd = false,
+      this.editOneByOne = false,
+      this.autoSaveRows = false})
+      : assert(() {
           if ((onRowEdit == null && onRowSave != null) ||
               (onRowEdit != null && onRowSave == null)) {
             return false;
@@ -86,13 +92,23 @@ class DynamicTable extends StatefulWidget {
           }
         }(), "onRowEdit and onRowSave must be both null or both non-null"),
         assert(() {
-          if (showAddRowButton == true && showActions == false) {
+          if (showAddRowButton == true && (showActions == false && touchMode == false)) {
             return false;
           } else {
             return true;
           }
         }(),
-            "showActions cannot be false if showAddRowButton is true, because the actions column is required to save the new row");
+            "showActions or touchMode shall be true if showAddRowButton is true, because the actions column or touchMode is required to save the new row"),
+        assert(() {
+          if (!editOneByOne && autoSaveRows) {
+            return false;
+          }
+          return true;
+        }(), 'autoSaveRows cannot be true if editOneByOne is false'),
+        this.selectable = selectable,
+        this.showCheckboxColumn = selectable && showCheckboxColumn {
+          if (columns.where((column) => column.isKeyColumn).length != 1) throw Exception("One Column must be Key Column.");
+        }
 
   /// The table card's optional header.
   ///
@@ -106,18 +122,6 @@ class DynamicTable extends StatefulWidget {
 
   final Widget? header;
 
-  /// Icon buttons to show at the top end side of the table. The [header] must
-  /// not be null to show the actions.
-  ///
-  /// Typically, the exact actions included in this list will vary based on
-  /// whether any rows are selected or not.
-  ///
-  /// These should be size 24.0 with default padding (8.0).
-  final List<Widget>? actions;
-
-  /// The configuration and labels for the columns in the table.
-  final List<DynamicTableDataColumn> columns;
-
   /// The current primary sort key's column.
   ///
   /// See [DataTable.sortColumnIndex].
@@ -128,12 +132,6 @@ class DynamicTable extends StatefulWidget {
   ///
   /// See [DataTable.sortAscending].
   final bool sortAscending;
-
-  /// Invoked when the user selects or unselects every row, using the
-  /// checkbox in the heading row.
-  ///
-  /// See [DataTable.onSelectAll].
-  final ValueSetter<bool?>? onSelectAll;
 
   /// The minimum height of each row (excluding the row that contains column headings).
   ///
@@ -169,9 +167,6 @@ class DynamicTable extends StatefulWidget {
   ///
   /// This value defaults to 56.0 to adhere to the Material Design specifications.
   final double columnSpacing;
-
-  /// {@macro flutter.material.dataTable.showCheckboxColumn}
-  final bool showCheckboxColumn;
 
   /// Flag to display the pagination buttons to go to the first and last pages.
   final bool showFirstLastButtons;
@@ -237,13 +232,31 @@ class DynamicTable extends StatefulWidget {
   /// {@macro flutter.widgets.scroll_view.primary}
   final bool? primary;
 
+  /// The title of the last column of the table.
+  /// This is used to display the actions.
+  /// Defaults to "Actions"
+  final String actionColumnTitle;
+
+  /// Invoked when the user selects or unselects every row, using the
+  /// checkbox in the heading row.
+  ///
+  /// See [DataTable.onSelectAll].
+  final ValueSetter<bool?>? onSelectAll;
+
+  /// {@macro flutter.material.dataTable.showCheckboxColumn}
+  /// Only when selectable is true show checkbox column can be true
+  final bool showCheckboxColumn;
+
+  /// Whether the table should be selectable
+  final bool selectable;
+
   /// Called when the user clicks on the edit icon of a row.
   ///
   /// Return true to allow the edit action, false to prevent it.
   /// If the action is allowed, the row will be editable.
   ///
   /// ```dart
-  /// bool onRowEdit(int index, List<dynamic> row){
+  /// bool onRowEdit(int index, List<Comparable<dynamic>> row){
   /// //Do some validation on row and return false if validation fails
   /// if (index%2==1) {
   ///   ScaffoldMessenger.of(context).showSnackBar(
@@ -256,7 +269,7 @@ class DynamicTable extends StatefulWidget {
   /// return true; // The row will open in editable mode
   /// }
   /// ```
-  final bool Function(int index, List<dynamic> row)? onRowEdit;
+  final bool Function(int index, List<Comparable<dynamic>?> row)? onRowEdit;
 
   /// Called when the user clicks on the delete icon of a row.
   ///
@@ -265,7 +278,7 @@ class DynamicTable extends StatefulWidget {
   /// If the delete action is allowed, the row will be deleted from the table.
   ///
   /// ```dart
-  /// bool onRowDelete(int index, List<dynamic> row){
+  /// bool onRowDelete(int index, List<Comparable<dynamic>> row){
   /// //Do some validation on row and return false if validation fails
   /// if (row[0] == null) {
   ///    ScaffoldMessenger.of(context).showSnackBar(
@@ -278,11 +291,11 @@ class DynamicTable extends StatefulWidget {
   /// return true;
   /// }
   /// ```
-  final bool Function(int index, List<dynamic> row)? onRowDelete;
+  final bool Function(int index, List<Comparable<dynamic>?> row)? onRowDelete;
 
   /// Called when the user clicks on the save icon of a row.
   ///
-  /// Return List<dynamic> [newValue] to allow the save action, null to prevent it.
+  /// Return List<Comparable<dynamic>> [newValue] to allow the save action, null to prevent it.
   ///
   /// The [newValue] must be a list of the same length as the column.
   ///
@@ -293,7 +306,7 @@ class DynamicTable extends StatefulWidget {
   ///
   /// ```dart
   ///
-  /// List<dynamic>? onRowSave(int index, List<dynamic> oldValue, List<dynamic> newValue) {
+  /// List<Comparable<dynamic>>? onRowSave(int index, List<Comparable<dynamic>> oldValue, List<Comparable<dynamic>> newValue) {
   /// //Do some validation on new value and return null if validation fails
   /// if (newValue[0] == null) {
   ///     ScaffoldMessenger.of(context).showSnackBar(
@@ -311,21 +324,23 @@ class DynamicTable extends StatefulWidget {
   /// }
   /// ```
   ///
-  final List<dynamic>? Function(
-      int index, List<dynamic> oldValue, List<dynamic> newValue)? onRowSave;
+  final List<Comparable<dynamic>?>? Function(
+      int index, List<Comparable<dynamic>?> oldValue, List<Comparable<dynamic>?> newValue)? onRowSave;
+
+  /// Icon buttons to show at the top end side of the table. The [header] must
+  /// not be null to show the actions.
+  ///
+  /// Typically, the exact actions included in this list will vary based on
+  /// whether any rows are selected or not.
+  ///
+  /// These should be size 24.0 with default padding (8.0).
+  final List<Widget>? actions;
+
+  /// The configuration and labels for the columns in the table.
+  final List<DynamicTableDataColumn> columns;
 
   /// The data for the rows of the table.
-  final List<DynamicTableDataRow> rows;
-
-  /// The title of the last column of the table.
-  /// This is used to display the actions.
-  /// Defaults to "Actions"
-  final String actionColumnTitle;
-
-  /// Whether to show the add row button.
-  /// Defaults to true.
-  /// If set to true and [showActions] is set to false, exception will be thrown because the actions column is required to save the new row.
-  final bool showAddRowButton;
+  final Map<Comparable<dynamic>, List<Comparable<dynamic>?>> rows;
 
   /// Whether to show the actions column.
   /// Defaults to true.
@@ -338,104 +353,67 @@ class DynamicTable extends StatefulWidget {
   /// If set to true and [showActions] is set to false, the delete action will be displayed but the actions column will not be displayed.
   final bool showDeleteAction;
 
+  /// Whether to show the add row button.
+  /// Defaults to true.
+  /// If set to true and [showActions] is set to false, exception will be thrown because the actions column is required to save the new row.
+  final bool showAddRowButton;
+
+  /// Whether to add the new row beyond all existing rows, when add row button is clicked
+  /// Defaults to false
+  /// By default the new row becomes the first row
+  final bool addRowAtTheEnd;
+
+  /// Whether to allow only one row to be editable at any particular time
+  /// Defaults to false
+  /// By default multiple rows can be editable simultaneously
+  final bool editOneByOne;
+
+  /// Whether to save the rows automatically as the user moves focus out of the current editing row to another one
+  /// Defaults to false
+  /// This option requires edit one by one be enabled
+  final bool autoSaveRows;
+
+  /// Whether to edit a row cell by tapping on it, save a row when a user completes editing a row (the last cell of a row) and add a row when the user completes editing the last row
+  /// Defaults to false
+  final bool touchMode;
+
+  /// Whether to show delete or cancel actions
+  /// In view mode delete action is shown
+  /// In edit mode edit action is shown
+  final bool showDeleteOrCancelAction;
+
   @override
   State<DynamicTable> createState() => DynamicTableState();
 }
 
 class DynamicTableState extends State<DynamicTable> {
-  void insertRow(int index, List<dynamic> values, {bool isEditing = false}) {
-    _source.insertRow(index, values, isEditing: isEditing);
-  }
-
-  void addRow() {
-    _source.addRow();
-  }
-
-  void addRowWithValues(List<dynamic> values, {bool isEditing = false}) {
-    _source.addRowWithValues(values, isEditing: isEditing);
-  }
-
-  void deleteRow(int index) {
-    _source.deleteRow(index);
-  }
-
-  void deleteAllRows() {
-    _source.deleteAllRows();
-  }
-
-  void deleteSelectedRows() {
-    _source.deleteSelectedRows();
-  }
-
-  List<dynamic> getRowByIndex(int index) {
-    return _source.getRowByIndex(index);
-  }
-
-  List<List<dynamic>> getSelectedRows() {
-    return _source.getSelectedRows();
-  }
-
-  List<List<dynamic>> getAllRows() {
-    return _source.getAllRows();
-  }
-
-  void updateRow(int index, List<dynamic> values) {
-    _source.updateRow(index, values);
-  }
-
-  void updateAllRows(List<List<dynamic>> values) {
-    _source.updateAllRows(values);
-  }
-
-  void selectRow(int index, {required bool isSelected}) {
-    _source.selectRow(index, isSelected: isSelected);
-  }
-
-  void selectAllRows({required bool isSelected}) {
-    _source.selectAllRows(isSelected: isSelected);
-  }
-
-  @override
-  void initState() {
-    _buildColumns();
-    _buildSource();
-    _rowsPerPage = widget.rowsPerPage;
-    super.initState();
-  }
 
   late DynamicTableSource _source;
 
   List<DynamicTableDataColumn> _columns = [];
 
-  void _buildColumns() {
-    _columns = [...widget.columns];
+  int _rowsPerPage = 10;
+
+  void selectRow(int index, {bool isSelected = true}) {
+    _source.selectRow(index, isSelected: isSelected);
   }
 
-  List<DataColumn> _getTableColumns() {
-    List<DataColumn> columnList = _columns.map((e) {
-      return DataColumn(
-          label: e.label,
-          numeric: e.numeric,
-          tooltip: e.tooltip,
-          onSort: e.onSort);
-    }).toList();
-    if (widget.showActions || widget.showDeleteAction) {
-      columnList.add(
-        DataColumn(
-          label: Text(widget.actionColumnTitle),
-        ),
-      );
-    }
-    return columnList;
+  void _buildColumns() {
+    _columns = [...widget.columns];
   }
 
   void _buildSource() {
     _source = DynamicTableSource(
       data: widget.rows,
       columns: _columns,
+      actionColumnTitle: widget.actionColumnTitle,
+      selectable: widget.selectable,
       showActions: widget.showActions,
       showDeleteAction: widget.showDeleteAction,
-      actionColumnTitle: widget.actionColumnTitle,
+      showDeleteOrCancelAction: widget.showDeleteOrCancelAction,
+      editOneByOne: widget.editOneByOne,
+      autoSaveRowsEnabled: widget.autoSaveRows,
+      touchMode: widget.touchMode,
       onRowEdit: widget.onRowEdit,
       onRowDelete: widget.onRowDelete,
       onRowSave: widget.onRowSave,
@@ -443,16 +421,31 @@ class DynamicTableState extends State<DynamicTable> {
   }
 
   @override
-  void didUpdateWidget(covariant DynamicTable oldWidget) {
-    if (oldWidget.columns != widget.columns ||
-        oldWidget.rows != widget.rows ||
-        oldWidget.showActions != widget.showActions) {
-      _buildSource();
-    }
-    super.didUpdateWidget(oldWidget);
+  void initState() {
+    super.initState();
+    _buildColumns();
+    _buildSource();
+    _rowsPerPage = widget.rowsPerPage;
   }
 
-  int _rowsPerPage = 10;
+  @override
+  void didUpdateWidget(covariant DynamicTable oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _rowsPerPage = widget.rowsPerPage;
+    _source.updateConfig(
+      actionColumnTitle: widget.actionColumnTitle,
+      selectable: widget.selectable,
+      showActions: widget.showActions,
+      showDeleteAction: widget.showDeleteAction,
+      showDeleteOrCancelAction: widget.showDeleteOrCancelAction,
+      editOneByOne: widget.editOneByOne,
+      autoSaveRowsEnabled: widget.autoSaveRows,
+      touchMode: widget.touchMode,
+      onRowEdit: widget.onRowEdit,
+      onRowDelete: widget.onRowDelete,
+      onRowSave: widget.onRowSave,);
+    _source.updateRowsByKeyByDiffChecking(widget.rows);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -464,16 +457,19 @@ class DynamicTableState extends State<DynamicTable> {
             icon: const Icon(Icons.add),
             label: const Text("Add Row"),
             onPressed: () {
-              addRow();
+              if (widget.addRowAtTheEnd)
+                _source.addRowLast();
+              else
+                _source.addRow();
             },
           ),
         ...?widget.actions,
       ],
-      columns: _getTableColumns(),
+      columns: _source.getTableColumns(),
       sortColumnIndex: widget.sortColumnIndex,
       sortAscending: widget.sortAscending,
       onSelectAll: (value) {
-        selectAllRows(isSelected: value ?? false);
+        _source.selectAllRows(isSelected: value ?? false);
         widget.onSelectAll?.call(value);
       },
       dataRowMinHeight: widget.dataRowMinHeight,

@@ -20,7 +20,10 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   var tableKey = GlobalKey<DynamicTableState>();
-  var myData = dummyData.toList();
+  Map<String, List<Comparable<dynamic>?>> myData = dummyData.asMap().map(
+        (key, value) => MapEntry(value[1] as String, value),
+      );
+  String actionColumnTitle = "My Action Title";
 
   @override
   Widget build(BuildContext context) {
@@ -35,13 +38,20 @@ class _MyAppState extends State<MyApp> {
             child: DynamicTable(
               key: tableKey,
               header: const Text("Person Table"),
+              editOneByOne: true,
+              autoSaveRows: true,
+              addRowAtTheEnd: true,
+              showActions: false,
+              showAddRowButton: true,
+              showDeleteOrCancelAction: true,
+              touchMode: true,
+              selectable: true,
               onRowEdit: (index, row) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text("Row Edited index:$index row:$row"),
                   ),
                 );
-                myData[index] = row;
                 return true;
               },
               onRowDelete: (index, row) {
@@ -50,7 +60,7 @@ class _MyAppState extends State<MyApp> {
                     content: Text("Row Deleted index:$index row:$row"),
                   ),
                 );
-                myData.removeAt(index);
+                if (myData.containsKey(row[1])) myData.remove(row[1]);
                 return true;
               },
               onRowSave: (index, old, newValue) {
@@ -88,11 +98,15 @@ class _MyAppState extends State<MyApp> {
                 }
                 if (newValue[1] == null) {
                   //If newly added row then add unique ID
-                  newValue[1] = Random()
-                      .nextInt(500)
+                  newValue[1] = (Random().nextInt(500) + 100)
                       .toString(); // to add Unique ID because it is not editable
+
+                  while (myData.containsKey(newValue[1])) {
+                    newValue[1] = (Random().nextInt(500) + 100).toString();
+                  }
                 }
-                myData[index] = newValue; // Update data
+                myData.putIfAbsent(
+                    newValue[1]! as String, () => newValue); // Update data
                 if (newValue[0] == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -103,9 +117,6 @@ class _MyAppState extends State<MyApp> {
                 }
                 return newValue;
               },
-              showActions: true,
-              showAddRowButton: true,
-              showDeleteAction: true,
               rowsPerPage: 5,
               showFirstLastButtons: true,
               availableRowsPerPage: const [
@@ -117,7 +128,7 @@ class _MyAppState extends State<MyApp> {
               dataRowMinHeight: 60,
               dataRowMaxHeight: 60,
               columnSpacing: 60,
-              actionColumnTitle: "My Action Title",
+              actionColumnTitle: actionColumnTitle,
               showCheckboxColumn: true,
               onSelectAll: (value) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -154,28 +165,29 @@ class _MyAppState extends State<MyApp> {
                   icon: const Icon(Icons.deselect_outlined),
                   tooltip: "Unselect all odd Values",
                 ),
+                IconButton(
+                    onPressed: () {
+                      setState(() {
+                        actionColumnTitle = "New Action Title";
+                        myData['101'] = [
+                          "Aakash",
+                          "101",
+                          DateTime(2000, 2, 11),
+                          genderDropdown[0],
+                          "Some more info about Aakash"
+                        ];
+                        myData['100'] = [
+                          "Raksha",
+                          "100",
+                          DateTime(2000, 2, 11),
+                          genderDropdown[1],
+                          "Some other info about Raksha"
+                        ];
+                      });
+                    },
+                    icon: const Icon(Icons.refresh))
               ],
-              rows: List.generate(
-                myData.length,
-                (index) => DynamicTableDataRow(
-                  onSelectChanged: (value) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: value ?? false
-                            ? Text("Row Selected index:$index")
-                            : Text("Row Unselected index:$index"),
-                      ),
-                    );
-                  },
-                  index: index,
-                  cells: List.generate(
-                    myData[index].length,
-                    (cellIndex) => DynamicTableDataCell(
-                      value: myData[index][cellIndex],
-                    ),
-                  ),
-                ),
-              ),
+              rows: Map<String, List<Comparable<dynamic>?>>.from(myData),
               columns: [
                 DynamicTableDataColumn(
                     label:
@@ -184,6 +196,7 @@ class _MyAppState extends State<MyApp> {
                     dynamicTableInputType: DynamicTableInputType.text()),
                 DynamicTableDataColumn(
                     label: const Text("Unique ID"),
+                    isKeyColumn: true,
                     onSort: (columnIndex, ascending) {},
                     isEditable: false,
                     dynamicTableInputType: DynamicTableInputType.text()),
@@ -227,12 +240,13 @@ class _MyAppState extends State<MyApp> {
                 DynamicTableDataColumn(
                   label: const Text("Other Info"),
                   onSort: (columnIndex, ascending) {},
+                  isEditable: false,
                   dynamicTableInputType: DynamicTableInputType.text(
                     decoration: const InputDecoration(
                       hintText: "Enter Other Info",
                       border: OutlineInputBorder(),
                     ),
-                    maxLines: 100,
+                    maxLines: 5,
                   ),
                 ),
               ],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:dynamic_table/dynamic_table_data_cell.dart';
+import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_cell.dart';
 
 /// Row configuration and cell data for a [DynamicTable].
 ///
@@ -11,7 +11,7 @@ import 'package:dynamic_table/dynamic_table_data_cell.dart';
 /// The data for this row of the table is provided in the [cells]
 /// property of the [DynamicTableDataRow] object.
 class DynamicTableDataRow {
-  final int index;
+  int index;
 
   /// Called when the user selects or unselects a selectable row.
   ///

@@ -203,7 +203,7 @@ Invoked when the user selects a different number of rows per page.
 If this is null, then the value given by [rowsPerPage] will be used
 and no affordance will be provided to change the value.
 
-### `bool Function(int, List<dynamic>)? onRowEdit`
+### `bool Function(int, List<Comparable<dynamic>>)? onRowEdit`
 
 Called when the user clicks on the edit icon of a row.
 
@@ -212,7 +212,7 @@ Return `true` to allow the edit action, false to prevent it.
 If the action is allowed, the row will be editable.
 
 ```dart
-bool onRowEdit(int index, List<dynamic> row){
+bool onRowEdit(int index, List<Comparable<dynamic>> row){
 //Do some validation on row and return false if validation fails
 if (index%2==1) {
   ScaffoldMessenger.of(context).showSnackBar(
@@ -226,7 +226,7 @@ return true; // The row will open in editable mode
 }
 ```
 
-### `bool Function(int, List<dynamic>)? onRowDelete`
+### `bool Function(int, List<Comparable<dynamic>>)? onRowDelete`
 
 Called when the user clicks on the delete icon of a row.
 
@@ -235,7 +235,7 @@ Return `true` to allow the delete action, `false` to prevent it.
 If the delete action is allowed, the row will be deleted from the table.
 
 ```dart
-bool onRowDelete(int index, List<dynamic> row){
+bool onRowDelete(int index, List<Comparable<dynamic>> row){
 //Do some validation on row and return false if validation fails
 if (row[0] == null) {
    ScaffoldMessenger.of(context).showSnackBar(
@@ -249,11 +249,11 @@ return true;
 }
 ```
 
-### `List<dynamic>? Function(int, List<dynamic>, List<dynamic>)? onRowSave`
+### `List<Comparable<dynamic>>? Function(int, List<Comparable<dynamic>>, List<Comparable<dynamic>>)? onRowSave`
 
 Called when the user clicks on the save icon of a row.
 
-Return `List<dynamic> newValue` to allow the save action, `null` to prevent it.
+Return `List<Comparable<dynamic>> newValue` to allow the save action, `null` to prevent it.
 
 The `newValue` must be a list of the same length as the column.
 
@@ -264,7 +264,7 @@ The `newValue` is the value of the row after the edit.
 
 ```dart
 
-List<dynamic>? onRowSave(int index, List<dynamic> oldValue, List<dynamic> newValue) {
+List<Comparable<dynamic>>? onRowSave(int index, List<Comparable<dynamic>> oldValue, List<Comparable<dynamic>> newValue) {
 //Do some validation on new value and return null if validation fails
 if (newValue[0] == null) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -302,7 +302,7 @@ Add new empty row at the 0th position in the table. The `showActions` parameter 
 
 NOTE: Cant add value to Non-Editable Columns.
 
-### `addRowWithValues(List<dynamic> values, {bool isEditing = false})`
+### `addRowWithValues(List<Comparable<dynamic>> values, {bool isEditing = false})`
 
 ```dart
 tableKey.currentState?.addRowWithValues(`column1,column2...columnN`);
@@ -326,7 +326,7 @@ Delete the row at the given `index`.
 
 `index` should be `index`<`rows.length` && `index`>=0.
 
-### `updateRow(int index, List<dynamic> values)`
+### `updateRow(int index, List<Comparable<dynamic>> values)`
 
 ```dart
 tableKey.currentState.?.updateRow(0, dummyData`column1,column2,...,columnN`);
@@ -338,7 +338,7 @@ The `values.length` must be equal to columns.length.
 
 `index` should be `index`<`rows.length` && `index`>=0.
 
-### `insertRow(int index, List<dynamic> values, {bool isEditing = false,})`
+### `insertRow(int index, List<Comparable<dynamic>> values, {bool isEditing = false,})`
 
 ```dart
 tableKey.currentState?.insertRow(
@@ -396,7 +396,7 @@ tableKey.currentState?.getAllRows()
 
 Get all the rows in the table.
 
-### `updateAllRows(List<List<dynamic>> data)`
+### `updateAllRows(List<List<Comparable<dynamic>>> data)`
 
 ```dart
 tableKey.currentState?.updateAllRows(data);
