@@ -17,7 +17,7 @@ class DynamicTableEditingValues {
     }
   }
 
-  Map<int, List<dynamic>> _editingValues = {};
+  Map<int, List<Comparable<dynamic>?>> _editingValues = {};
   final List<DynamicTableDataColumn> columns;
   //{1:[3,4]} 3 and 4th column are dependent on 1st column
   final Map<int, List<int>> dependentOn = {};
@@ -34,7 +34,7 @@ class DynamicTableEditingValues {
     return _editingValues.containsKey(index);
   }
 
-  void cache(int index, List<dynamic> values) {
+  void cache(int index, List<Comparable<dynamic>?> values) {
     setDefaultIfAbsent(index, currentValues: values);
   }
 
@@ -42,25 +42,25 @@ class DynamicTableEditingValues {
     _editingValues.remove(index);
   }
 
-  dynamic getEditingValue(int row, int column) {
+  Comparable<dynamic>? getEditingValue(int row, int column) {
     return _editingValues[row]?[column];
   }
 
-  List<dynamic> getEditingValues(int row) {
-    List editingValues = [];
+  List<Comparable<dynamic>?> getEditingValues(int row) {
+    List<Comparable<dynamic>?> editingValues = [];
     for (int column in List.generate(getColumnsLength(), (index) => index)) {
       editingValues.add(getEditingValue(row, column));
     }
     return editingValues;
   }
 
-  void setEditingValue(int row, int column, dynamic value) {
+  void setEditingValue(int row, int column, Comparable<dynamic>? value) {
     setDefaultIfAbsent(row);
     _editingValues[row]![column] = value;
   }
 
-  void setDefaultIfAbsent(int row, { List<dynamic>? currentValues }) {
-    void fillEditingValuesIfAbsent(int index, { List<dynamic>? currentValues }) {
+  void setDefaultIfAbsent(int row, { List<Comparable<dynamic>?>? currentValues }) {
+    void fillEditingValuesIfAbsent(int index, { List<Comparable<dynamic>?>? currentValues }) {
       if (_editingValues[index] != null) return;
       _editingValues[index] = currentValues ?? List.filled(getColumnsLength(), null);
     }
@@ -81,7 +81,7 @@ class DynamicTableEditingValues {
 
       if (_editingValues[row]![columnIndex] == null) {
         _editingValues[row]![columnIndex] =
-            (dynamicTableInputType as DynamicTableDropDownInput)
+            (dynamicTableInputType as DynamicTableDropDownInput<Comparable<dynamic>>)
                 .getFirstValue();
       }
     });
@@ -110,7 +110,7 @@ class DynamicTableEditingValues {
                 .dependentValue =
             _editingValues[row]![dynamicTableInputType.dependentOn!];
         _editingValues[row]![columnIndex] =
-            (dynamicTableInputType as DynamicTableDependentDropDownInput)
+            (dynamicTableInputType as DynamicTableDependentDropDownInput<Comparable<dynamic>, Comparable<dynamic>>)
                 .getFirstValue();
       }
     });

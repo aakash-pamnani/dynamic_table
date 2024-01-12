@@ -7,7 +7,7 @@ mixin DynamicTableEditables
   DynamicTableShiftableData getData();
   DynamicTableEditingValues getEditingValues();
 
-  void onShift(Map<int, int> shiftData) {
+  void shiftEditingValues(Map<int, int> shiftData) {
     getEditingValues().shiftKeys(shiftData, getDataLength());
   }
 
@@ -34,6 +34,13 @@ mixin DynamicTableEditables
     getEditingValues().setDefaultIfAbsent(index, currentValues: getCurrentValues(index));
   }
 
+  void updateSortByColumnIndex(int sortByColumnIndex) {
+    if (sortByColumnIndex < 0 || sortByColumnIndex >= getColumnsLength()) {
+      throw Exception('Index out of bounds');
+    }
+    getData().updateSortByColumnIndex(sortByColumnIndex);
+  }
+
   void unmarkFromEditing(int index) {
     if (!getData().isEditing(index)) return;
     getData().unmarkFromEditing(index);
@@ -44,7 +51,7 @@ mixin DynamicTableEditables
     getEditingValues().clear(index);
   }
 
-  void insertRow(int index, {List<dynamic>? values, bool isEditing = false}) {
+  void insertRow(int index, {List<Comparable<dynamic>?>? values, bool isEditing = false}) {
     if (values != null && values.length != getColumnsLength()) {
       throw Exception('Values length must match columns');
     }
@@ -52,7 +59,7 @@ mixin DynamicTableEditables
       throw Exception('Index out of bounds');
     }
 
-    getData().insert(index, getColumnsLength());
+    getData().insert(index);
     if (values != null) getEditingValues().cache(index, values);
     if (isEditing) editRow(index);
   }
@@ -65,7 +72,7 @@ mixin DynamicTableEditables
     insertRow(getDataLength(), isEditing: true);
   }
 
-  void addRowWithValues(List<dynamic> values, {bool isEditing = false}) {
+  void addRowWithValues(List<Comparable<dynamic>?> values, {bool isEditing = false}) {
     insertRow(0, values: values, isEditing: isEditing);
   }
 
@@ -99,23 +106,31 @@ mixin DynamicTableEditables
     }
   }
 
-  void updateRow(int index, List<dynamic> values) {
+  void updateRow(int index, List<Comparable<dynamic>?> values) {
     if (values.length != getColumnsLength()) {
       throw Exception('Values length must match columns');
     }
-    getData().updateRow(index, getColumnsLength(), values);
+    if (index < 0 || index >= getDataLength()) {
+      throw Exception('Index out of bounds');
+    }
+    getData().updateRow(index, values);
     unmarkFromEditingAndClearEditingValues(index);
   }
 
-  void updateRows(Map<dynamic, List<dynamic>> diff) {
-    for (dynamic key in diff.keys) {
+  void updateRowsByKeyByDiffChecking(Map<Comparable<dynamic>, List<Comparable<dynamic>?>> rows) {
+    for (Comparable<dynamic> key in rows.keys) {
       int? row = getData().getRowIndexOfKey(key);
-      if (row == null || diff[key] == null) continue; //TODO: insert row if the row for the key not exists already
-      updateRow(row, diff[key]!);
+      if (rows[key] == null) continue;
+      if (!getData().hasChangedOrNew(key, rows[key]!)) continue;
+      if (row == null) {
+        row = getDataLength();
+        insertRow(row);
+      }
+      updateRow(row, rows[key]!);
     }
   }
 
-  void updateAllRows(List<List<dynamic>> values) {
+  void updateAllRows(List<List<Comparable<dynamic>?>> values) {
     if (values.length != getDataLength()) {
       throw Exception('Values length must match data rows length');
     }
@@ -125,7 +140,7 @@ mixin DynamicTableEditables
   }
 
   bool saveRow(int row) {
-    List newValue = getCurrentValues(row);
+    List<Comparable<dynamic>?> newValue = getCurrentValues(row);
 
     var response =
         onRowSave?.call(row, getData().getSavedValues(row), newValue);
@@ -163,20 +178,20 @@ mixin DynamicTableEditables
     }
   }
 
-  List<dynamic> getCurrentValues(int row) {
-    List newValue = [];
+  List<Comparable<dynamic>?> getCurrentValues(int row) {
+    List<Comparable<dynamic>?> newValue = [];
     for (int column = 0; column < getColumnsLength(); column++) {
       newValue.add(getCurrentValue(row, column));
     }
     return newValue;
   }
 
-  dynamic getCurrentValue(int row, int column) {
+  Comparable<dynamic>? getCurrentValue(int row, int column) {
     return getEditingValues().getEditingValue(row, column) ??
         getData().getSavedValue(row, column);
   }
 
-  void setEditingValue(int row, int column, dynamic value) {
+  void setEditingValue(int row, int column, Comparable<dynamic>? value) {
     getEditingValues().setEditingValue(row, column, value);
   }
 }

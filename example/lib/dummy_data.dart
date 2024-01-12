@@ -1,7 +1,7 @@
 List<String> genderDropdown = ["Male", "Female"];
 
 // [Name,uniqueId,BirthDate,gender,OtherInfo]
-List<List<dynamic>> dummyData = [
+List<List<Comparable<dynamic>>> dummyData = [
   [
     "Aakash",
     "101",

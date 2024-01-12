@@ -77,4 +77,15 @@ mixin DynamicTableFocus implements DynamicTableSourceView {
     updateFocus(DynamicTableFocusData(row: row, column: column));
     onFocusThisField?.call(row);
   }
+
+  void focusThisRow(int row) {
+    updateFocus(DynamicTableFocusData(row: row, column: -1));
+  }
+
+  DynamicTableFocusData? shiftFocus(DynamicTableFocusData? focus, Map<int, int> shiftData) {
+    if (focus != null && shiftData.containsKey(focus.row)) {
+      return DynamicTableFocusData(row: shiftData[focus.row]!, column: focus.column);
+    }
+    return focus;
+  }
 }

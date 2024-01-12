@@ -9,20 +9,23 @@ import 'package:dynamic_table/dynamic_table_source/shifting_map.dart';
  */
 
 class DynamicTableShiftableData {
-  DynamicTableShiftableData(List<DynamicTableDataRow> data,
-      {void Function(Map<int, int> shiftData)? onShift, required this.keyColumnIndex})
-      : _data = data {
-        data.asMap().forEach((row, values) { cacheIndexKeyMapping(row, (column) => values.cells[column].value); });
-      }
+  DynamicTableShiftableData({void Function(Map<int, int> shiftData)? this.onShift, required this.keyColumnIndex, required this.columnsLength}) : sortByColumnIndex = keyColumnIndex;
+  
+  void loadInitialData(Map<Comparable<dynamic>, List<Comparable<dynamic>?>> data,) {
+    _data.addAll(data.values.toList().asMap().map((index, values) => MapEntry(index, DynamicTableDataRow(index: index, cells: List.generate(values.length, (index) => DynamicTableDataCell(value: values[index])))),).values.toList());
+    _data.asMap().forEach((row, values) { cacheIndexKeyMapping(row, (column) => values.cells[column].value); });
+    sort();
+  }
 
-  final List<DynamicTableDataRow> _data;
+  final List<DynamicTableDataRow> _data = [];
   final int keyColumnIndex;
+  final int columnsLength;
+  final void Function(Map<int, int> shiftData)? onShift;
+  int sortByColumnIndex;
 
   final Map<int, dynamic> indexKeyMap = {};
 
-  void Function(Map<int, int> shiftData)? onShift;
-
-  void cacheIndexKeyMapping(int row, dynamic getValueByColumn(int column)) {
+  void cacheIndexKeyMapping(int row, Comparable<dynamic>? getValueByColumn(int column)) {
     if (getValueByColumn(keyColumnIndex) != null) {
       indexKeyMap[row] = getValueByColumn(keyColumnIndex);
     }
@@ -46,7 +49,7 @@ class DynamicTableShiftableData {
     onShift?.call(shiftData);
   }
 
-  void insert(int index, int columnsLength) {
+  void insert(int index) {
     _data.insert(
         index,
         DynamicTableDataRow(
@@ -61,19 +64,33 @@ class DynamicTableShiftableData {
     shift();
   }
 
-  void sortByColumn(int sortColumnIndex) {
-    _data.sort((a, b) =>
-        a.cells[sortColumnIndex].value
-            ?.compareTo(b.cells[sortColumnIndex].value) ??
-        (b.cells[sortColumnIndex].value == null ? 0 : 1));
+  void sort() {
+    _sortByColumn(sortByColumnIndex);
+  }
+
+  void _sortByColumn(int sortColumnIndex) {
+    _data.sort((a, b) {
+      if (b.cells[sortColumnIndex].value == null &&
+          a.cells[sortColumnIndex].value == null) return 0;
+      if (b.cells[sortColumnIndex].value == null) return -1;
+      if (a.cells[sortColumnIndex].value == null) return 1;
+      return a.cells[sortColumnIndex].value!
+          .compareTo(b.cells[sortColumnIndex].value!);
+    });
     shift();
   }
 
-  void updateRow(int row, int columnsLength, List<dynamic> values) {
+  void updateSortByColumnIndex(int sortByColumnIndex) {
+    this.sortByColumnIndex = sortByColumnIndex;
+    sort();
+  }
+
+  void updateRow(int row, List<Comparable<dynamic>?> values) {
     for (int index = 0; index < columnsLength; index++) {
       _data[row].cells[index].value = values[index];
     }
     cacheIndexKeyMapping(row, (column) => values[column]);
+    sort();
   }
 
   void markAsEditing(int index) {
@@ -100,16 +117,24 @@ class DynamicTableShiftableData {
     return _data[row].cells.every((cell) => cell.value == null);
   }
 
-  int? getRowIndexOfKey(dynamic key) {
+  bool hasChangedOrNew(Comparable<dynamic> key, List<Comparable<dynamic>?> values) {
+    int? row = getRowIndexOfKey(key);
+    if (row == null) return true;
+    List<Comparable<dynamic>?> oldValues = getSavedValues(row);
+    if (!List.generate(columnsLength, (index) => index).every((column) => values[column] == oldValues[column])) return true;
+    return false;
+  }
+
+  int? getRowIndexOfKey(Comparable<dynamic> key) {
     int row = indexKeyMap.keys.firstWhere((index) => indexKeyMap[index] == key, orElse: () => -1);
     return row == -1? null: row;
   }
 
-  dynamic getSavedValue(int row, int column) {
+  Comparable<dynamic>? getSavedValue(int row, int column) {
     return _data[row].cells[column].value;
   }
 
-  List<dynamic> getSavedValues(int row) {
+  List<Comparable<dynamic>?> getSavedValues(int row) {
     return _data[row]
         .cells
         .map(
@@ -118,15 +143,15 @@ class DynamicTableShiftableData {
         .toList();
   }
 
-  List<List<dynamic>> getAllSavedValues() {
-    List<List<dynamic>> result = [];
+  List<List<Comparable<dynamic>?>> getAllSavedValues() {
+    List<List<Comparable<dynamic>?>> result = [];
     for (int row in List.generate(getDataLength(), (index) => index)) {
       result.add(getSavedValues(row));
     }
     return result;
   }
 
-  List<List<dynamic>> getAllSelectedSavedValues() {
+  List<List<Comparable<dynamic>?>> getAllSelectedSavedValues() {
     return _data.where((element) => element.selected).toList().map((e) {
       return e.cells.map((e) {
         return e.value;

@@ -72,7 +72,6 @@ class DynamicTable extends StatefulWidget {
       this.actions,
       required this.columns,
       required this.rows,
-      required this.diff,
       this.onRowEdit,
       this.onRowDelete,
       this.onRowSave,
@@ -257,7 +256,7 @@ class DynamicTable extends StatefulWidget {
   /// If the action is allowed, the row will be editable.
   ///
   /// ```dart
-  /// bool onRowEdit(int index, List<dynamic> row){
+  /// bool onRowEdit(int index, List<Comparable<dynamic>> row){
   /// //Do some validation on row and return false if validation fails
   /// if (index%2==1) {
   ///   ScaffoldMessenger.of(context).showSnackBar(
@@ -270,7 +269,7 @@ class DynamicTable extends StatefulWidget {
   /// return true; // The row will open in editable mode
   /// }
   /// ```
-  final bool Function(int index, List<dynamic> row)? onRowEdit;
+  final bool Function(int index, List<Comparable<dynamic>?> row)? onRowEdit;
 
   /// Called when the user clicks on the delete icon of a row.
   ///
@@ -279,7 +278,7 @@ class DynamicTable extends StatefulWidget {
   /// If the delete action is allowed, the row will be deleted from the table.
   ///
   /// ```dart
-  /// bool onRowDelete(int index, List<dynamic> row){
+  /// bool onRowDelete(int index, List<Comparable<dynamic>> row){
   /// //Do some validation on row and return false if validation fails
   /// if (row[0] == null) {
   ///    ScaffoldMessenger.of(context).showSnackBar(
@@ -292,11 +291,11 @@ class DynamicTable extends StatefulWidget {
   /// return true;
   /// }
   /// ```
-  final bool Function(int index, List<dynamic> row)? onRowDelete;
+  final bool Function(int index, List<Comparable<dynamic>?> row)? onRowDelete;
 
   /// Called when the user clicks on the save icon of a row.
   ///
-  /// Return List<dynamic> [newValue] to allow the save action, null to prevent it.
+  /// Return List<Comparable<dynamic>> [newValue] to allow the save action, null to prevent it.
   ///
   /// The [newValue] must be a list of the same length as the column.
   ///
@@ -307,7 +306,7 @@ class DynamicTable extends StatefulWidget {
   ///
   /// ```dart
   ///
-  /// List<dynamic>? onRowSave(int index, List<dynamic> oldValue, List<dynamic> newValue) {
+  /// List<Comparable<dynamic>>? onRowSave(int index, List<Comparable<dynamic>> oldValue, List<Comparable<dynamic>> newValue) {
   /// //Do some validation on new value and return null if validation fails
   /// if (newValue[0] == null) {
   ///     ScaffoldMessenger.of(context).showSnackBar(
@@ -325,8 +324,8 @@ class DynamicTable extends StatefulWidget {
   /// }
   /// ```
   ///
-  final List<dynamic>? Function(
-      int index, List<dynamic> oldValue, List<dynamic> newValue)? onRowSave;
+  final List<Comparable<dynamic>?>? Function(
+      int index, List<Comparable<dynamic>?> oldValue, List<Comparable<dynamic>?> newValue)? onRowSave;
 
   /// Icon buttons to show at the top end side of the table. The [header] must
   /// not be null to show the actions.
@@ -341,9 +340,7 @@ class DynamicTable extends StatefulWidget {
   final List<DynamicTableDataColumn> columns;
 
   /// The data for the rows of the table.
-  final List<DynamicTableDataRow> rows;
-
-  final Map<dynamic, List<dynamic>> diff;
+  final Map<Comparable<dynamic>, List<Comparable<dynamic>?>> rows;
 
   /// Whether to show the actions column.
   /// Defaults to true.
@@ -447,7 +444,7 @@ class DynamicTableState extends State<DynamicTable> {
       onRowEdit: widget.onRowEdit,
       onRowDelete: widget.onRowDelete,
       onRowSave: widget.onRowSave,);
-    _source.updateRows(widget.diff);
+    _source.updateRowsByKeyByDiffChecking(widget.rows);
   }
 
   @override

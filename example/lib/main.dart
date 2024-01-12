@@ -20,18 +20,10 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   var tableKey = GlobalKey<DynamicTableState>();
-  Map<String, List<dynamic>> myData = dummyData.asMap().map(
-        (key, value) => MapEntry(value[1], value),
+  Map<String, List<Comparable<dynamic>?>> myData = dummyData.asMap().map(
+        (key, value) => MapEntry(value[1] as String, value),
       );
-  List<dynamic> viewData() {
-    var result = myData.values.toList();
-    result.sort(((a, b) => a[1].compareTo(b[1])));
-    return result;
-  }
   String actionColumnTitle = "My Action Title";
-  Map<String, List<dynamic>> diff = {
-    '101': ['Mukesh', '101', DateTime(2000, 2, 11), genderDropdown[0], "Some other info about Mukesh"]
-  };
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +105,8 @@ class _MyAppState extends State<MyApp> {
                     newValue[1] = (Random().nextInt(500) + 100).toString();
                   }
                 }
-                myData.putIfAbsent(newValue[1], () => newValue); // Update data
+                myData.putIfAbsent(
+                    newValue[1]! as String, () => newValue); // Update data
                 if (newValue[0] == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -172,34 +165,29 @@ class _MyAppState extends State<MyApp> {
                   icon: const Icon(Icons.deselect_outlined),
                   tooltip: "Unselect all odd Values",
                 ),
-                IconButton(onPressed: () { setState(() {
-                  actionColumnTitle = "New Action Title";
-                }); }, icon: const Icon(Icons.refresh))
-              ],
-              rows: () {
-                final data = viewData();
-                return List.generate(myData.length, (index) {
-                  return DynamicTableDataRow(
-                    onSelectChanged: (value) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: value ?? false
-                              ? Text("Row Selected index:$index")
-                              : Text("Row Unselected index:$index"),
-                        ),
-                      );
+                IconButton(
+                    onPressed: () {
+                      setState(() {
+                        actionColumnTitle = "New Action Title";
+                        myData['101'] = [
+                          "Aakash",
+                          "101",
+                          DateTime(2000, 2, 11),
+                          genderDropdown[0],
+                          "Some more info about Aakash"
+                        ];
+                        myData['100'] = [
+                          "Raksha",
+                          "100",
+                          DateTime(2000, 2, 11),
+                          genderDropdown[1],
+                          "Some other info about Raksha"
+                        ];
+                      });
                     },
-                    index: index,
-                    cells: List.generate(
-                      data[index].length,
-                      (cellIndex) => DynamicTableDataCell(
-                        value: data[index][cellIndex],
-                      ),
-                    ),
-                  );
-                });
-              }(),
-              diff: diff,
+                    icon: const Icon(Icons.refresh))
+              ],
+              rows: Map<String, List<Comparable<dynamic>?>>.from(myData),
               columns: [
                 DynamicTableDataColumn(
                     label:
