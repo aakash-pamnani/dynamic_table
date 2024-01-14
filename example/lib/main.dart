@@ -214,12 +214,12 @@ class _MyAppState extends State<MyApp> {
                 DynamicTableDataColumn(
                   label: const Text("Gender"),
                   dynamicTableInputType: DynamicTableInputType.dropDown<String>(
-                    items: genderDropdown
+                    items: []/*genderDropdown
                         .map((e) => DropdownMenuItem(
                               value: e,
                               child: Text(e),
                             ))
-                        .toList(growable: false),
+                        .toList(growable: false)*/,
                     selectedItemBuilder: (context) {
                       return genderDropdown
                           .map((e) => Text(e))

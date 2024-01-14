@@ -59,10 +59,10 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
     if (dependentValue == null) {
       return null;
     }
-    return _itemsBuilder(dependentValue!).first.value;
+    return _itemsBuilder(dependentValue!).firstOrNull?.value;
   }
 
-  bool hasSelectionValue(W dependentValue) {
+  bool hasSelectionValues(W dependentValue) {
     return _itemsBuilder(dependentValue).isNotEmpty;
   }
 

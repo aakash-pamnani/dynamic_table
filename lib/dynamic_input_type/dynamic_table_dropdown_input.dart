@@ -95,10 +95,10 @@ class DynamicTableDropDownInput<T extends Object>
   final BorderRadius? _borderRadius;
 
   T? getFirstValue() {
-    return _items.first.value;
+    return _items.firstOrNull?.value;
   }
 
-  bool hasSelectionValue() {
+  bool hasSelectionValues() {
     return _items.isNotEmpty;
   }
 

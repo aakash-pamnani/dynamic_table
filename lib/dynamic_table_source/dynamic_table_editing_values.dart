@@ -55,15 +55,19 @@ class DynamicTableEditingValues {
     return editingValues;
   }
 
-  void setEditingValue(Reference<int> row, int column, Comparable<dynamic>? value) {
+  void setEditingValue(
+      Reference<int> row, int column, Comparable<dynamic>? value) {
     setDefaultIfAbsent(row);
     _editingValues[row.value]![column] = value;
   }
 
-  void setDefaultIfAbsent(Reference<int> row, { List<Comparable<dynamic>?>? currentValues }) {
-    void fillEditingValuesIfAbsent(Reference<int> row, { List<Comparable<dynamic>?>? currentValues }) {
+  void setDefaultIfAbsent(Reference<int> row,
+      {List<Comparable<dynamic>?>? currentValues}) {
+    void fillEditingValuesIfAbsent(Reference<int> row,
+        {List<Comparable<dynamic>?>? currentValues}) {
       if (_editingValues[row.value] != null) return;
-      _editingValues[row.value] = currentValues ?? List.filled(getColumnsLength(), null);
+      _editingValues[row.value] =
+          currentValues ?? List.filled(getColumnsLength(), null);
     }
 
     fillEditingValuesIfAbsent(row, currentValues: currentValues);
@@ -81,9 +85,9 @@ class DynamicTableEditingValues {
       var columnIndex = indexedColumn.$1;
 
       if (_editingValues[row.value]![columnIndex] == null) {
-        _editingValues[row.value]![columnIndex] =
-            (dynamicTableInputType as DynamicTableDropDownInput<Comparable<dynamic>>)
-                .getFirstValue();
+        _editingValues[row.value]![columnIndex] = (dynamicTableInputType
+                as DynamicTableDropDownInput<Comparable<dynamic>>)
+            .getFirstValue();
       }
     });
 
@@ -104,35 +108,65 @@ class DynamicTableEditingValues {
       if ((dynamicTableInputType as DynamicTableDependentDropDownInput)
                   .dependentValue ==
               null ||
-          (dynamicTableInputType)
-                  .dependentValue !=
+          (dynamicTableInputType).dependentValue !=
               _editingValues[row.value]![dynamicTableInputType.dependentOn!]) {
-        (dynamicTableInputType)
-                .dependentValue =
+        (dynamicTableInputType).dependentValue =
             _editingValues[row.value]![dynamicTableInputType.dependentOn!];
-        _editingValues[row.value]![columnIndex] =
-            (dynamicTableInputType as DynamicTableDependentDropDownInput<Comparable<dynamic>, Comparable<dynamic>>)
-                .getFirstValue();
+        _editingValues[row.value]![columnIndex] = (dynamicTableInputType
+                as DynamicTableDependentDropDownInput<Comparable<dynamic>,
+                    Comparable<dynamic>>)
+            .getFirstValue();
       }
     });
   }
 
-  bool isDropdownColumnAndHasNoDropdownValues(Reference<int> row, int columnIndex) {
-    bool isDropdownColumn() {
-      return columns[columnIndex].dynamicTableInputType is DynamicTableDropDownInput<Comparable<dynamic>>
-        || columns[columnIndex].dynamicTableInputType is DynamicTableDependentDropDownInput<Comparable<dynamic>, Comparable<dynamic>>;
+  static bool isDropdownColumn(
+      DynamicTableInputType getInputType(int columnIndex), int columnIndex) {
+    return getInputType(columnIndex)
+            is DynamicTableDropDownInput<Comparable<dynamic>> ||
+        getInputType(columnIndex) is DynamicTableDependentDropDownInput<
+            Comparable<dynamic>, Comparable<dynamic>>;
+  }
+
+  static bool hasDropdownValues(
+      DynamicTableInputType getInputType(int columnIndex),
+      Comparable<dynamic>? getEditingValue(Reference<int> row, int column),
+      Reference<int> row,
+      int columnIndex) {
+    if (getInputType(columnIndex)
+        is DynamicTableDropDownInput<Comparable<dynamic>>) {
+      return (getInputType(columnIndex)
+              as DynamicTableDropDownInput<Comparable<dynamic>>)
+          .hasSelectionValues();
     }
-    bool hasDropdownValues() {
-      if (columns[columnIndex].dynamicTableInputType is DynamicTableDropDownInput<Comparable<dynamic>>) {
-        return (columns[columnIndex].dynamicTableInputType as DynamicTableDropDownInput<Comparable<dynamic>>).hasSelectionValue();
-      }
-      if (columns[columnIndex].dynamicTableInputType is DynamicTableDependentDropDownInput<Comparable<dynamic>, Comparable<dynamic>>) {
-        final int dependentOnColumnIndex = (columns[columnIndex].dynamicTableInputType as DynamicTableDependentDropDownInput<Comparable<dynamic>, Comparable<dynamic>>).dependentOnColumn;
-        final Comparable<dynamic>? dependentOnColumnSelectedValue = getEditingValue(row, dependentOnColumnIndex);
-        return dependentOnColumnSelectedValue != null && (columns[columnIndex].dynamicTableInputType as DynamicTableDependentDropDownInput<Comparable<dynamic>, Comparable<dynamic>>).hasSelectionValue(dependentOnColumnSelectedValue);
-      }
-      return false;
+    if (getInputType(columnIndex) is DynamicTableDependentDropDownInput<
+        Comparable<dynamic>, Comparable<dynamic>>) {
+      final int dependentOnColumnIndex = (getInputType(columnIndex)
+              as DynamicTableDependentDropDownInput<Comparable<dynamic>,
+                  Comparable<dynamic>>)
+          .dependentOnColumn;
+      final Comparable<dynamic>? dependentOnColumnSelectedValue =
+          getEditingValue(row, dependentOnColumnIndex);
+      return dependentOnColumnSelectedValue != null &&
+          (getInputType(columnIndex) as DynamicTableDependentDropDownInput<
+                  Comparable<dynamic>, Comparable<dynamic>>)
+              .hasSelectionValues(dependentOnColumnSelectedValue);
     }
-    return isDropdownColumn() && !hasDropdownValues();
+    return false;
+  }
+
+  bool isDropdownColumnAndHasNoDropdownValues(
+      Reference<int> row, int columnIndex) {
+    var getInputType =
+        (int columnIndex) => columns[columnIndex].dynamicTableInputType;
+    return isDropdownColumn(getInputType, columnIndex) &&
+        !hasDropdownValues(getInputType, getEditingValue, row, columnIndex);
+  }
+
+  bool ifDropdownColumnThenHasDropdownValues(Reference<int> row, int columnIndex) {
+    var getInputType =
+        (int columnIndex) => columns[columnIndex].dynamicTableInputType;
+    return !isDropdownColumn(getInputType, columnIndex) ||
+        hasDropdownValues(getInputType, getEditingValue, row, columnIndex);
   }
 }

@@ -249,6 +249,10 @@ class DynamicTableSource extends DataTableSource
     return getEditingValues().isDropdownColumnAndHasNoDropdownValues(row, columnIndex);
   }
 
+  bool isColumnEditableAndIfDropdownColumnThenHasDropdownValues(Reference<int> row, int columnIndex) {
+    return isColumnEditable(columnIndex) && getEditingValues().ifDropdownColumnThenHasDropdownValues(row, columnIndex);
+  }
+
   @override
   DataRow? getRow(int index) {
     return _buildRow(Reference<int>(value: index));
@@ -307,9 +311,7 @@ class DynamicTableSource extends DataTableSource
   List<DataCell> _buildRowCells(Reference<int> row) {
     List<DataCell> cellsList =
         List.generate(getColumnsLength(), (index) => index).map((column) {
-      final showEditingWidget =
-          getData().isEditing(row) && isColumnEditable(column);
-      return _buildDataCell(row, column, showEditingWidget);
+      return _buildDataCell(row, column);
     }).toList();
     cellsList.addAll(_addActionsInCell(row));
     return cellsList;
@@ -386,17 +388,20 @@ class DynamicTableSource extends DataTableSource
   }
 
   DataCell _buildDataCell(
-      Reference<int> index, int columnIndex, bool showEditingWidget) {
-    var dynamicTableInputType = columns[columnIndex].dynamicTableInputType;
+      Reference<int> index, int columnIndex) {
+    final dynamicTableInputType = columns[columnIndex].dynamicTableInputType;
+    final bool showEditingWidget =
+          getData().isEditing(index) && isColumnEditableAndIfDropdownColumnThenHasDropdownValues(index, columnIndex);
+    final bool enableTouchMode = (touchMode && isColumnEditableAndIfDropdownColumnThenHasDropdownValues(index, columnIndex));
     return DataCell(
       dynamicTableInputType.getChild(
-        focused: touchMode ? checkFocus(index, columnIndex) : false,
+        focused: enableTouchMode ? checkFocus(index, columnIndex) : false,
         getCurrentValue(index, columnIndex),
         isEditing: showEditingWidget,
         onChanged: (value) {
           setEditingValue(index, columnIndex, value as Comparable<dynamic>?);
         },
-        onEditComplete: touchMode
+        onEditComplete: enableTouchMode
             ? () {
                 if (showEditingWidget) {
                   focusNextField(
@@ -414,24 +419,22 @@ class DynamicTableSource extends DataTableSource
                 }
               }
             : null,
-        focusThisField: () => focusThisField(index, columnIndex),
+        focusThisField: enableTouchMode? () => focusThisField(index, columnIndex) : null,
       ),
       //placeholder: cell.placeholder,
       //showEditIcon: cell.showEditIcon,
-      onTap: () {
+      onTap: enableTouchMode? () {
         void tapToEdit(Reference<int> row, int column) {
           focusThisField(row, column, onFocusThisField: (row) => editRow(row));
         }
 
-        if (touchMode && isColumnEditable(columnIndex)) {
-          if (!showEditingWidget) {
-            tapToEdit(index, columnIndex);
-          } else {
-            focusThisField(index, columnIndex);
-          }
+        if (!showEditingWidget) {
+          tapToEdit(index, columnIndex);
+        } else {
+          focusThisField(index, columnIndex);
         }
         //cell.onTap?.call();
-      },
+      } : null,
       //onLongPress: cell.onLongPress,
       //onTapDown: cell.onTapDown,
       //onDoubleTap: cell.onDoubleTap,
