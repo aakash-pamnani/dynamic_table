@@ -59,7 +59,7 @@ mixin DynamicTableFocus implements DynamicTableSourceView {
     updateFocus(DynamicTableFocusData(row: row.value + 1, column: -1));
     onFocusNextRow?.call(row);
     //checking if last row
-    if (row.value == (getDataLength() - 1)) {
+    if (getRawFocus() != null && getRawFocus()!.row == (getDataLength())) {
       onFocusLastRow?.call();
     }
   }

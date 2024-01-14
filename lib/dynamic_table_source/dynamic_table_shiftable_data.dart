@@ -122,10 +122,11 @@ class DynamicTableShiftableData {
         updateToNewIndex(data);
       }
     }
-    
+
     indexKeyMap.shiftKeys(shiftData, getDataLength());
     if (shiftableRowReference!=null && shiftData[shiftableRowReference.value]!=null) shiftableRowReference.update(shiftData[shiftableRowReference.value]!);
     print("inner shift" + shiftData.toString());
+    print('inner shift end');
     onShift?.call(shiftData);
   }
 

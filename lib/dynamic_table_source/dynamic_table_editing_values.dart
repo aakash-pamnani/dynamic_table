@@ -116,4 +116,8 @@ class DynamicTableEditingValues {
       }
     });
   }
+
+  void logEditingRowIndices() {
+    print('Editing Row Indices: ' + _editingValues.keys.toString());
+  }
 }
