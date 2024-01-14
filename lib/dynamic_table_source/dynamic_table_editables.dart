@@ -36,11 +36,11 @@ mixin DynamicTableEditables
     getEditingValues().setDefaultIfAbsent(index, currentValues: getCurrentValues(index));
   }
 
-  void updateSortByColumnIndex(int sortByColumnIndex, {SortOrder? order}) {
+  void updateSortByColumnIndex(int sortByColumnIndex) {
     if (sortByColumnIndex < 0 || sortByColumnIndex >= getColumnsLength()) {
       throw Exception('Index out of bounds');
     }
-    getData().updateSortByColumnIndex(sortByColumnIndex, order: order);
+    getData().updateSortByColumnIndex(sortByColumnIndex);
   }
 
   void unmarkFromEditing(Reference<int> index) {

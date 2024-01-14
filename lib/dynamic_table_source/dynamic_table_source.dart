@@ -212,8 +212,8 @@ class DynamicTableSource extends DataTableSource
   }
 
   @override
-  void updateSortByColumnIndex(int sortByColumnIndex, {SortOrder? order}) {
-    super.updateSortByColumnIndex(sortByColumnIndex, order: order);
+  void updateSortByColumnIndex(int sortByColumnIndex) {
+    super.updateSortByColumnIndex(sortByColumnIndex);
     notifyListeners();
   }
 
@@ -264,7 +264,7 @@ class DynamicTableSource extends DataTableSource
           label: e.label,
           numeric: e.numeric,
           tooltip: e.tooltip,
-          onSort: (column, order) { updateSortByColumnIndex(column, order: SortOrder.byOrder(order: order)); setTableState(() {}); });
+          onSort: (column, order) { updateSortByColumnIndex(column); setTableState(() {}); });
     }).toList();
     if (showActions || showDeleteOrCancelAction) {
       columnList.add(
@@ -367,8 +367,6 @@ class DynamicTableSource extends DataTableSource
                 return true;
               }
               return false;
-            }).map((e) {
-              return e;
             }).toList(),
             isEditing: getData().isEditing(row),
           ),

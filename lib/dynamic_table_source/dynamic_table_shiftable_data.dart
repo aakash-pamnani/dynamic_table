@@ -119,7 +119,7 @@ class DynamicTableShiftableData {
   }
 
   // shifting
-  void updateSortByColumnIndex(int sortByColumnIndex, {SortOrder? order}) {
+  void updateSortByColumnIndex(int sortByColumnIndex) {
     if (this.sortByColumnIndex != sortByColumnIndex) {
       _sortOrder = SortOrder.asc;
       this.sortByColumnIndex = sortByColumnIndex;
