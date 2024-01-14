@@ -392,6 +392,8 @@ class DynamicTable extends StatefulWidget {
 }
 
 class DynamicTableState extends State<DynamicTable> {
+  GlobalKey<PaginatedDataTableState> _paginatedDataTableState = GlobalKey();
+
   late DynamicTableSource _source;
 
   List<DynamicTableDataColumn> _columns = [];
@@ -417,6 +419,7 @@ class DynamicTableState extends State<DynamicTable> {
       onRowEdit: widget.onRowEdit,
       onRowDelete: widget.onRowDelete,
       onRowSave: widget.onRowSave,
+      pageTo: (rowIndex) => _paginatedDataTableState.currentState?.pageTo(rowIndex),
     );
   }
 
@@ -451,6 +454,7 @@ class DynamicTableState extends State<DynamicTable> {
   @override
   Widget build(BuildContext context) {
     return PaginatedDataTable(
+      key: _paginatedDataTableState,
       header: widget.header,
       actions: [
         if (widget.showAddRowButton)

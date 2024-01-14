@@ -51,6 +51,7 @@ class DynamicTableSource extends DataTableSource
       Comparable<dynamic>? key,
       List<Comparable<dynamic>?> oldValue,
       List<Comparable<dynamic>?> newValue)? onRowSave;
+  void Function(int rowIndex) pageTo;
 
   final List<DynamicTableDataColumn> columns;
   late DynamicTableShiftableData _data;
@@ -110,6 +111,7 @@ class DynamicTableSource extends DataTableSource
     this.onRowEdit,
     this.onRowDelete,
     this.onRowSave,
+    required this.pageTo,
   }) : _editingValues = DynamicTableEditingValues(columns: columns) {
     _data = DynamicTableShiftableData(data,
         onShift: onShift,
@@ -130,6 +132,7 @@ class DynamicTableSource extends DataTableSource
   void updateFocus(DynamicTableFocusData? focus) {
     _focus = focus;
     notifyListeners();
+    pageTo(getFocus().row);
   }
 
   @override
@@ -164,6 +167,7 @@ class DynamicTableSource extends DataTableSource
   void onShift(Map<int, int> shiftData) {
     shiftEditingValues(shiftData);
     _focus = shiftFocus(_focus, shiftData);
+    pageTo(getFocus().row);
   }
 
   @override

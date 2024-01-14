@@ -2,7 +2,6 @@ import 'package:dynamic_table/dynamic_table_source/dynamic_table_editing_values.
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_shiftable_data.dart';
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_source.dart';
 import 'package:dynamic_table/dynamic_table_source/reference.dart';
-import 'package:dynamic_table/dynamic_table_source/sort_order.dart';
 
 mixin DynamicTableEditables
     implements DynamicTableSourceView, DynamicTableSourceConfig {

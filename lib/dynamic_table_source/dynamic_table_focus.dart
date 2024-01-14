@@ -8,7 +8,6 @@ mixin DynamicTableFocus implements DynamicTableSourceView {
 
   //TODO: in move to next editable column skip also the dropdown columns having no selection values.
   //TODO: disallow touchMode if the data table has no editable columns.
-  //TODO: consider pagination when resetting focus and changing focus
   //TODO: in editing cell if esc key is pressed then cancel the editing
   DynamicTableFocusData resetFocus(DynamicTableFocusData? focus) {
     if (focus == null) return DynamicTableFocusData(row: 0, column: -1);
