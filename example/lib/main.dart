@@ -9,6 +9,16 @@ void main() {
   runApp(const MyApp());
 }
 
+enum MyDataField {
+  name(0), uniqueId(1), birthDate(2), gender(3), otherInfo(4);
+
+  final int _index;
+
+  int get idx => _index;
+
+  const MyDataField(int index) : _index = index;
+}
+
 class MyApp extends StatefulWidget {
   const MyApp({
     Key? key,
@@ -20,7 +30,10 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   var tableKey = GlobalKey<DynamicTableState>();
-  var myData = dummyData.toList();
+  Map<String, List<Comparable<dynamic>?>> myData = dummyData.asMap().map(
+        (key, value) => MapEntry(value[MyDataField.uniqueId.idx] as String, value),
+      );
+  String actionColumnTitle = "My Action Title";
 
   @override
   Widget build(BuildContext context) {
@@ -35,32 +48,39 @@ class _MyAppState extends State<MyApp> {
             child: DynamicTable(
               key: tableKey,
               header: const Text("Person Table"),
-              onRowEdit: (index, row) {
+              editOneByOne: true,
+              autoSaveRows: true,
+              addRowAtTheEnd: true,
+              showActions: false,
+              showAddRowButton: true,
+              showDeleteOrCancelAction: true,
+              touchMode: true,
+              selectable: true,
+              onRowEdit: (key, row) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text("Row Edited index:$index row:$row"),
+                    content: Text("Row Edited key:$key row:$row"),
                   ),
                 );
-                myData[index] = row;
                 return true;
               },
-              onRowDelete: (index, row) {
+              onRowDelete: (key, row) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text("Row Deleted index:$index row:$row"),
+                    content: Text("Row Deleted key:$key row:$row"),
                   ),
                 );
-                myData.removeAt(index);
+                if (myData.containsKey(key)) myData.remove(key);
                 return true;
               },
-              onRowSave: (index, old, newValue) {
+              onRowSave: (key, old, newValue) {
                 // ScaffoldMessenger.of(context).showSnackBar(
                 //   SnackBar(
                 //     content:
                 //         Text("Row Saved index:$index old:$old new:$newValue"),
                 //   ),
                 // );
-                if (newValue[0] == null) {
+                if (newValue[MyDataField.name.idx] == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text("Name cannot be null"),
@@ -69,7 +89,7 @@ class _MyAppState extends State<MyApp> {
                   return null;
                 }
 
-                if (newValue[0].toString().length < 3) {
+                if (newValue[MyDataField.name.idx].toString().length < 3) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text("Name must be atleast 3 characters long"),
@@ -77,7 +97,7 @@ class _MyAppState extends State<MyApp> {
                   );
                   return null;
                 }
-                if (newValue[0].toString().length > 20) {
+                if (newValue[MyDataField.name.idx].toString().length > 20) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content:
@@ -86,14 +106,18 @@ class _MyAppState extends State<MyApp> {
                   );
                   return null;
                 }
-                if (newValue[1] == null) {
+                if (key == null) {
                   //If newly added row then add unique ID
-                  newValue[1] = Random()
-                      .nextInt(500)
+                  newValue[MyDataField.uniqueId.idx] = (Random().nextInt(500) + 100)
                       .toString(); // to add Unique ID because it is not editable
+
+                  while (myData.containsKey(newValue[MyDataField.uniqueId.idx])) {
+                    newValue[MyDataField.uniqueId.idx] = (Random().nextInt(500) + 100).toString();
+                  }
                 }
-                myData[index] = newValue; // Update data
-                if (newValue[0] == null) {
+                myData.putIfAbsent(
+                    newValue[MyDataField.uniqueId.idx]! as String, () => newValue); // Update data
+                if (newValue[MyDataField.name.idx] == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text("Name cannot be null"),
@@ -103,9 +127,6 @@ class _MyAppState extends State<MyApp> {
                 }
                 return newValue;
               },
-              showActions: true,
-              showAddRowButton: true,
-              showDeleteAction: true,
               rowsPerPage: 5,
               showFirstLastButtons: true,
               availableRowsPerPage: const [
@@ -117,7 +138,11 @@ class _MyAppState extends State<MyApp> {
               dataRowMinHeight: 60,
               dataRowMaxHeight: 60,
               columnSpacing: 60,
-              actionColumnTitle: "My Action Title",
+              actionColumnTitle: actionColumnTitle,
+              selectAllToolTip: 'Select all odd Values',
+              unselectAllToolTip: 'Unselect all Values',
+              showSelectAllButton: true,
+              filterSelectionByIndex: (index) => (index + 1).isOdd,
               showCheckboxColumn: true,
               onSelectAll: (value) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -137,45 +162,28 @@ class _MyAppState extends State<MyApp> {
               },
               actions: [
                 IconButton(
-                  onPressed: () {
-                    for (var i = 0; i < myData.length; i += 2) {
-                      tableKey.currentState?.selectRow(i, isSelected: true);
-                    }
-                  },
-                  icon: const Icon(Icons.select_all),
-                  tooltip: "Select all odd Values",
-                ),
-                IconButton(
-                  onPressed: () {
-                    for (var i = 0; i < myData.length; i += 2) {
-                      tableKey.currentState?.selectRow(i, isSelected: false);
-                    }
-                  },
-                  icon: const Icon(Icons.deselect_outlined),
-                  tooltip: "Unselect all odd Values",
-                ),
+                    onPressed: () {
+                      setState(() {
+                        actionColumnTitle = "New Action Title";
+                        myData['101'] = [
+                          "Aakash",
+                          "101",
+                          DateTime(2000, 2, 11),
+                          genderDropdown[0],
+                          "Some more info about Aakash"
+                        ];
+                        myData['100'] = [
+                          "Raksha",
+                          "100",
+                          DateTime(2000, 2, 11),
+                          genderDropdown[1],
+                          "Some other info about Raksha"
+                        ];
+                      });
+                    },
+                    icon: const Icon(Icons.refresh))
               ],
-              rows: List.generate(
-                myData.length,
-                (index) => DynamicTableDataRow(
-                  onSelectChanged: (value) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: value ?? false
-                            ? Text("Row Selected index:$index")
-                            : Text("Row Unselected index:$index"),
-                      ),
-                    );
-                  },
-                  index: index,
-                  cells: List.generate(
-                    myData[index].length,
-                    (cellIndex) => DynamicTableDataCell(
-                      value: myData[index][cellIndex],
-                    ),
-                  ),
-                ),
-              ),
+              rows: Map<String, List<Comparable<dynamic>?>>.from(myData),
               columns: [
                 DynamicTableDataColumn(
                     label:
@@ -184,6 +192,7 @@ class _MyAppState extends State<MyApp> {
                     dynamicTableInputType: DynamicTableInputType.text()),
                 DynamicTableDataColumn(
                     label: const Text("Unique ID"),
+                    isKeyColumn: true,
                     onSort: (columnIndex, ascending) {},
                     isEditable: false,
                     dynamicTableInputType: DynamicTableInputType.text()),
@@ -227,12 +236,13 @@ class _MyAppState extends State<MyApp> {
                 DynamicTableDataColumn(
                   label: const Text("Other Info"),
                   onSort: (columnIndex, ascending) {},
+                  isEditable: false,
                   dynamicTableInputType: DynamicTableInputType.text(
                     decoration: const InputDecoration(
                       hintText: "Enter Other Info",
                       border: OutlineInputBorder(),
                     ),
-                    maxLines: 100,
+                    maxLines: 5,
                   ),
                 ),
               ],

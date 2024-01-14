@@ -2,6 +2,13 @@ import 'package:dynamic_table/dynamic_table.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:dynamic_table/dynamic_table_widget/default_display_widget.dart';
+import 'package:dynamic_table/dynamic_table_widget/dynamic_table_autocomplete_widget.dart';
+import 'package:dynamic_table/dynamic_table_widget/dynamic_table_date_input_widget.dart';
+import 'package:dynamic_table/dynamic_table_widget/dynamic_table_dependent_dropdown_widget.dart';
+import 'package:dynamic_table/dynamic_table_widget/dynamic_table_dropdown_widget.dart';
+import 'package:dynamic_table/dynamic_table_widget/dynamic_table_text_input_widget.dart';
+
 part 'dynamic_table_date_input.dart';
 part 'dynamic_table_text_input.dart';
 part 'dynamic_table_dropdown_input.dart';
@@ -19,22 +26,28 @@ abstract class DynamicTableInputType<T extends Object> {
 
   Widget getChild(T? value,
       {required bool isEditing,
-      Function(T? value, int row, int column)? onChanged,
-      required int row,
-      required int column}) {
+      Function(T? value)? onChanged,
+      void Function()? onEditComplete,
+      void Function()? focusThisField,
+      bool focused = false}) {
     if (isEditing) {
-      return editingWidget(value, onChanged, row, column);
+      return editingWidget(value, onChanged, onEditComplete, focusThisField, focused);
     } else {
-      return displayWidget(value);
+      return displayWidget(value, focused, onEditComplete);
     }
   }
 
   /// This is the widget which will be displayed when the [DynamicTableDataRow.isEditing] is true.
   Widget editingWidget(T? value,
-      Function(T? value, int row, int column)? onChanged, int row, int column);
+      Function(T? value)? onChanged,
+      void Function()? onEditComplete,
+      void Function()? focusThisField,
+      // ignore: avoid_positional_boolean_parameters
+      bool focused);
 
   /// This is the widget which will be displayed when the [DynamicTableDataRow.isEditing] is false.
-  Widget displayWidget(T? value);
+  // ignore: avoid_positional_boolean_parameters
+  Widget displayWidget(T? value, bool focused, void Function()? onEditComplete);
 
   void dispose();
 
@@ -64,7 +77,7 @@ abstract class DynamicTableInputType<T extends Object> {
     SmartQuotesType? smartQuotesType,
     bool enableSuggestions = true,
     MaxLengthEnforcement? maxLengthEnforcement,
-    int? maxLines = 1,
+    int maxLines = 1,
     int? minLines,
     bool expands = false,
     int? maxLength,
@@ -92,7 +105,6 @@ abstract class DynamicTableInputType<T extends Object> {
       textDirection: textDirection,
       textAlign: textAlign,
       textAlignVertical: textAlignVertical,
-      autofocus: autofocus,
       readOnly: readOnly,
       showCursor: showCursor,
       obscuringCharacter: obscuringCharacter,
@@ -151,9 +163,9 @@ abstract class DynamicTableInputType<T extends Object> {
     List<TextInputFormatter>? inputFormatters,
     bool? enabled,
     MouseCursor? mouseCursor,
+    bool readOnly = true
   }) {
     return DynamicTableDateInput(
-      context: context,
       initialDate: initialDate,
       lastDate: lastDate,
       formatDate: formatDate,
@@ -163,8 +175,8 @@ abstract class DynamicTableInputType<T extends Object> {
       textDirection: textDirection,
       textAlign: textAlign,
       textAlignVertical: textAlignVertical,
-      autofocus: autofocus,
       mouseCursor: mouseCursor,
+      readOnly: readOnly
     );
   }
 
@@ -193,7 +205,6 @@ abstract class DynamicTableInputType<T extends Object> {
     bool isExpanded = false,
     double? itemHeight,
     Color? focusColor,
-    FocusNode? focusNode,
     bool autofocus = false,
     Color? dropdownColor,
     InputDecoration? decoration,
@@ -218,8 +229,6 @@ abstract class DynamicTableInputType<T extends Object> {
       isExpanded: isExpanded,
       itemHeight: itemHeight,
       focusColor: focusColor,
-      focusNode: focusNode,
-      autofocus: autofocus,
       dropdownColor: dropdownColor,
       decoration: decoration,
       menuMaxHeight: menuMaxHeight,
