@@ -116,4 +116,23 @@ class DynamicTableEditingValues {
       }
     });
   }
+
+  bool isDropdownColumnAndHasNoDropdownValues(Reference<int> row, int columnIndex) {
+    bool isDropdownColumn() {
+      return columns[columnIndex].dynamicTableInputType is DynamicTableDropDownInput<Comparable<dynamic>>
+        || columns[columnIndex].dynamicTableInputType is DynamicTableDependentDropDownInput<Comparable<dynamic>, Comparable<dynamic>>;
+    }
+    bool hasDropdownValues() {
+      if (columns[columnIndex].dynamicTableInputType is DynamicTableDropDownInput<Comparable<dynamic>>) {
+        return (columns[columnIndex].dynamicTableInputType as DynamicTableDropDownInput<Comparable<dynamic>>).hasSelectionValue();
+      }
+      if (columns[columnIndex].dynamicTableInputType is DynamicTableDependentDropDownInput<Comparable<dynamic>, Comparable<dynamic>>) {
+        final int dependentOnColumnIndex = (columns[columnIndex].dynamicTableInputType as DynamicTableDependentDropDownInput<Comparable<dynamic>, Comparable<dynamic>>).dependentOnColumn;
+        final Comparable<dynamic>? dependentOnColumnSelectedValue = getEditingValue(row, dependentOnColumnIndex);
+        return dependentOnColumnSelectedValue != null && (columns[columnIndex].dynamicTableInputType as DynamicTableDependentDropDownInput<Comparable<dynamic>, Comparable<dynamic>>).hasSelectionValue(dependentOnColumnSelectedValue);
+      }
+      return false;
+    }
+    return isDropdownColumn() && !hasDropdownValues();
+  }
 }

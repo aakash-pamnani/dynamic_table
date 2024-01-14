@@ -16,6 +16,7 @@ abstract class DynamicTableSourceView {
   int getColumnsLength();
   bool isColumnEditable(int column);
   int getKeyColumnIndex();
+  bool isDropdownColumnAndHasNoDropdownValues(Reference<int> row, int columnIndex);
 }
 
 abstract class DynamicTableSourceConfig {
@@ -242,6 +243,10 @@ class DynamicTableSource extends DataTableSource
 
   List<List<Comparable<dynamic>?>> getAllRows() {
     return getData().getAllSavedValues();
+  }
+
+  bool isDropdownColumnAndHasNoDropdownValues(Reference<int> row, int columnIndex) {
+    return getEditingValues().isDropdownColumnAndHasNoDropdownValues(row, columnIndex);
   }
 
   @override

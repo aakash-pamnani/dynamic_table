@@ -38,6 +38,8 @@ class DynamicTable extends StatefulWidget {
   ///
   ///
 
+  //TODO:validate widget configuration
+
   DynamicTable(
       {super.key,
       this.header,

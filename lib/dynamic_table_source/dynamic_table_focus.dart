@@ -6,8 +6,7 @@ mixin DynamicTableFocus implements DynamicTableSourceView {
   DynamicTableFocusData? getRawFocus();
   void updateFocus(DynamicTableFocusData? focus);
 
-  //TODO: in move to next editable column skip also the dropdown columns having no selection values.
-  //TODO: disallow touchMode if the data table has no editable columns.
+  //TODO: focus the selection list in the dropdown controls instead of the outter container
   //TODO: in editing cell if esc key is pressed then cancel the editing
   DynamicTableFocusData resetFocus(DynamicTableFocusData? focus) {
     if (focus == null) return DynamicTableFocusData(row: 0, column: -1);
@@ -37,7 +36,7 @@ mixin DynamicTableFocus implements DynamicTableSourceView {
     //moving to the next editable column
     var i = 1;
     while (((focus.column + i) < getColumnsLength()) &&
-        !isColumnEditable(focus.column + i)) {
+        (!isColumnEditable(focus.column + i) || isDropdownColumnAndHasNoDropdownValues(Reference<int>(value: focus.row), focus.column + i))) {
       i = i + 1;
     }
     return DynamicTableFocusData(row: focus.row, column: focus.column + i);

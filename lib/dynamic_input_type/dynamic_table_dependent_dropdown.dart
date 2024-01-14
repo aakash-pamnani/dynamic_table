@@ -62,6 +62,10 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
     return _itemsBuilder(dependentValue!).first.value;
   }
 
+  bool hasSelectionValue(W dependentValue) {
+    return _itemsBuilder(dependentValue).isNotEmpty;
+  }
+
   @override
   Widget displayWidget(T? value, bool focused, void Function()? onEditComplete, ) {
     return DefaultDisplayWidget<T>(

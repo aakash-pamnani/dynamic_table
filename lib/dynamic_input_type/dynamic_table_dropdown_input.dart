@@ -98,6 +98,10 @@ class DynamicTableDropDownInput<T extends Object>
     return _items.first.value;
   }
 
+  bool hasSelectionValue() {
+    return _items.isNotEmpty;
+  }
+
   @override
   Widget editingWidget(
       T? value,
