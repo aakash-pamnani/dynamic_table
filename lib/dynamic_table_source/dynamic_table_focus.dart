@@ -1,5 +1,6 @@
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_focus_data.dart';
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_source.dart';
+import 'package:dynamic_table/dynamic_table_source/reference.dart';
 
 mixin DynamicTableFocus implements DynamicTableSourceView {
   DynamicTableFocusData? getRawFocus();
@@ -16,16 +17,19 @@ mixin DynamicTableFocus implements DynamicTableSourceView {
     var isColumnOutOfFocus =
         () => !(focus.column >= -1 && focus.column < getColumnsLength());
 
-    if (isRowOutOfFocus() && isColumnOutOfFocus())
+    if (isRowOutOfFocus() && isColumnOutOfFocus()) {
       return DynamicTableFocusData(row: 0, column: -1);
+    }
 
     //resetting row focus if it is out of focus
-    if (isRowOutOfFocus())
+    if (isRowOutOfFocus()) {
       return DynamicTableFocusData(row: 0, column: -1);
+    }
 
     //resetting column focus if it is out of focus
-    if (isColumnOutOfFocus())
+    if (isColumnOutOfFocus()) {
       return DynamicTableFocusData(row: focus.row, column: -1);
+    }
 
     return focus;
   }
@@ -46,40 +50,40 @@ mixin DynamicTableFocus implements DynamicTableSourceView {
     return focus;
   }
 
-  bool checkFocus(int row, int column) {
+  bool checkFocus(Reference<int> row, int column) {
     var focus = getFocus();
-    return focus.row == row && focus.column == column;
+    return focus.row == row.value && focus.column == column;
   }
 
-  void focusNextRow(int row, { void onFocusNextRow(int oldRow)?, void onFocusLastRow()? }) {
-    updateFocus(DynamicTableFocusData(row: row + 1, column: -1));
+  void focusNextRow(Reference<int> row, { void onFocusNextRow(Reference<int> oldRow)?, void onFocusLastRow()? }) {
+    updateFocus(DynamicTableFocusData(row: row.value + 1, column: -1));
     onFocusNextRow?.call(row);
     //checking if last row
-    if (row == (getDataLength() - 1)) {
+    if (getRawFocus() != null && getRawFocus()!.row == (getDataLength())) {
       onFocusLastRow?.call();
     }
   }
 
-  void focusNextField(int row, int column, { void onFocusNextRow(int oldRow)?, void onFocusLastRow()? }) {
+  void focusNextField(Reference<int> row, int column, { void onFocusNextRow(Reference<int> oldRow)?, void onFocusLastRow()? }) {
     var focus =
-        moveToNextEditableColumn(DynamicTableFocusData(row: row, column: column));
+        moveToNextEditableColumn(DynamicTableFocusData(row: row.value, column: column));
 
     //checking if there are no more editable columns
     if ((focus.column) == getColumnsLength()) {
-      focusNextRow(focus.row, onFocusLastRow: onFocusLastRow, onFocusNextRow: onFocusNextRow);
+      focusNextRow(row, onFocusLastRow: onFocusLastRow, onFocusNextRow: onFocusNextRow);
       return;
     }
 
     updateFocus(focus);
   }
 
-  void focusThisField(int row, int column, { void onFocusThisField(int row)? }) {
-    updateFocus(DynamicTableFocusData(row: row, column: column));
+  void focusThisField(Reference<int> row, int column, { void onFocusThisField(Reference<int> row)? }) {
+    updateFocus(DynamicTableFocusData(row: row.value, column: column));
     onFocusThisField?.call(row);
   }
 
-  void focusThisRow(int row) {
-    updateFocus(DynamicTableFocusData(row: row, column: -1));
+  void focusThisRow(Reference<int> row) {
+    updateFocus(DynamicTableFocusData(row: row.value, column: -1));
   }
 
   DynamicTableFocusData? shiftFocus(DynamicTableFocusData? focus, Map<int, int> shiftData) {

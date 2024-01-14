@@ -3,14 +3,12 @@ import 'package:dynamic_table/dynamic_table_source/dynamic_table_editing_values.
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_focus.dart';
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_focus_data.dart';
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_shiftable_data.dart';
-import 'package:dynamic_table/dynamic_table_source/shifting_map.dart';
+import 'package:dynamic_table/dynamic_table_source/reference.dart';
 import 'package:flutter/material.dart';
 
 import 'package:dynamic_table/dynamic_input_type/dynamic_table_input_type.dart';
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_action.dart';
-import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_cell.dart';
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_column.dart';
-import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_row.dart';
 
 abstract class DynamicTableSourceView {
   int getDataLength();
@@ -20,10 +18,14 @@ abstract class DynamicTableSourceView {
 }
 
 abstract class DynamicTableSourceConfig {
-  bool Function(int index, List<Comparable<dynamic>?> row)? get onRowEdit;
-  bool Function(int index, List<Comparable<dynamic>?> row)? get onRowDelete;
+  bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)?
+      get onRowEdit;
+  bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)?
+      get onRowDelete;
   List<Comparable<dynamic>?>? Function(
-      int index, List<Comparable<dynamic>?> oldValue, List<Comparable<dynamic>?> newValue)? get onRowSave;
+      Comparable<dynamic>? key,
+      List<Comparable<dynamic>?> oldValue,
+      List<Comparable<dynamic>?> newValue)? get onRowSave;
   bool get selectable;
   bool get editOneByOne;
   bool get autoSaveRowsEnabled;
@@ -40,10 +42,14 @@ class DynamicTableSource extends DataTableSource
   bool selectable;
   bool editOneByOne;
   bool autoSaveRowsEnabled;
-  bool Function(int index, List<Comparable<dynamic>?> row)? onRowEdit;
-  bool Function(int index, List<Comparable<dynamic>?> row)? onRowDelete;
+  bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)?
+      onRowEdit;
+  bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)?
+      onRowDelete;
   List<Comparable<dynamic>?>? Function(
-      int index, List<Comparable<dynamic>?> oldValue, List<Comparable<dynamic>?> newValue)? onRowSave;
+      Comparable<dynamic>? key,
+      List<Comparable<dynamic>?> oldValue,
+      List<Comparable<dynamic>?> newValue)? onRowSave;
 
   final List<DynamicTableDataColumn> columns;
   late DynamicTableShiftableData _data;
@@ -60,23 +66,29 @@ class DynamicTableSource extends DataTableSource
     bool? selectable,
     bool? editOneByOne,
     bool? autoSaveRowsEnabled,
-    bool Function(int index, List<Comparable<dynamic>?> row)? onRowEdit,
-    bool Function(int index, List<Comparable<dynamic>?> row)? onRowDelete,
+    bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)?
+        onRowEdit,
+    bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)?
+        onRowDelete,
     List<Comparable<dynamic>?>? Function(
-      int index, List<Comparable<dynamic>?> oldValue, List<Comparable<dynamic>?> newValue)? onRowSave,}) {
-      if (actionColumnTitle != null) this.actionColumnTitle = actionColumnTitle;
-      if (showActions != null) this.showActions = showActions;
-      if (showDeleteAction != null) this.showDeleteAction = showDeleteAction;
-      if (showDeleteOrCancelAction != null) this.showDeleteOrCancelAction = showDeleteOrCancelAction;
-      if (touchMode != null) this.touchMode = touchMode;
-      if (selectable != null) this.selectable = selectable;
-      if (editOneByOne != null) this.editOneByOne = editOneByOne;
-      if (autoSaveRowsEnabled != null) this.autoSaveRowsEnabled = autoSaveRowsEnabled;
-      if (onRowEdit != null) this.onRowEdit = onRowEdit;
-      if (onRowDelete != null) this.onRowDelete = onRowDelete;
-      if (onRowSave != null) this.onRowSave = onRowSave;
-      notifyListeners();
-    }
+            Comparable<dynamic>? key,
+            List<Comparable<dynamic>?> oldValue,
+            List<Comparable<dynamic>?> newValue)?
+        onRowSave,
+  }) {
+    if (actionColumnTitle != null) this.actionColumnTitle = actionColumnTitle;
+    if (showActions != null) this.showActions = showActions;
+    if (showDeleteAction != null) this.showDeleteAction = showDeleteAction;
+    if (showDeleteOrCancelAction != null) this.showDeleteOrCancelAction = showDeleteOrCancelAction;
+    if (touchMode != null) this.touchMode = touchMode;
+    if (selectable != null) this.selectable = selectable;
+    if (editOneByOne != null) this.editOneByOne = editOneByOne;
+    if (autoSaveRowsEnabled != null) this.autoSaveRowsEnabled = autoSaveRowsEnabled;
+    if (onRowEdit != null) this.onRowEdit = onRowEdit;
+    if (onRowDelete != null) this.onRowDelete = onRowDelete;
+    if (onRowSave != null) this.onRowSave = onRowSave;
+    notifyListeners();
+  }
 
   void retainFocus(DynamicTableSource? lastSource) {
     this._focus = lastSource?._focus;
@@ -98,9 +110,10 @@ class DynamicTableSource extends DataTableSource
     this.onRowDelete,
     this.onRowSave,
   }) : _editingValues = DynamicTableEditingValues(columns: columns) {
-
-    _data = DynamicTableShiftableData(onShift: onShift, keyColumnIndex: getKeyColumnIndex(), columnsLength: getColumnsLength());
-    _data.loadInitialData(data);
+    _data = DynamicTableShiftableData(data,
+        onShift: onShift,
+        keyColumnIndex: getKeyColumnIndex(),
+        columnsLength: getColumnsLength());
 
     //Retaining empty rows with their editing values if present
     /*lastSource?._unsavedRows.sort((a, b) => a.compareTo(b));
@@ -139,7 +152,7 @@ class DynamicTableSource extends DataTableSource
   }
 
   @override
-  DynamicTableShiftableData getData() =>  _data;
+  DynamicTableShiftableData getData() => _data;
 
   @override
   DynamicTableEditingValues getEditingValues() => _editingValues;
@@ -150,44 +163,46 @@ class DynamicTableSource extends DataTableSource
   }
 
   @override
-  void insertRow(int index, {List<Comparable<dynamic>?>? values, bool isEditing = false}) {
+  void insertRow(Reference<int> index,
+      {List<Comparable<dynamic>?>? values, bool isEditing = false}) {
     super.insertRow(index, values: values, isEditing: isEditing);
     notifyListeners();
     focusThisRow(index);
   }
 
   @override
-  void deleteRow(int index) {
+  void deleteRow(Reference<int> index) {
     super.deleteRow(index);
     notifyListeners();
   }
 
   @override
-  void cancelRow(int row) {
+  void cancelRow(Reference<int> row) {
     super.cancelRow(row);
     notifyListeners();
   }
 
   @override
-  void editRow(int row) {
+  void editRow(Reference<int> row) {
     super.editRow(row);
     notifyListeners();
   }
 
   @override
-  void updateRow(int index, List<Comparable<dynamic>?> values) {
+  void updateRow(Reference<int> index, List<Comparable<dynamic>?> values) {
     super.updateRow(index, values);
     notifyListeners();
   }
 
   @override
-  void selectRow(int index, {required bool isSelected}) {
+  void selectRow(Reference<int> index, {required bool isSelected}) {
     super.selectRow(index, isSelected: isSelected);
     notifyListeners();
   }
 
   @override
-  void setEditingValue(int row, int column, Comparable<dynamic>? value) {
+  void setEditingValue(
+      Reference<int> row, int column, Comparable<dynamic>? value) {
     super.setEditingValue(row, column, value);
     notifyListeners();
   }
@@ -198,7 +213,7 @@ class DynamicTableSource extends DataTableSource
     notifyListeners();
   }
 
-  List<Comparable<dynamic>?> getRowByIndex(int index) {
+  List<Comparable<dynamic>?> getRowByIndex(Reference<int> index) {
     if (index < 0 || index >= getDataLength()) {
       throw Exception('Index out of bounds');
     }
@@ -223,7 +238,7 @@ class DynamicTableSource extends DataTableSource
 
   @override
   DataRow? getRow(int index) {
-    return _buildRow(index);
+    return _buildRow(Reference<int>(value: index));
   }
 
   @override
@@ -257,9 +272,11 @@ class DynamicTableSource extends DataTableSource
     return columnList;
   }
 
-  DataRow? _buildRow(int index) {
-    var datarow = DataRow.byIndex(
-      index: index,
+  DataRow? _buildRow(Reference<int> index) {
+    var datarow = DataRow(
+      key: getData().getKeyOfRowIndex(index) != null
+          ? ValueKey<Comparable<dynamic>>(getData().getKeyOfRowIndex(index)!)
+          : null,
       selected: getData().isSelected(index),
       onSelectChanged: selectable
           ? (value) {
@@ -274,11 +291,22 @@ class DynamicTableSource extends DataTableSource
     return datarow;
   }
 
-  List<DataCell> _addActionsInCell(int row) {
+  List<DataCell> _buildRowCells(Reference<int> row) {
+    List<DataCell> cellsList =
+        List.generate(getColumnsLength(), (index) => index).map((column) {
+      final showEditingWidget =
+          getData().isEditing(row) && isColumnEditable(column);
+      return _buildDataCell(row, column, showEditingWidget);
+    }).toList();
+    cellsList.addAll(_addActionsInCell(row));
+    return cellsList;
+  }
+
+  List<DataCell> _addActionsInCell(Reference<int> row) {
     List<DynamicTableAction> actions = [];
     List<DataCell> cellsList = [];
 
-    if (showActions)
+    if (showActions) {
       actions.add(
         DynamicTableActionEdit(
           showOnlyOnEditing: false,
@@ -287,8 +315,9 @@ class DynamicTableSource extends DataTableSource
           },
         ),
       );
+    }
 
-    if (showActions)
+    if (showActions) {
       actions.add(
         DynamicTableActionSave(
           showOnlyOnEditing: true,
@@ -297,16 +326,18 @@ class DynamicTableSource extends DataTableSource
           },
         ),
       );
+    }
 
-    if (showActions || showDeleteOrCancelAction)
+    if (showActions || showDeleteOrCancelAction) {
       actions.add(DynamicTableActionCancel(
         showOnlyOnEditing: true,
         onPressed: () {
           cancelRow(row);
         },
       ));
+    }
 
-    if ((showActions && showDeleteAction) || showDeleteOrCancelAction)
+    if ((showActions && showDeleteAction) || showDeleteOrCancelAction) {
       actions.add(DynamicTableActionDelete(
         showOnlyOnEditing: false,
         showAlways: !showDeleteOrCancelAction,
@@ -314,6 +345,7 @@ class DynamicTableSource extends DataTableSource
           deleteRow(row);
         },
       ));
+    }
 
     if (actions.isNotEmpty) {
       DynamicTableActionsInput actionsInput = DynamicTableActionsInput();
@@ -335,8 +367,6 @@ class DynamicTableSource extends DataTableSource
               return e;
             }).toList(),
             isEditing: getData().isEditing(row),
-            row: row,
-            column: getActionsColumn(row),
           ),
         ),
       );
@@ -344,53 +374,41 @@ class DynamicTableSource extends DataTableSource
     return cellsList;
   }
 
-  List<DataCell> _buildRowCells(int row) {
-    List<DataCell> cellsList =
-        List.generate(getColumnsLength(), (index) => index).map((column) {
-      final showEditingWidget =
-          getData().isEditing(row) && isColumnEditable(column);
-      return _buildDataCell(row, column, showEditingWidget);
-    }).toList();
-    cellsList.addAll(_addActionsInCell(row));
-    return cellsList;
-  }
-
-  DataCell _buildDataCell(int index, int columnIndex, bool showEditingWidget) {
+  DataCell _buildDataCell(
+      Reference<int> index, int columnIndex, bool showEditingWidget) {
     var dynamicTableInputType = columns[columnIndex].dynamicTableInputType;
     return DataCell(
       dynamicTableInputType.getChild(
         focused: touchMode ? checkFocus(index, columnIndex) : false,
         getCurrentValue(index, columnIndex),
         isEditing: showEditingWidget,
-        row: index,
-        column: columnIndex,
-        onChanged: (value, row, column) {
-          setEditingValue(row, column, value as Comparable<dynamic>?);
+        onChanged: (value) {
+          setEditingValue(index, columnIndex, value as Comparable<dynamic>?);
         },
         onEditComplete: touchMode
-            ? (row, column) {
+            ? () {
                 if (showEditingWidget) {
                   focusNextField(
-                    row,
-                    column,
-                    onFocusNextRow: (oldRow) => saveRow(row),
+                    index,
+                    columnIndex,
+                    onFocusNextRow: (oldRow) => saveRow(index),
                     onFocusLastRow: () => addRowLast(),
                   );
                 } else {
                   focusNextField(
-                    row,
-                    column,
+                    index,
+                    columnIndex,
                     onFocusLastRow: () => addRowLast(),
                   );
                 }
               }
             : null,
-        focusThisField: (row, column) => focusThisField(row, column),
+        focusThisField: () => focusThisField(index, columnIndex),
       ),
       //placeholder: cell.placeholder,
       //showEditIcon: cell.showEditIcon,
       onTap: () {
-        void tapToEdit(int row, int column) {
+        void tapToEdit(Reference<int> row, int column) {
           focusThisField(row, column, onFocusThisField: (row) => editRow(row));
         }
 

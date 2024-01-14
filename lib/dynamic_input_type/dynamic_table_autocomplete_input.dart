@@ -32,14 +32,12 @@ class DynamicTableAutocompleteInput extends DynamicTableInputType<String> {
   final AutocompleteOptionsViewBuilder<String>? _optionsViewBuilder;
 
   @override
-  Widget displayWidget(String? value, bool focused, void Function(int row, int column)? onEditComplete, int row, int column) {
+  Widget displayWidget(String? value, bool focused, void Function()? onEditComplete, ) {
     return DefaultDisplayWidget<String>(
       displayBuilder: _displayBuilder,
       value: value,
       focused: focused,
       onEditComplete: onEditComplete,
-      row: row,
-      column: column
     );
   }
 
@@ -58,11 +56,9 @@ class DynamicTableAutocompleteInput extends DynamicTableInputType<String> {
   @override
   Widget editingWidget(
       String? value,
-      Function(String value, int row, int column)? onChanged,
-      void Function(int row, int column)? onEditComplete,
-      void Function(int row, int column)? focusThisField,
-      int row,
-      int column,
+      Function(String value, )? onChanged,
+      void Function()? onEditComplete,
+      void Function()? focusThisField,
       bool focused) {
     return DynamicTableAutocompleteWidget(
         optionsBuilder: _optionsBuilder,
@@ -75,8 +71,6 @@ class DynamicTableAutocompleteInput extends DynamicTableInputType<String> {
         onChanged: onChanged,
         onEditComplete: onEditComplete,
         focusThisField: focusThisField,
-        row: row,
-        column: column,
         focused: focused);
   }
 

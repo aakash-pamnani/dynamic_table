@@ -9,6 +9,16 @@ void main() {
   runApp(const MyApp());
 }
 
+enum MyDataField {
+  name(0), uniqueId(1), birthDate(2), gender(3), otherInfo(4);
+
+  final int _index;
+
+  int get idx => _index;
+
+  const MyDataField(int index) : _index = index;
+}
+
 class MyApp extends StatefulWidget {
   const MyApp({
     Key? key,
@@ -21,7 +31,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   var tableKey = GlobalKey<DynamicTableState>();
   Map<String, List<Comparable<dynamic>?>> myData = dummyData.asMap().map(
-        (key, value) => MapEntry(value[1] as String, value),
+        (key, value) => MapEntry(value[MyDataField.uniqueId.idx] as String, value),
       );
   String actionColumnTitle = "My Action Title";
 
@@ -46,31 +56,31 @@ class _MyAppState extends State<MyApp> {
               showDeleteOrCancelAction: true,
               touchMode: true,
               selectable: true,
-              onRowEdit: (index, row) {
+              onRowEdit: (key, row) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text("Row Edited index:$index row:$row"),
+                    content: Text("Row Edited key:$key row:$row"),
                   ),
                 );
                 return true;
               },
-              onRowDelete: (index, row) {
+              onRowDelete: (key, row) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text("Row Deleted index:$index row:$row"),
+                    content: Text("Row Deleted key:$key row:$row"),
                   ),
                 );
-                if (myData.containsKey(row[1])) myData.remove(row[1]);
+                if (myData.containsKey(key)) myData.remove(key);
                 return true;
               },
-              onRowSave: (index, old, newValue) {
+              onRowSave: (key, old, newValue) {
                 // ScaffoldMessenger.of(context).showSnackBar(
                 //   SnackBar(
                 //     content:
                 //         Text("Row Saved index:$index old:$old new:$newValue"),
                 //   ),
                 // );
-                if (newValue[0] == null) {
+                if (newValue[MyDataField.name.idx] == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text("Name cannot be null"),
@@ -79,7 +89,7 @@ class _MyAppState extends State<MyApp> {
                   return null;
                 }
 
-                if (newValue[0].toString().length < 3) {
+                if (newValue[MyDataField.name.idx].toString().length < 3) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text("Name must be atleast 3 characters long"),
@@ -87,7 +97,7 @@ class _MyAppState extends State<MyApp> {
                   );
                   return null;
                 }
-                if (newValue[0].toString().length > 20) {
+                if (newValue[MyDataField.name.idx].toString().length > 20) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content:
@@ -96,18 +106,18 @@ class _MyAppState extends State<MyApp> {
                   );
                   return null;
                 }
-                if (newValue[1] == null) {
+                if (key == null) {
                   //If newly added row then add unique ID
-                  newValue[1] = (Random().nextInt(500) + 100)
+                  newValue[MyDataField.uniqueId.idx] = (Random().nextInt(500) + 100)
                       .toString(); // to add Unique ID because it is not editable
 
-                  while (myData.containsKey(newValue[1])) {
-                    newValue[1] = (Random().nextInt(500) + 100).toString();
+                  while (myData.containsKey(newValue[MyDataField.uniqueId.idx])) {
+                    newValue[MyDataField.uniqueId.idx] = (Random().nextInt(500) + 100).toString();
                   }
                 }
                 myData.putIfAbsent(
-                    newValue[1]! as String, () => newValue); // Update data
-                if (newValue[0] == null) {
+                    newValue[MyDataField.uniqueId.idx]! as String, () => newValue); // Update data
+                if (newValue[MyDataField.name.idx] == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text("Name cannot be null"),
@@ -129,6 +139,10 @@ class _MyAppState extends State<MyApp> {
               dataRowMaxHeight: 60,
               columnSpacing: 60,
               actionColumnTitle: actionColumnTitle,
+              selectAllToolTip: 'Select all odd Values',
+              unselectAllToolTip: 'Unselect all Values',
+              showSelectAllButton: true,
+              filterSelectionByIndex: (index) => (index + 1).isOdd,
               showCheckboxColumn: true,
               onSelectAll: (value) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -147,24 +161,6 @@ class _MyAppState extends State<MyApp> {
                 );
               },
               actions: [
-                IconButton(
-                  onPressed: () {
-                    for (var i = 0; i < myData.length; i += 2) {
-                      tableKey.currentState?.selectRow(i, isSelected: true);
-                    }
-                  },
-                  icon: const Icon(Icons.select_all),
-                  tooltip: "Select all odd Values",
-                ),
-                IconButton(
-                  onPressed: () {
-                    for (var i = 0; i < myData.length; i += 2) {
-                      tableKey.currentState?.selectRow(i, isSelected: false);
-                    }
-                  },
-                  icon: const Icon(Icons.deselect_outlined),
-                  tooltip: "Unselect all odd Values",
-                ),
                 IconButton(
                     onPressed: () {
                       setState(() {

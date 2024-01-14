@@ -20,7 +20,6 @@ class DynamicTableDropDownInput<T extends Object>
     bool isExpanded = false,
     double? itemHeight,
     Color? focusColor,
-    bool autofocus = false,
     Color? dropdownColor,
     InputDecoration? decoration,
     double? menuMaxHeight,
@@ -42,7 +41,6 @@ class DynamicTableDropDownInput<T extends Object>
         _isExpanded = isExpanded,
         _itemHeight = itemHeight,
         _focusColor = focusColor,
-        _autofocus = autofocus,
         _dropdownColor = dropdownColor,
         _decoration = decoration,
         _menuMaxHeight = menuMaxHeight,
@@ -53,7 +51,7 @@ class DynamicTableDropDownInput<T extends Object>
         // dynamicTableInput: DynamicTableInput.dropdown,
         );
   @override
-  Widget displayWidget(T? value, bool focused, void Function(int row, int column)? onEditComplete, int row, int column) {
+  Widget displayWidget(T? value, bool focused, void Function()? onEditComplete) {
     assert(
       _items.isEmpty ||
           value == null ||
@@ -71,8 +69,6 @@ class DynamicTableDropDownInput<T extends Object>
       value: value,
       focused: focused,
       onEditComplete: onEditComplete,
-      row: row,
-      column: column
     );
   }
 
@@ -91,7 +87,6 @@ class DynamicTableDropDownInput<T extends Object>
   final bool _isExpanded;
   final double? _itemHeight;
   final Color? _focusColor;
-  final bool _autofocus;
   final Color? _dropdownColor;
   final InputDecoration? _decoration;
   final double? _menuMaxHeight;
@@ -106,11 +101,9 @@ class DynamicTableDropDownInput<T extends Object>
   @override
   Widget editingWidget(
       T? value,
-      Function(T? value, int row, int column)? onChanged,
-      void Function(int row, int column)? onEditComplete,
-      void Function(int row, int column)? focusThisField,
-      int row,
-      int column,
+      Function(T? value)? onChanged,
+      void Function()? onEditComplete,
+      void Function()? focusThisField,
       bool focused) {
     return DynamicTableDropdownWidget<T>(
         items: _items,
@@ -137,8 +130,6 @@ class DynamicTableDropDownInput<T extends Object>
         onChanged: onChanged,
         onEditComplete: onEditComplete,
         focusThisField: focusThisField,
-        row: row,
-        column: column,
         focused: focused);
   }
 

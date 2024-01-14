@@ -1,14 +1,13 @@
 import 'package:dynamic_table/dynamic_table.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../dynamic_table_widget/default_display_widget.dart';
-import '../dynamic_table_widget/dynamic_table_autocomplete_widget.dart';
-import '../dynamic_table_widget/dynamic_table_date_input_widget.dart';
-import '../dynamic_table_widget/dynamic_table_dependent_dropdown_widget.dart';
-import '../dynamic_table_widget/dynamic_table_dropdown_widget.dart';
-import '../dynamic_table_widget/dynamic_table_text_input_widget.dart';
+import 'package:dynamic_table/dynamic_table_widget/default_display_widget.dart';
+import 'package:dynamic_table/dynamic_table_widget/dynamic_table_autocomplete_widget.dart';
+import 'package:dynamic_table/dynamic_table_widget/dynamic_table_date_input_widget.dart';
+import 'package:dynamic_table/dynamic_table_widget/dynamic_table_dependent_dropdown_widget.dart';
+import 'package:dynamic_table/dynamic_table_widget/dynamic_table_dropdown_widget.dart';
+import 'package:dynamic_table/dynamic_table_widget/dynamic_table_text_input_widget.dart';
 
 part 'dynamic_table_date_input.dart';
 part 'dynamic_table_text_input.dart';
@@ -27,28 +26,28 @@ abstract class DynamicTableInputType<T extends Object> {
 
   Widget getChild(T? value,
       {required bool isEditing,
-      Function(T? value, int row, int column)? onChanged,
-      void Function(int row, int column)? onEditComplete,
-      void Function(int row, int column)? focusThisField,
-      required int row,
-      required int column,
+      Function(T? value)? onChanged,
+      void Function()? onEditComplete,
+      void Function()? focusThisField,
       bool focused = false}) {
     if (isEditing) {
-      return editingWidget(value, onChanged, onEditComplete, focusThisField, row, column, focused);
+      return editingWidget(value, onChanged, onEditComplete, focusThisField, focused);
     } else {
-      return displayWidget(value, focused, onEditComplete, row, column);
+      return displayWidget(value, focused, onEditComplete);
     }
   }
 
   /// This is the widget which will be displayed when the [DynamicTableDataRow.isEditing] is true.
   Widget editingWidget(T? value,
-      Function(T? value, int row, int column)? onChanged,
-      void Function(int row, int column)? onEditComplete,
-      void Function(int row, int column)? focusThisField,
-      int row, int column, bool focused);
+      Function(T? value)? onChanged,
+      void Function()? onEditComplete,
+      void Function()? focusThisField,
+      // ignore: avoid_positional_boolean_parameters
+      bool focused);
 
   /// This is the widget which will be displayed when the [DynamicTableDataRow.isEditing] is false.
-  Widget displayWidget(T? value, bool focused, void Function(int row, int column)? onEditComplete, int row, int column);
+  // ignore: avoid_positional_boolean_parameters
+  Widget displayWidget(T? value, bool focused, void Function()? onEditComplete);
 
   void dispose();
 
@@ -106,7 +105,6 @@ abstract class DynamicTableInputType<T extends Object> {
       textDirection: textDirection,
       textAlign: textAlign,
       textAlignVertical: textAlignVertical,
-      autofocus: autofocus,
       readOnly: readOnly,
       showCursor: showCursor,
       obscuringCharacter: obscuringCharacter,
@@ -168,7 +166,6 @@ abstract class DynamicTableInputType<T extends Object> {
     bool readOnly = true
   }) {
     return DynamicTableDateInput(
-      context: context,
       initialDate: initialDate,
       lastDate: lastDate,
       formatDate: formatDate,
@@ -178,7 +175,6 @@ abstract class DynamicTableInputType<T extends Object> {
       textDirection: textDirection,
       textAlign: textAlign,
       textAlignVertical: textAlignVertical,
-      autofocus: autofocus,
       mouseCursor: mouseCursor,
       readOnly: readOnly
     );
@@ -233,7 +229,6 @@ abstract class DynamicTableInputType<T extends Object> {
       isExpanded: isExpanded,
       itemHeight: itemHeight,
       focusColor: focusColor,
-      autofocus: autofocus,
       dropdownColor: dropdownColor,
       decoration: decoration,
       menuMaxHeight: menuMaxHeight,
