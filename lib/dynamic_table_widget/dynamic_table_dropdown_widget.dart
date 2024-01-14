@@ -1,4 +1,3 @@
-import 'package:dynamic_table/dynamic_table.dart';
 import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,8 +29,6 @@ class DynamicTableDropdownWidget<T> extends StatefulWidget {
     this.onChanged,
     required this.onEditComplete,
     required this.focusThisField,
-    required this.row,
-    required this.column,
     required this.focused,
   })  : _items = items,
         _selectedItemBuilder = selectedItemBuilder,
@@ -75,11 +72,9 @@ class DynamicTableDropdownWidget<T> extends StatefulWidget {
   final AlignmentGeometry _alignment;
   final BorderRadius? _borderRadius;
   final T? value;
-  final Function(T? value, int row, int column)? onChanged;
-  final void Function(int row, int column)? onEditComplete;
-  final void Function(int row, int column)? focusThisField;
-  final int row;
-  final int column;
+  final Function(T? value, )? onChanged;
+  final void Function()? onEditComplete;
+  final void Function()? focusThisField;
   final bool focused;
 
   @override
@@ -97,7 +92,7 @@ class _DynamicTableDropdownWidgetState<T>
     _focusNode = FocusNode();
     _focusNode?.addListener(() {
       if ((_focusNode?.hasFocus??false) && !widget.focused) {
-        widget.focusThisField?.call(widget.row, widget.column);
+        widget.focusThisField?.call();
       }
     });
 
@@ -105,7 +100,7 @@ class _DynamicTableDropdownWidgetState<T>
       if (widget.onEditComplete != null &&
           (event.logicalKey ==
               LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
-        widget.onEditComplete?.call(widget.row, widget.column);
+        widget.onEditComplete?.call();
         return KeyEventResult.handled;
       } else {
                 return KeyEventResult.handled;
@@ -148,8 +143,8 @@ class _DynamicTableDropdownWidgetState<T>
     return DropdownButtonFormField<T>(
       value: widget.value,
       onChanged: (value) {
-        widget.onChanged?.call(value as T, widget.row, widget.column);
-        widget.onEditComplete?.call(widget.row, widget.column);
+        widget.onChanged?.call(value as T, );
+        widget.onEditComplete?.call();
       },
       items: widget._items,
       selectedItemBuilder: (context) {

@@ -1,4 +1,3 @@
-import 'package:dynamic_table/dynamic_table.dart';
 import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,8 +19,6 @@ class DynamicTableDateInputWidget extends StatefulWidget {
       required this.onChanged,
       required this.onEditComplete,
       required this.focusThisField,
-      required this.row,
-      required this.column,
       required this.focused,
       required this.displayBuilder})
       : _initialDate = initialDate,
@@ -46,11 +43,9 @@ class DynamicTableDateInputWidget extends StatefulWidget {
   final TextAlignVertical? _textAlignVertical;
   final MouseCursor? _mouseCursor;
   final DateTime? value;
-  final Function(DateTime? value, int row, int column)? onChanged;
-  final void Function(int row, int column)? onEditComplete;
-  final void Function(int row, int column)? focusThisField;
-  final int row;
-  final int column;
+  final Function(DateTime? value, )? onChanged;
+  final void Function()? onEditComplete;
+  final void Function()? focusThisField;
   final bool focused;
   final String Function(DateTime?) displayBuilder;
 
@@ -87,8 +82,8 @@ class _DynamicTableDateInputWidgetState
 
   void showPicker() {
     _showPicker(widget.value ?? DateTime.now()).then((value) {
-      widget.onChanged?.call(value, widget.row, widget.column);
-      widget.onEditComplete?.call(widget.row, widget.column);
+      widget.onChanged?.call(value, );
+      widget.onEditComplete?.call();
       controller?.text = widget.displayBuilder(value);
     }, onError: (error) {if (error != Completion.Cancelled) throw error;});
   }
@@ -103,13 +98,13 @@ class _DynamicTableDateInputWidgetState
     focusNode?.addListener(() {
       if ((focusNode?.hasFocus ?? false) &&
           !widget.focused) {
-        widget.focusThisField?.call(widget.row, widget.column);
+        widget.focusThisField?.call();
       }
     });
     datePickerIconFocusNode?.addListener(() {
       if ((focusNode?.hasFocus ?? false) &&
           !widget.focused) {
-        widget.focusThisField?.call(widget.row, widget.column);
+        widget.focusThisField?.call();
       }
     });
 
@@ -117,7 +112,7 @@ class _DynamicTableDateInputWidgetState
       if (widget.onEditComplete != null &&
           (event.logicalKey ==
               LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
-        widget.onEditComplete?.call(widget.row, widget.column);
+        widget.onEditComplete?.call();
         return KeyEventResult.handled;
       } else {
                 return KeyEventResult.handled;
@@ -126,7 +121,7 @@ class _DynamicTableDateInputWidgetState
       if ((event.logicalKey == LogicalKeyboardKey.enter)) if (event
           is KeyDownEvent) {
         if (!widget._readOnly) {
-          widget.onEditComplete?.call(widget.row, widget.column);
+          widget.onEditComplete?.call();
         } else {
           showPicker.call();
         }
@@ -141,7 +136,7 @@ class _DynamicTableDateInputWidgetState
       if (widget.onEditComplete != null &&
           (event.logicalKey ==
               LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
-        widget.onEditComplete?.call(widget.row, widget.column);
+        widget.onEditComplete?.call();
         return KeyEventResult.handled;
       } else {
                 return KeyEventResult.handled;
@@ -210,7 +205,7 @@ class _DynamicTableDateInputWidgetState
       mouseCursor: widget._mouseCursor,
       readOnly: widget._readOnly,
       onEditingComplete: () =>
-          widget.onEditComplete?.call(widget.row, widget.column),
+          widget.onEditComplete?.call(),
     );
   }
 }

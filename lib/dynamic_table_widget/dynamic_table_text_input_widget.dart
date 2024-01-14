@@ -43,8 +43,6 @@ class DynamicTableTextInputWidget extends StatefulWidget {
     required this.onChanged,
     required this.onEditComplete,
     required this.focusThisField,
-    required this.row,
-    required this.column,
     required this.focused,
   }) : _keyboardType = keyboardType, _maxLines = maxLines, _decoration = decoration, _textCapitalization = textCapitalization, _textInputAction = textInputAction, _style = style, _strutStyle = strutStyle, _textDirection = textDirection, _textAlign = textAlign, _textAlignVertical = textAlignVertical, _readOnly = readOnly, _showCursor = showCursor, _obscuringCharacter = obscuringCharacter, _obscureText = obscureText, _autocorrect = autocorrect, _smartDashesType = smartDashesType, _smartQuotesType = smartQuotesType, _enableSuggestions = enableSuggestions, _maxLengthEnforcement = maxLengthEnforcement, _minLines = minLines, _expands = expands, _maxLength = maxLength, _inputFormatters = inputFormatters, _enabled = enabled, _cursorWidth = cursorWidth, _cursorHeight = cursorHeight, _cursorRadius = cursorRadius, _cursorColor = cursorColor, _keyboardAppearance = keyboardAppearance, _scrollPadding = scrollPadding, _scrollPhysics = scrollPhysics, _autofillHints = autofillHints, _autovalidateMode = autovalidateMode, _mouseCursor = mouseCursor;
 
@@ -83,11 +81,9 @@ class DynamicTableTextInputWidget extends StatefulWidget {
   final AutovalidateMode? _autovalidateMode;
   final MouseCursor? _mouseCursor;
   final String? value;
-  final Function(String? value, int row, int column)? onChanged;
-  final void Function(int row, int column)? onEditComplete;
-  final void Function(int row, int column)? focusThisField;
-  final int row;
-  final int column;
+  final Function(String? value, )? onChanged;
+  final void Function()? onEditComplete;
+  final void Function()? focusThisField;
   final bool focused;
 
   @override
@@ -105,7 +101,7 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
     focusNode = FocusNode();
     focusNode?.addListener(() {
       if ((focusNode?.hasFocus??false) && !widget.focused) {
-        widget.focusThisField?.call(widget.row, widget.column);
+        widget.focusThisField?.call();
       }
     });
 
@@ -120,7 +116,7 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
               1) >=
           widget._maxLines)) {
             if (event is KeyDownEvent) {
-        widget.onEditComplete!.call(widget.row, widget.column);
+        widget.onEditComplete!.call();
         return KeyEventResult.handled;
       } else {
             return KeyEventResult.handled;
@@ -131,7 +127,7 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
       if (widget.onEditComplete != null &&
           (event.logicalKey ==
               LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
-        widget.onEditComplete!.call(widget.row, widget.column);
+        widget.onEditComplete!.call();
         return KeyEventResult.handled;
       } else {
                 return KeyEventResult.handled;
@@ -165,7 +161,7 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
     return TextFormField(
       focusNode: focusNode,
       onChanged: (value) {
-        widget.onChanged?.call(value, widget.row, widget.column);
+        widget.onChanged?.call(value, );
       },
       controller: textEditingController,
       decoration: widget._decoration ??
@@ -211,7 +207,7 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
       autofillHints: widget._autofillHints,
       autovalidateMode: widget._autovalidateMode,
       mouseCursor: widget._mouseCursor,
-      onEditingComplete: () => widget.onEditComplete?.call(widget.row, widget.column),
+      onEditingComplete: () => widget.onEditComplete?.call(),
     );
   }
 }

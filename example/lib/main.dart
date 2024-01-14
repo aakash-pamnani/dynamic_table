@@ -46,24 +46,24 @@ class _MyAppState extends State<MyApp> {
               showDeleteOrCancelAction: true,
               touchMode: true,
               selectable: true,
-              onRowEdit: (index, row) {
+              onRowEdit: (key, row) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text("Row Edited index:$index row:$row"),
+                    content: Text("Row Edited key:$key row:$row"),
                   ),
                 );
                 return true;
               },
-              onRowDelete: (index, row) {
+              onRowDelete: (key, row) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text("Row Deleted index:$index row:$row"),
+                    content: Text("Row Deleted key:$key row:$row"),
                   ),
                 );
                 if (myData.containsKey(row[1])) myData.remove(row[1]);
                 return true;
               },
-              onRowSave: (index, old, newValue) {
+              onRowSave: (key, old, newValue) {
                 // ScaffoldMessenger.of(context).showSnackBar(
                 //   SnackBar(
                 //     content:

@@ -1,5 +1,6 @@
 import 'package:dynamic_table/dynamic_input_type/dynamic_table_input_type.dart';
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_column.dart';
+import 'package:dynamic_table/dynamic_table_source/reference.dart';
 import 'package:dynamic_table/dynamic_table_source/shifting_map.dart';
 
 class DynamicTableEditingValues {
@@ -30,23 +31,23 @@ class DynamicTableEditingValues {
     _editingValues.shiftKeys(shiftData, dataLength);
   }
 
-  bool contains(int index) {
-    return _editingValues.containsKey(index);
+  bool contains(Reference<int> row) {
+    return _editingValues.containsKey(row.value);
   }
 
-  void cache(int index, List<Comparable<dynamic>?> values) {
-    setDefaultIfAbsent(index, currentValues: values);
+  void cache(Reference<int> row, List<Comparable<dynamic>?> values) {
+    setDefaultIfAbsent(row, currentValues: values);
   }
 
-  void clear(int index) {
-    _editingValues.remove(index);
+  void clear(Reference<int> row) {
+    _editingValues.remove(row.value);
   }
 
-  Comparable<dynamic>? getEditingValue(int row, int column) {
-    return _editingValues[row]?[column];
+  Comparable<dynamic>? getEditingValue(Reference<int> row, int column) {
+    return _editingValues[row.value]?[column];
   }
 
-  List<Comparable<dynamic>?> getEditingValues(int row) {
+  List<Comparable<dynamic>?> getEditingValues(Reference<int> row) {
     List<Comparable<dynamic>?> editingValues = [];
     for (int column in List.generate(getColumnsLength(), (index) => index)) {
       editingValues.add(getEditingValue(row, column));
@@ -54,15 +55,15 @@ class DynamicTableEditingValues {
     return editingValues;
   }
 
-  void setEditingValue(int row, int column, Comparable<dynamic>? value) {
+  void setEditingValue(Reference<int> row, int column, Comparable<dynamic>? value) {
     setDefaultIfAbsent(row);
-    _editingValues[row]![column] = value;
+    _editingValues[row.value]![column] = value;
   }
 
-  void setDefaultIfAbsent(int row, { List<Comparable<dynamic>?>? currentValues }) {
-    void fillEditingValuesIfAbsent(int index, { List<Comparable<dynamic>?>? currentValues }) {
-      if (_editingValues[index] != null) return;
-      _editingValues[index] = currentValues ?? List.filled(getColumnsLength(), null);
+  void setDefaultIfAbsent(Reference<int> row, { List<Comparable<dynamic>?>? currentValues }) {
+    void fillEditingValuesIfAbsent(Reference<int> row, { List<Comparable<dynamic>?>? currentValues }) {
+      if (_editingValues[row.value] != null) return;
+      _editingValues[row.value] = currentValues ?? List.filled(getColumnsLength(), null);
     }
 
     fillEditingValuesIfAbsent(row, currentValues: currentValues);
@@ -79,8 +80,8 @@ class DynamicTableEditingValues {
       var dynamicTableInputType = indexedColumn.$2.dynamicTableInputType;
       var columnIndex = indexedColumn.$1;
 
-      if (_editingValues[row]![columnIndex] == null) {
-        _editingValues[row]![columnIndex] =
+      if (_editingValues[row.value]![columnIndex] == null) {
+        _editingValues[row.value]![columnIndex] =
             (dynamicTableInputType as DynamicTableDropDownInput<Comparable<dynamic>>)
                 .getFirstValue();
       }
@@ -105,11 +106,11 @@ class DynamicTableEditingValues {
               null ||
           (dynamicTableInputType)
                   .dependentValue !=
-              _editingValues[row]![dynamicTableInputType.dependentOn!]) {
+              _editingValues[row.value]![dynamicTableInputType.dependentOn!]) {
         (dynamicTableInputType)
                 .dependentValue =
-            _editingValues[row]![dynamicTableInputType.dependentOn!];
-        _editingValues[row]![columnIndex] =
+            _editingValues[row.value]![dynamicTableInputType.dependentOn!];
+        _editingValues[row.value]![columnIndex] =
             (dynamicTableInputType as DynamicTableDependentDropDownInput<Comparable<dynamic>, Comparable<dynamic>>)
                 .getFirstValue();
       }

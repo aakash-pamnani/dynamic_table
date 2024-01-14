@@ -1,4 +1,3 @@
-import 'package:dynamic_table/dynamic_table.dart';
 import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -31,8 +30,6 @@ class DynamicTableDependentDropdownWidget<T, W> extends StatefulWidget {
     required this.onChanged,
     required this.onEditComplete,
     required this.focusThisField,
-    required this.row,
-    required this.column,
     required this.focused,
   }) : _itemsBuilder = itemsBuilder, _selectedItemBuilder = selectedItemBuilder, _hint = hint, _disabledHint = disabledHint, _elevation = elevation, _style = style, _icon = icon, _iconDisabledColor = iconDisabledColor, _iconEnabledColor = iconEnabledColor, _iconSize = iconSize, _isDense = isDense, _isExpanded = isExpanded, _itemHeight = itemHeight, _focusColor = focusColor, _dropdownColor = dropdownColor, _decoration = decoration, _menuMaxHeight = menuMaxHeight, _enableFeedback = enableFeedback, _alignment = alignment, _borderRadius = borderRadius;
 
@@ -59,11 +56,9 @@ class DynamicTableDependentDropdownWidget<T, W> extends StatefulWidget {
   final W? dependentValue;
   final List<DropdownMenuItem<T>> Function(W dependentValue) _itemsBuilder;
   final T? value;
-  final Function(T value, int row, int column)? onChanged;
-  final void Function(int row, int column)? onEditComplete;
-  final void Function(int row, int column)? focusThisField;
-  final int row;
-  final int column;
+  final Function(T value, )? onChanged;
+  final void Function()? onEditComplete;
+  final void Function()? focusThisField;
   final bool focused;
 
   @override
@@ -80,14 +75,14 @@ class _DynamicTableDependentDropdownWidgetState<T, W> extends State<DynamicTable
     _focusNode = FocusNode();
     _focusNode?.addListener(() {
       if ((_focusNode?.hasFocus??false) && !widget.focused) {
-        widget.focusThisField?.call(widget.row, widget.column);
+        widget.focusThisField?.call();
       }
     });
     _focusNode?.onKeyEvent = (node, event) {
       if (widget.onEditComplete != null &&
           (event.logicalKey == LogicalKeyboardKey.tab)) if (event
           is KeyDownEvent) {
-        widget.onEditComplete?.call(widget.row, widget.column);
+        widget.onEditComplete?.call();
         return KeyEventResult.handled;
       } else {
             return KeyEventResult.handled;
@@ -135,8 +130,8 @@ class _DynamicTableDependentDropdownWidgetState<T, W> extends State<DynamicTable
     return DropdownButtonFormField<T>(
       value: widget.value,
       onChanged: (value) {
-        widget.onChanged?.call(value as T, widget.row, widget.column);
-        widget.onEditComplete?.call(widget.row, widget.column);
+        widget.onChanged?.call(value as T, );
+        widget.onEditComplete?.call();
       },
       items: _items,
       selectedItemBuilder: widget._selectedItemBuilder,

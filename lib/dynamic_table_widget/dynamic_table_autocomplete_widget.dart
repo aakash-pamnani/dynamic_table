@@ -1,4 +1,3 @@
-import 'package:dynamic_table/dynamic_table.dart';
 import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,8 +15,6 @@ class DynamicTableAutocompleteWidget extends StatelessWidget {
     required this.onChanged,
     required this.onEditComplete,
     required this.focusThisField,
-    required this.row,
-    required this.column,
     required this.focused,
   })  : _optionsBuilder = optionsBuilder,
         _displayStringForOption = displayStringForOption,
@@ -33,11 +30,9 @@ class DynamicTableAutocompleteWidget extends StatelessWidget {
   final double _optionsMaxHeight;
   final AutocompleteOptionsViewBuilder<String>? _optionsViewBuilder;
   final String? value;
-  final Function(String value, int row, int column)? onChanged;
-  final void Function(int row, int column)? onEditComplete;
-  final void Function(int row, int column)? focusThisField;
-  final int row;
-  final int column;
+  final Function(String value, )? onChanged;
+  final void Function()? onEditComplete;
+  final void Function()? focusThisField;
   final bool focused;
 
   @override
@@ -49,12 +44,12 @@ class DynamicTableAutocompleteWidget extends StatelessWidget {
           (context, textEditingController, focusNode, onFieldSubmitted) {
         textEditingController.text = value ?? "";
         textEditingController.addListener(() {
-          onChanged?.call(textEditingController.text, row, column);
+          onChanged?.call(textEditingController.text, );
         });
 
         focusNode.addListener(() {
           if ((focusNode.hasFocus) && !focused) {
-            focusThisField?.call(row, column);
+            focusThisField?.call();
           }
         });
 
@@ -63,7 +58,7 @@ class DynamicTableAutocompleteWidget extends StatelessWidget {
               (event.logicalKey == LogicalKeyboardKey.enter ||
                   event.logicalKey == LogicalKeyboardKey.tab)) if (event
               is KeyDownEvent) {
-            onEditComplete?.call(row, column);
+            onEditComplete?.call();
             return KeyEventResult.handled;
           } else {
                     return KeyEventResult.handled;
@@ -76,7 +71,7 @@ class DynamicTableAutocompleteWidget extends StatelessWidget {
       },
       onSelected: (value) {
         _onSelected?.call(value);
-        onEditComplete?.call(row, column);
+        onEditComplete?.call();
       },
       optionsMaxHeight: _optionsMaxHeight,
       optionsViewBuilder: _optionsViewBuilder,

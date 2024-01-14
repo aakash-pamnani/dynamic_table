@@ -1,3 +1,4 @@
+import 'package:dynamic_table/dynamic_table_source/reference.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -268,7 +269,7 @@ class DynamicTable extends StatefulWidget {
   /// return true; // The row will open in editable mode
   /// }
   /// ```
-  final bool Function(int index, List<Comparable<dynamic>?> row)? onRowEdit;
+  final bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)? onRowEdit;
 
   /// Called when the user clicks on the delete icon of a row.
   ///
@@ -290,7 +291,7 @@ class DynamicTable extends StatefulWidget {
   /// return true;
   /// }
   /// ```
-  final bool Function(int index, List<Comparable<dynamic>?> row)? onRowDelete;
+  final bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)? onRowDelete;
 
   /// Called when the user clicks on the save icon of a row.
   ///
@@ -324,7 +325,7 @@ class DynamicTable extends StatefulWidget {
   /// ```
   ///
   final List<Comparable<dynamic>?>? Function(
-      int index, List<Comparable<dynamic>?> oldValue, List<Comparable<dynamic>?> newValue)? onRowSave;
+      Comparable<dynamic>? key, List<Comparable<dynamic>?> oldValue, List<Comparable<dynamic>?> newValue)? onRowSave;
 
   /// Icon buttons to show at the top end side of the table. The [header] must
   /// not be null to show the actions.
@@ -394,7 +395,7 @@ class DynamicTableState extends State<DynamicTable> {
   int _rowsPerPage = 10;
 
   void selectRow(int index, {bool isSelected = true}) {
-    _source.selectRow(index, isSelected: isSelected);
+    _source.selectRow(Reference<int>(value: index), isSelected: isSelected);
   }
 
   void _buildColumns() {
