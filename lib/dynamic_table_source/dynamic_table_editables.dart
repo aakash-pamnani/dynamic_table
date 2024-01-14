@@ -9,14 +9,7 @@ mixin DynamicTableEditables
   DynamicTableEditingValues getEditingValues();
 
   void shiftEditingValues(Map<int, int> shiftData) {
-    print('shifting editing values');
-    print('shift data: ' + shiftData.toString());
-    print('before');
-    getEditingValues().logEditingRowIndices();
     getEditingValues().shiftKeys(shiftData, getDataLength());
-    print('after');
-    getEditingValues().logEditingRowIndices();
-    print('shifting editing values end');
   }
 
   bool isSaved(Reference<int> index) {
@@ -70,9 +63,6 @@ mixin DynamicTableEditables
     getData().insert(index);
     if (values != null) getEditingValues().cache(index, values);
     if (isEditing) editRow(index);
-    print('inserting');
-    getData().logEditingRowIndices();
-    print('inserting end');
   }
 
   void addRow() {
@@ -127,10 +117,6 @@ mixin DynamicTableEditables
     }
     getData().updateRow(index, values);
     unmarkFromEditingAndClearEditingValues(index);
-    print('updating: ' + index.value.toString());
-    getData().logEditingRowIndices();
-    getEditingValues().logEditingRowIndices();
-    print('updating end');
   }
 
   void updateRowsByKeyByDiffChecking(Map<Comparable<dynamic>, List<Comparable<dynamic>?>> rows) {

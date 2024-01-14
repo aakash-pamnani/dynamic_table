@@ -125,8 +125,6 @@ class DynamicTableShiftableData {
 
     indexKeyMap.shiftKeys(shiftData, getDataLength());
     if (shiftableRowReference!=null && shiftData[shiftableRowReference.value]!=null) shiftableRowReference.update(shiftData[shiftableRowReference.value]!);
-    print("inner shift" + shiftData.toString());
-    print('inner shift end');
     onShift?.call(shiftData);
   }
 
@@ -248,18 +246,6 @@ class DynamicTableShiftableData {
 
   bool isEditingRowsCountZero() {
     return getEditingRowsCount() == 0;
-  }
-
-  void logEditingRowIndices() {
-    var indices = _data
-        .where((element) => element.isEditing)
-        .map(
-          (e) => e.index,
-        )
-        .toList();
-    if (kDebugMode) {
-      print('editing rows: ' + indices.toString());
-    }
   }
 
   DynamicTableIndicesFetchTillEmptyQueryResult getAllEditingRowIndices() {
