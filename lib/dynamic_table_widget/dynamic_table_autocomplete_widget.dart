@@ -52,8 +52,8 @@ class DynamicTableAutocompleteWidget extends StatelessWidget {
           onChanged?.call(textEditingController.text, row, column);
         });
 
-        focusNode?.addListener(() {
-          if ((focusNode?.hasFocus??false) && !focused) {
+        focusNode.addListener(() {
+          if ((focusNode.hasFocus) && !focused) {
             focusThisField?.call(row, column);
           }
         });
@@ -65,8 +65,9 @@ class DynamicTableAutocompleteWidget extends StatelessWidget {
               is KeyDownEvent) {
             onEditComplete?.call(row, column);
             return KeyEventResult.handled;
-          } else
-            return KeyEventResult.handled;
+          } else {
+                    return KeyEventResult.handled;
+                  }
           return KeyEventResult.ignored;
         };
         focusNode.focus(focused);

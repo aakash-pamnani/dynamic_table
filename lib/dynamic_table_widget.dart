@@ -2,7 +2,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_column.dart';
-import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_row.dart';
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_source.dart';
 
 class DynamicTable extends StatefulWidget {
@@ -457,10 +456,11 @@ class DynamicTableState extends State<DynamicTable> {
             icon: const Icon(Icons.add),
             label: const Text("Add Row"),
             onPressed: () {
-              if (widget.addRowAtTheEnd)
+              if (widget.addRowAtTheEnd) {
                 _source.addRowLast();
-              else
+              } else {
                 _source.addRow();
+              }
             },
           ),
         ...?widget.actions,

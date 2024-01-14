@@ -3,14 +3,11 @@ import 'package:dynamic_table/dynamic_table_source/dynamic_table_editing_values.
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_focus.dart';
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_focus_data.dart';
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_shiftable_data.dart';
-import 'package:dynamic_table/dynamic_table_source/shifting_map.dart';
 import 'package:flutter/material.dart';
 
 import 'package:dynamic_table/dynamic_input_type/dynamic_table_input_type.dart';
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_action.dart';
-import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_cell.dart';
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_column.dart';
-import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_row.dart';
 
 abstract class DynamicTableSourceView {
   int getDataLength();
@@ -278,7 +275,7 @@ class DynamicTableSource extends DataTableSource
     List<DynamicTableAction> actions = [];
     List<DataCell> cellsList = [];
 
-    if (showActions)
+    if (showActions) {
       actions.add(
         DynamicTableActionEdit(
           showOnlyOnEditing: false,
@@ -287,8 +284,9 @@ class DynamicTableSource extends DataTableSource
           },
         ),
       );
+    }
 
-    if (showActions)
+    if (showActions) {
       actions.add(
         DynamicTableActionSave(
           showOnlyOnEditing: true,
@@ -297,16 +295,18 @@ class DynamicTableSource extends DataTableSource
           },
         ),
       );
+    }
 
-    if (showActions || showDeleteOrCancelAction)
+    if (showActions || showDeleteOrCancelAction) {
       actions.add(DynamicTableActionCancel(
         showOnlyOnEditing: true,
         onPressed: () {
           cancelRow(row);
         },
       ));
+    }
 
-    if ((showActions && showDeleteAction) || showDeleteOrCancelAction)
+    if ((showActions && showDeleteAction) || showDeleteOrCancelAction) {
       actions.add(DynamicTableActionDelete(
         showOnlyOnEditing: false,
         showAlways: !showDeleteOrCancelAction,
@@ -314,6 +314,7 @@ class DynamicTableSource extends DataTableSource
           deleteRow(row);
         },
       ));
+    }
 
     if (actions.isNotEmpty) {
       DynamicTableActionsInput actionsInput = DynamicTableActionsInput();

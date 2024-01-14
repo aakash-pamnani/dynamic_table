@@ -16,16 +16,19 @@ mixin DynamicTableFocus implements DynamicTableSourceView {
     var isColumnOutOfFocus =
         () => !(focus.column >= -1 && focus.column < getColumnsLength());
 
-    if (isRowOutOfFocus() && isColumnOutOfFocus())
+    if (isRowOutOfFocus() && isColumnOutOfFocus()) {
       return DynamicTableFocusData(row: 0, column: -1);
+    }
 
     //resetting row focus if it is out of focus
-    if (isRowOutOfFocus())
+    if (isRowOutOfFocus()) {
       return DynamicTableFocusData(row: 0, column: -1);
+    }
 
     //resetting column focus if it is out of focus
-    if (isColumnOutOfFocus())
+    if (isColumnOutOfFocus()) {
       return DynamicTableFocusData(row: focus.row, column: -1);
+    }
 
     return focus;
   }

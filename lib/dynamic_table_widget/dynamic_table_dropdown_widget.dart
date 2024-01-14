@@ -107,8 +107,9 @@ class _DynamicTableDropdownWidgetState<T>
               LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
         widget.onEditComplete?.call(widget.row, widget.column);
         return KeyEventResult.handled;
-      } else
-        return KeyEventResult.handled;
+      } else {
+                return KeyEventResult.handled;
+              }
       return KeyEventResult.ignored;
     };
 

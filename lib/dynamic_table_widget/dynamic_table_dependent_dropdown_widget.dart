@@ -89,8 +89,9 @@ class _DynamicTableDependentDropdownWidgetState<T, W> extends State<DynamicTable
           is KeyDownEvent) {
         widget.onEditComplete?.call(widget.row, widget.column);
         return KeyEventResult.handled;
-      } else
-        return KeyEventResult.handled;
+      } else {
+            return KeyEventResult.handled;
+          }
       return KeyEventResult.ignored;
     };
     _focusNode?.focus(widget.focused);

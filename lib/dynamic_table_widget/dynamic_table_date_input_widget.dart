@@ -119,18 +119,21 @@ class _DynamicTableDateInputWidgetState
               LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
         widget.onEditComplete?.call(widget.row, widget.column);
         return KeyEventResult.handled;
-      } else
-        return KeyEventResult.handled;
+      } else {
+                return KeyEventResult.handled;
+              }
 
       if ((event.logicalKey == LogicalKeyboardKey.enter)) if (event
           is KeyDownEvent) {
-        if (!widget._readOnly)
+        if (!widget._readOnly) {
           widget.onEditComplete?.call(widget.row, widget.column);
-        else
+        } else {
           showPicker.call();
+        }
         return KeyEventResult.handled;
-      } else
+      } else {
         return KeyEventResult.handled;
+      }
       return KeyEventResult.ignored;
     };
 
@@ -140,26 +143,29 @@ class _DynamicTableDateInputWidgetState
               LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
         widget.onEditComplete?.call(widget.row, widget.column);
         return KeyEventResult.handled;
-      } else
-        return KeyEventResult.handled;
+      } else {
+                return KeyEventResult.handled;
+              }
       return KeyEventResult.ignored;
     };
 
     controller?.text = widget.displayBuilder(widget.value);
-    if (!widget._readOnly)
+    if (!widget._readOnly) {
       focusNode?.focus(widget.focused);
-    else
+    } else {
       datePickerIconFocusNode?.focus(widget.focused);
+    }
   }
 
   @override
   void didUpdateWidget(DynamicTableDateInputWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     controller?.text = widget.displayBuilder(widget.value);
-    if (!widget._readOnly)
+    if (!widget._readOnly) {
       focusNode?.focus(widget.focused);
-    else
+    } else {
       datePickerIconFocusNode?.focus(widget.focused);
+    }
   }
 
   @override

@@ -1,6 +1,4 @@
-import 'package:dynamic_table/dynamic_table.dart';
 import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -115,23 +113,29 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
       if (widget._keyboardType == TextInputType.multiline ||
           (widget._keyboardType == null &&
               widget._maxLines > 1)) if (widget.onEditComplete != null &&
-          (event.logicalKey == LogicalKeyboardKey.enter)) if ((("\n"
+          (event.logicalKey == LogicalKeyboardKey.enter)) {
+                if ((("\n"
                   .allMatches(textEditingController?.text ?? "")
                   .length +
               1) >=
-          widget._maxLines)) if (event is KeyDownEvent) {
+          widget._maxLines)) {
+            if (event is KeyDownEvent) {
         widget.onEditComplete!.call(widget.row, widget.column);
         return KeyEventResult.handled;
-      } else
-        return KeyEventResult.handled;
+      } else {
+            return KeyEventResult.handled;
+              }
+          }
+          }
 
       if (widget.onEditComplete != null &&
           (event.logicalKey ==
               LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
         widget.onEditComplete!.call(widget.row, widget.column);
         return KeyEventResult.handled;
-      } else
-        return KeyEventResult.handled;
+      } else {
+                return KeyEventResult.handled;
+              }
 
       return KeyEventResult.ignored;
     };

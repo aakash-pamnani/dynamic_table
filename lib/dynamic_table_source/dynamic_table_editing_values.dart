@@ -103,10 +103,10 @@ class DynamicTableEditingValues {
       if ((dynamicTableInputType as DynamicTableDependentDropDownInput)
                   .dependentValue ==
               null ||
-          (dynamicTableInputType as DynamicTableDependentDropDownInput)
+          (dynamicTableInputType)
                   .dependentValue !=
               _editingValues[row]![dynamicTableInputType.dependentOn!]) {
-        (dynamicTableInputType as DynamicTableDependentDropDownInput)
+        (dynamicTableInputType)
                 .dependentValue =
             _editingValues[row]![dynamicTableInputType.dependentOn!];
         _editingValues[row]![columnIndex] =
