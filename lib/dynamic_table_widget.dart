@@ -1,4 +1,3 @@
-import 'package:dynamic_table/dynamic_table_source/reference.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -66,6 +65,10 @@ class DynamicTable extends StatefulWidget {
       this.controller,
       this.primary,
       this.actionColumnTitle = "Actions",
+      this.selectAllToolTip,
+      this.unselectAllToolTip,
+      this.showSelectAllButton = false,
+      this.filterSelectionByIndex,
       this.onSelectAll,
       bool showCheckboxColumn = false,
       bool selectable = true,
@@ -92,7 +95,8 @@ class DynamicTable extends StatefulWidget {
           }
         }(), "onRowEdit and onRowSave must be both null or both non-null"),
         assert(() {
-          if (showAddRowButton == true && (showActions == false && touchMode == false)) {
+          if (showAddRowButton == true &&
+              (showActions == false && touchMode == false)) {
             return false;
           } else {
             return true;
@@ -107,8 +111,10 @@ class DynamicTable extends StatefulWidget {
         }(), 'autoSaveRows cannot be true if editOneByOne is false'),
         this.selectable = selectable,
         this.showCheckboxColumn = selectable && showCheckboxColumn {
-          if (columns.where((column) => column.isKeyColumn).length != 1) throw Exception("One Column must be Key Column.");
-        }
+    if (columns.where((column) => column.isKeyColumn).length != 1) {
+      throw Exception("One Column must be Key Column.");
+    }
+  }
 
   /// The table card's optional header.
   ///
@@ -237,6 +243,14 @@ class DynamicTable extends StatefulWidget {
   /// Defaults to "Actions"
   final String actionColumnTitle;
 
+  final bool showSelectAllButton;
+
+  final bool Function(int)? filterSelectionByIndex;
+
+  final String? selectAllToolTip;
+
+  final String? unselectAllToolTip;
+
   /// Invoked when the user selects or unselects every row, using the
   /// checkbox in the heading row.
   ///
@@ -269,7 +283,8 @@ class DynamicTable extends StatefulWidget {
   /// return true; // The row will open in editable mode
   /// }
   /// ```
-  final bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)? onRowEdit;
+  final bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)?
+      onRowEdit;
 
   /// Called when the user clicks on the delete icon of a row.
   ///
@@ -291,7 +306,8 @@ class DynamicTable extends StatefulWidget {
   /// return true;
   /// }
   /// ```
-  final bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)? onRowDelete;
+  final bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)?
+      onRowDelete;
 
   /// Called when the user clicks on the save icon of a row.
   ///
@@ -325,7 +341,9 @@ class DynamicTable extends StatefulWidget {
   /// ```
   ///
   final List<Comparable<dynamic>?>? Function(
-      Comparable<dynamic>? key, List<Comparable<dynamic>?> oldValue, List<Comparable<dynamic>?> newValue)? onRowSave;
+      Comparable<dynamic>? key,
+      List<Comparable<dynamic>?> oldValue,
+      List<Comparable<dynamic>?> newValue)? onRowSave;
 
   /// Icon buttons to show at the top end side of the table. The [header] must
   /// not be null to show the actions.
@@ -387,16 +405,11 @@ class DynamicTable extends StatefulWidget {
 }
 
 class DynamicTableState extends State<DynamicTable> {
-
   late DynamicTableSource _source;
 
   List<DynamicTableDataColumn> _columns = [];
 
   int _rowsPerPage = 10;
-
-  void selectRow(int index, {bool isSelected = true}) {
-    _source.selectRow(Reference<int>(value: index), isSelected: isSelected);
-  }
 
   void _buildColumns() {
     _columns = [...widget.columns];
@@ -443,7 +456,8 @@ class DynamicTableState extends State<DynamicTable> {
       touchMode: widget.touchMode,
       onRowEdit: widget.onRowEdit,
       onRowDelete: widget.onRowDelete,
-      onRowSave: widget.onRowSave,);
+      onRowSave: widget.onRowSave,
+    );
     _source.updateRowsByKeyByDiffChecking(widget.rows);
   }
 
@@ -463,6 +477,24 @@ class DynamicTableState extends State<DynamicTable> {
                 _source.addRow();
               }
             },
+          ),
+        if (widget.showSelectAllButton)
+          IconButton(
+            onPressed: () {
+              _source.selectAllRows(
+                  isSelected: true,
+                  filterByIndex: widget.filterSelectionByIndex);
+            },
+            icon: const Icon(Icons.select_all),
+            tooltip: widget.selectAllToolTip,
+          ),
+        if (widget.showSelectAllButton)
+          IconButton(
+            onPressed: () {
+              _source.selectAllRows(isSelected: false);
+            },
+            icon: const Icon(Icons.deselect_outlined),
+            tooltip: widget.unselectAllToolTip,
           ),
         ...?widget.actions,
       ],

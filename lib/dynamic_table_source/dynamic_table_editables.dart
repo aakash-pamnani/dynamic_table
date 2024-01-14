@@ -165,8 +165,8 @@ mixin DynamicTableEditables
     getData().selectRow(index, isSelected: isSelected);
   }
 
-  void selectAllRows({required bool isSelected}) {
-    for (var row in getData().getAllUnSelectedRowIndices()) {
+  void selectAllRows({required bool isSelected, bool filterByIndex(int index)? }) {
+    for (var row in isSelected? getData().getAllUnSelectedRowIndices(filterByIndex: filterByIndex) : getData().getAllSelectedRowIndices(filterByIndex : filterByIndex)) {
       selectRow(row, isSelected: isSelected);
     }
   }

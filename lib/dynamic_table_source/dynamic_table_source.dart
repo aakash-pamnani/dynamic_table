@@ -18,10 +18,14 @@ abstract class DynamicTableSourceView {
 }
 
 abstract class DynamicTableSourceConfig {
-  bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)? get onRowEdit;
-  bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)? get onRowDelete;
+  bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)?
+      get onRowEdit;
+  bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)?
+      get onRowDelete;
   List<Comparable<dynamic>?>? Function(
-      Comparable<dynamic>? key, List<Comparable<dynamic>?> oldValue, List<Comparable<dynamic>?> newValue)? get onRowSave;
+      Comparable<dynamic>? key,
+      List<Comparable<dynamic>?> oldValue,
+      List<Comparable<dynamic>?> newValue)? get onRowSave;
   bool get selectable;
   bool get editOneByOne;
   bool get autoSaveRowsEnabled;
@@ -38,10 +42,14 @@ class DynamicTableSource extends DataTableSource
   bool selectable;
   bool editOneByOne;
   bool autoSaveRowsEnabled;
-  bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)? onRowEdit;
-  bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)? onRowDelete;
+  bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)?
+      onRowEdit;
+  bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)?
+      onRowDelete;
   List<Comparable<dynamic>?>? Function(
-      Comparable<dynamic>? key, List<Comparable<dynamic>?> oldValue, List<Comparable<dynamic>?> newValue)? onRowSave;
+      Comparable<dynamic>? key,
+      List<Comparable<dynamic>?> oldValue,
+      List<Comparable<dynamic>?> newValue)? onRowSave;
 
   final List<DynamicTableDataColumn> columns;
   late DynamicTableShiftableData _data;
@@ -58,23 +66,29 @@ class DynamicTableSource extends DataTableSource
     bool? selectable,
     bool? editOneByOne,
     bool? autoSaveRowsEnabled,
-    bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)? onRowEdit,
-    bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)? onRowDelete,
+    bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)?
+        onRowEdit,
+    bool Function(Comparable<dynamic>? key, List<Comparable<dynamic>?> row)?
+        onRowDelete,
     List<Comparable<dynamic>?>? Function(
-      Comparable<dynamic>? key, List<Comparable<dynamic>?> oldValue, List<Comparable<dynamic>?> newValue)? onRowSave,}) {
-      if (actionColumnTitle != null) this.actionColumnTitle = actionColumnTitle;
-      if (showActions != null) this.showActions = showActions;
-      if (showDeleteAction != null) this.showDeleteAction = showDeleteAction;
-      if (showDeleteOrCancelAction != null) this.showDeleteOrCancelAction = showDeleteOrCancelAction;
-      if (touchMode != null) this.touchMode = touchMode;
-      if (selectable != null) this.selectable = selectable;
-      if (editOneByOne != null) this.editOneByOne = editOneByOne;
-      if (autoSaveRowsEnabled != null) this.autoSaveRowsEnabled = autoSaveRowsEnabled;
-      if (onRowEdit != null) this.onRowEdit = onRowEdit;
-      if (onRowDelete != null) this.onRowDelete = onRowDelete;
-      if (onRowSave != null) this.onRowSave = onRowSave;
-      notifyListeners();
-    }
+            Comparable<dynamic>? key,
+            List<Comparable<dynamic>?> oldValue,
+            List<Comparable<dynamic>?> newValue)?
+        onRowSave,
+  }) {
+    if (actionColumnTitle != null) this.actionColumnTitle = actionColumnTitle;
+    if (showActions != null) this.showActions = showActions;
+    if (showDeleteAction != null) this.showDeleteAction = showDeleteAction;
+    if (showDeleteOrCancelAction != null) this.showDeleteOrCancelAction = showDeleteOrCancelAction;
+    if (touchMode != null) this.touchMode = touchMode;
+    if (selectable != null) this.selectable = selectable;
+    if (editOneByOne != null) this.editOneByOne = editOneByOne;
+    if (autoSaveRowsEnabled != null) this.autoSaveRowsEnabled = autoSaveRowsEnabled;
+    if (onRowEdit != null) this.onRowEdit = onRowEdit;
+    if (onRowDelete != null) this.onRowDelete = onRowDelete;
+    if (onRowSave != null) this.onRowSave = onRowSave;
+    notifyListeners();
+  }
 
   void retainFocus(DynamicTableSource? lastSource) {
     this._focus = lastSource?._focus;
@@ -96,8 +110,10 @@ class DynamicTableSource extends DataTableSource
     this.onRowDelete,
     this.onRowSave,
   }) : _editingValues = DynamicTableEditingValues(columns: columns) {
-
-    _data = DynamicTableShiftableData(data, onShift: onShift, keyColumnIndex: getKeyColumnIndex(), columnsLength: getColumnsLength());
+    _data = DynamicTableShiftableData(data,
+        onShift: onShift,
+        keyColumnIndex: getKeyColumnIndex(),
+        columnsLength: getColumnsLength());
 
     //Retaining empty rows with their editing values if present
     /*lastSource?._unsavedRows.sort((a, b) => a.compareTo(b));
@@ -136,7 +152,7 @@ class DynamicTableSource extends DataTableSource
   }
 
   @override
-  DynamicTableShiftableData getData() =>  _data;
+  DynamicTableShiftableData getData() => _data;
 
   @override
   DynamicTableEditingValues getEditingValues() => _editingValues;
@@ -147,7 +163,8 @@ class DynamicTableSource extends DataTableSource
   }
 
   @override
-  void insertRow(Reference<int> index, {List<Comparable<dynamic>?>? values, bool isEditing = false}) {
+  void insertRow(Reference<int> index,
+      {List<Comparable<dynamic>?>? values, bool isEditing = false}) {
     super.insertRow(index, values: values, isEditing: isEditing);
     notifyListeners();
     focusThisRow(index);
@@ -184,7 +201,8 @@ class DynamicTableSource extends DataTableSource
   }
 
   @override
-  void setEditingValue(Reference<int> row, int column, Comparable<dynamic>? value) {
+  void setEditingValue(
+      Reference<int> row, int column, Comparable<dynamic>? value) {
     super.setEditingValue(row, column, value);
     notifyListeners();
   }
@@ -256,7 +274,9 @@ class DynamicTableSource extends DataTableSource
 
   DataRow? _buildRow(Reference<int> index) {
     var datarow = DataRow(
-      key: getData().getKeyOfRowIndex(index)!=null? ValueKey<Comparable<dynamic>>(getData().getKeyOfRowIndex(index)!) : null,
+      key: getData().getKeyOfRowIndex(index) != null
+          ? ValueKey<Comparable<dynamic>>(getData().getKeyOfRowIndex(index)!)
+          : null,
       selected: getData().isSelected(index),
       onSelectChanged: selectable
           ? (value) {
@@ -354,7 +374,8 @@ class DynamicTableSource extends DataTableSource
     return cellsList;
   }
 
-  DataCell _buildDataCell(Reference<int> index, int columnIndex, bool showEditingWidget) {
+  DataCell _buildDataCell(
+      Reference<int> index, int columnIndex, bool showEditingWidget) {
     var dynamicTableInputType = columns[columnIndex].dynamicTableInputType;
     return DataCell(
       dynamicTableInputType.getChild(

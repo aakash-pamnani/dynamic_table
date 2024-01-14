@@ -256,19 +256,21 @@ class DynamicTableShiftableData {
     },);
   }
 
-  DynamicTableIndicesFetchTillEmptyQueryResult getAllSelectedRowIndices() {
+  DynamicTableIndicesFetchTillEmptyQueryResult getAllSelectedRowIndices({ bool filterByIndex(int index)? }) {
     return DynamicTableIndicesFetchTillEmptyQueryResult(() {
       var row = _data
         .where((element) => element.selected)
+        .where((element) => filterByIndex?.call(element.index)??true)
         .firstOrNull()?.index;
       return row != null? Reference<int>(value: row) : null;
     },);
   }
 
-  DynamicTableIndicesFetchTillEmptyQueryResult getAllUnSelectedRowIndices() {
+  DynamicTableIndicesFetchTillEmptyQueryResult getAllUnSelectedRowIndices({ bool filterByIndex(int index)? }) {
     return DynamicTableIndicesFetchTillEmptyQueryResult(() {
       var row = _data
         .where((element) => !element.selected)
+        .where((element) => filterByIndex?.call(element.index)??true)
         .firstOrNull()?.index;
       return row != null? Reference<int>(value: row) : null;
     },);
