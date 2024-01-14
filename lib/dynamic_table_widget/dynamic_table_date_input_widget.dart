@@ -111,6 +111,7 @@ class _DynamicTableDateInputWidgetState
     focusNode?.onKeyEvent = (node, event) {
       if (widget.onEditComplete != null &&
           (event.logicalKey ==
+              // ignore: curly_braces_in_flow_control_structures
               LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
         widget.onEditComplete?.call();
         return KeyEventResult.handled;
@@ -118,6 +119,7 @@ class _DynamicTableDateInputWidgetState
                 return KeyEventResult.handled;
               }
 
+      // ignore: curly_braces_in_flow_control_structures
       if ((event.logicalKey == LogicalKeyboardKey.enter)) if (event
           is KeyDownEvent) {
         if (!widget._readOnly) {
@@ -135,6 +137,7 @@ class _DynamicTableDateInputWidgetState
     datePickerIconFocusNode?.onKeyEvent = (node, event) {
       if (widget.onEditComplete != null &&
           (event.logicalKey ==
+              // ignore: curly_braces_in_flow_control_structures
               LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
         widget.onEditComplete?.call();
         return KeyEventResult.handled;

@@ -80,6 +80,7 @@ class _DynamicTableDependentDropdownWidgetState<T, W> extends State<DynamicTable
     });
     _focusNode?.onKeyEvent = (node, event) {
       if (widget.onEditComplete != null &&
+          // ignore: curly_braces_in_flow_control_structures
           (event.logicalKey == LogicalKeyboardKey.tab)) if (event
           is KeyDownEvent) {
         widget.onEditComplete?.call();

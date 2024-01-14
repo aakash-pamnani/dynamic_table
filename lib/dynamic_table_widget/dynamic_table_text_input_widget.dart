@@ -108,6 +108,7 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
     focusNode?.onKeyEvent = (node, event) {
       if (widget._keyboardType == TextInputType.multiline ||
           (widget._keyboardType == null &&
+              // ignore: curly_braces_in_flow_control_structures
               widget._maxLines > 1)) if (widget.onEditComplete != null &&
           (event.logicalKey == LogicalKeyboardKey.enter)) {
                 if ((("\n"
@@ -126,6 +127,7 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
 
       if (widget.onEditComplete != null &&
           (event.logicalKey ==
+              // ignore: curly_braces_in_flow_control_structures
               LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
         widget.onEditComplete!.call();
         return KeyEventResult.handled;

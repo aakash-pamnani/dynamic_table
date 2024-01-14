@@ -56,6 +56,7 @@ class DynamicTableAutocompleteWidget extends StatelessWidget {
         focusNode.onKeyEvent = (node, event) {
           if (onEditComplete != null &&
               (event.logicalKey == LogicalKeyboardKey.enter ||
+                  // ignore: curly_braces_in_flow_control_structures
                   event.logicalKey == LogicalKeyboardKey.tab)) if (event
               is KeyDownEvent) {
             onEditComplete?.call();

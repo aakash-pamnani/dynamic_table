@@ -2,7 +2,6 @@ import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_cell.dart';
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_row.dart';
 import 'package:dynamic_table/dynamic_table_source/reference.dart';
 import 'package:dynamic_table/dynamic_table_source/shifting_map.dart';
-import 'package:flutter/foundation.dart';
 
 /**
  * data has the saved values for each row, state information such as isEditing, isSaved and isSelected are also contained in data

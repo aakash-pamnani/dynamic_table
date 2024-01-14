@@ -36,6 +36,7 @@ class _DefaultDisplayWidgetState<T> extends State<DefaultDisplayWidget<T>> {
     focusNode?.onKeyEvent = (node, event) {
       if (widget.onEditComplete != null &&
           (event.logicalKey ==
+              // ignore: curly_braces_in_flow_control_structures
               LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
         widget.onEditComplete!.call();
         return KeyEventResult.handled;

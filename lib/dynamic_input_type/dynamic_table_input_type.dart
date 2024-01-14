@@ -42,9 +42,11 @@ abstract class DynamicTableInputType<T extends Object> {
       Function(T? value)? onChanged,
       void Function()? onEditComplete,
       void Function()? focusThisField,
+      // ignore: avoid_positional_boolean_parameters
       bool focused);
 
   /// This is the widget which will be displayed when the [DynamicTableDataRow.isEditing] is false.
+  // ignore: avoid_positional_boolean_parameters
   Widget displayWidget(T? value, bool focused, void Function()? onEditComplete);
 
   void dispose();
