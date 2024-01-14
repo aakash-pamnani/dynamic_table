@@ -1,48 +1,10 @@
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_cell.dart';
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_row.dart';
+import 'package:dynamic_table/dynamic_table_source/fetch_till_empty_iterator.dart';
+import 'package:dynamic_table/dynamic_table_source/fetching_first_or_null.dart';
 import 'package:dynamic_table/dynamic_table_source/reference.dart';
 import 'package:dynamic_table/dynamic_table_source/shifting_map.dart';
-
-/**
- * data has the saved values for each row, state information such as isEditing, isSaved and isSelected are also contained in data
- * editingValues has the current edited values of a row
- * keyColumn holds the column index which is considered the key of the data in the table
- */
-
-extension FetchingFirstOrNull<T> on Iterable<T> {
-  T? firstOrNull() {
-    if (this.isNotEmpty) {
-      return this.first;
-    } else {
-      return null;
-    }
-  }
-}
-
-class FetchTillEmptyIterator<T> implements Iterator<T> {
-  T? _current;
-  T? Function () _fetch;
-
-  FetchTillEmptyIterator(T? Function () fetch) : _fetch = fetch;
-
-  @override
-  T get current { if (_current != null) return _current!; throw Exception('No Value'); }
-
-  @override
-  bool moveNext() {
-    _current = _fetch();
-    return _current != null;
-  }
-}
-
-class DynamicTableIndicesFetchTillEmptyQueryResult with Iterable<Reference<int>> {
-  Reference<int>? Function () _fetch;
-
-  DynamicTableIndicesFetchTillEmptyQueryResult(Reference<int>? Function () fetch) : _fetch = fetch;
-
-  FetchTillEmptyIterator<Reference<int>> get iterator => FetchTillEmptyIterator(_fetch);
-  
-}
+import 'package:dynamic_table/dynamic_table_source/sort_order.dart';
 
 class DynamicTableShiftableData {
   DynamicTableShiftableData(
@@ -55,7 +17,7 @@ class DynamicTableShiftableData {
       Map<Comparable<dynamic>, List<Comparable<dynamic>?>> data,
     ) {
       var dataValues = _sortByColumn(data.values.toList(), sortByColumnIndex,
-          (value, column) => value[column]);
+          _sortOrder, (value, column) => value[column]);
       _data.addAll(dataValues
           .asMap()
           .map(
@@ -84,18 +46,24 @@ class DynamicTableShiftableData {
   final int columnsLength;
   final void Function(Map<int, int> shiftData)? onShift;
   int sortByColumnIndex;
+  SortOrder _sortOrder = SortOrder.asc;
 
   final Map<int, Comparable<dynamic>> indexKeyMap = {};
 
+  SortOrder get sortOrder => _sortOrder;
+
   static List<U> _sortByColumn<U>(List<U> data, int sortColumnIndex,
-      Comparable<dynamic>? parseValue(U value, int column)) {
+      SortOrder order, Comparable<dynamic>? parseValue(U value, int column)) {
     data.sort((a, b) {
-      Comparable<dynamic>? parsedAValue = parseValue(a, sortColumnIndex);
-      Comparable<dynamic>? parsedBValue = parseValue(b, sortColumnIndex);
-      if (parsedBValue == null && parsedAValue == null) return 0;
-      if (parsedBValue == null) return -1;
-      if (parsedAValue == null) return 1;
-      return parsedAValue.compareTo(parsedBValue);
+      var comparator = () {
+        Comparable<dynamic>? parsedAValue = parseValue(a, sortColumnIndex);
+        Comparable<dynamic>? parsedBValue = parseValue(b, sortColumnIndex);
+        if (parsedBValue == null && parsedAValue == null) return 0;
+        if (parsedBValue == null) return -1;
+        if (parsedAValue == null) return 1;
+        return parsedAValue.compareTo(parsedBValue);
+      };
+      return order * comparator();
     });
     return data;
   }
@@ -123,13 +91,13 @@ class DynamicTableShiftableData {
     }
 
     indexKeyMap.shiftKeys(shiftData, getDataLength());
-    if (shiftableRowReference!=null && shiftData[shiftableRowReference.value]!=null) shiftableRowReference.update(shiftData[shiftableRowReference.value]!);
+    shiftableRowReference?.shift(shiftData);
     onShift?.call(shiftData);
   }
 
   void _sort({Reference<int>? shiftableRowReference}) {
     _sortByColumn(
-        _data, sortByColumnIndex, (value, column) => value.cells[column].value);
+        _data, sortByColumnIndex, _sortOrder, (value, column) => value.cells[column].value);
     _shift(shiftableRowReference: shiftableRowReference);
   }
 
@@ -151,9 +119,16 @@ class DynamicTableShiftableData {
   }
 
   // shifting
-  void updateSortByColumnIndex(int sortByColumnIndex) {
-    this.sortByColumnIndex = sortByColumnIndex;
-    _sort();
+  void updateSortByColumnIndex(int sortByColumnIndex, {SortOrder? order}) {
+    if (this.sortByColumnIndex != sortByColumnIndex) {
+      _sortOrder = SortOrder.asc;
+      this.sortByColumnIndex = sortByColumnIndex;
+      _sort();
+    }
+    else {
+      _sortOrder = _sortOrder.switchOrder();
+      _sort();
+    }
   }
 
   // shifting

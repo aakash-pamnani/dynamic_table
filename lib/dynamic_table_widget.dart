@@ -41,8 +41,6 @@ class DynamicTable extends StatefulWidget {
   DynamicTable(
       {super.key,
       this.header,
-      this.sortColumnIndex,
-      this.sortAscending = true,
       this.dataRowMinHeight = kMinInteractiveDimension,
       this.dataRowMaxHeight = kMinInteractiveDimension,
       this.headingRowHeight = 56.0,
@@ -127,17 +125,6 @@ class DynamicTable extends StatefulWidget {
   /// [actions] are still visible when items are selected.
 
   final Widget? header;
-
-  /// The current primary sort key's column.
-  ///
-  /// See [DataTable.sortColumnIndex].
-  final int? sortColumnIndex;
-
-  /// Whether the column mentioned in [sortColumnIndex], if any, is sorted
-  /// in ascending order.
-  ///
-  /// See [DataTable.sortAscending].
-  final bool sortAscending;
 
   /// The minimum height of each row (excluding the row that contains column headings).
   ///
@@ -498,9 +485,9 @@ class DynamicTableState extends State<DynamicTable> {
           ),
         ...?widget.actions,
       ],
-      columns: _source.getTableColumns(),
-      sortColumnIndex: widget.sortColumnIndex,
-      sortAscending: widget.sortAscending,
+      columns: _source.getTableColumns(setTableState: setState),
+      sortColumnIndex: _source.sortColumnIndex,
+      sortAscending: _source.sortOrder.toBool(),
       onSelectAll: (value) {
         _source.selectAllRows(isSelected: value ?? false);
         widget.onSelectAll?.call(value);

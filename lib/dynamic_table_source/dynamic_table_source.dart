@@ -4,6 +4,7 @@ import 'package:dynamic_table/dynamic_table_source/dynamic_table_focus.dart';
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_focus_data.dart';
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_shiftable_data.dart';
 import 'package:dynamic_table/dynamic_table_source/reference.dart';
+import 'package:dynamic_table/dynamic_table_source/sort_order.dart';
 import 'package:flutter/material.dart';
 
 import 'package:dynamic_table/dynamic_input_type/dynamic_table_input_type.dart';
@@ -157,6 +158,9 @@ class DynamicTableSource extends DataTableSource
   @override
   DynamicTableEditingValues getEditingValues() => _editingValues;
 
+  SortOrder get sortOrder => getData().sortOrder;
+  int get sortColumnIndex => getData().sortByColumnIndex;
+
   void onShift(Map<int, int> shiftData) {
     shiftEditingValues(shiftData);
     _focus = shiftFocus(_focus, shiftData);
@@ -208,8 +212,8 @@ class DynamicTableSource extends DataTableSource
   }
 
   @override
-  void updateSortByColumnIndex(int sortByColumnIndex) {
-    super.updateSortByColumnIndex(sortByColumnIndex);
+  void updateSortByColumnIndex(int sortByColumnIndex, {SortOrder? order}) {
+    super.updateSortByColumnIndex(sortByColumnIndex, order: order);
     notifyListeners();
   }
 
@@ -254,13 +258,13 @@ class DynamicTableSource extends DataTableSource
     return getColumnsLength();
   }
 
-  List<DataColumn> getTableColumns() {
+  List<DataColumn> getTableColumns({ required void setTableState(void Function() fn) }) {
     List<DataColumn> columnList = columns.map((e) {
       return DataColumn(
           label: e.label,
           numeric: e.numeric,
           tooltip: e.tooltip,
-          onSort: (column, order) => updateSortByColumnIndex(column));
+          onSort: (column, order) { updateSortByColumnIndex(column, order: SortOrder.byOrder(order: order)); setTableState(() {}); });
     }).toList();
     if (showActions || showDeleteOrCancelAction) {
       columnList.add(
