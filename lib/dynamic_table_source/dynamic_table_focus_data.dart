@@ -3,4 +3,9 @@ class DynamicTableFocusData {
 
   final int row;
   final int column;
+
+  @override
+  String toString() {
+    return 'row: ' + row.toString() + ' | ' + 'column: ' + column.toString();
+  }
 }

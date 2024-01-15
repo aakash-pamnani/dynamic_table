@@ -1,4 +1,6 @@
+import 'package:dynamic_table/dynamic_table_source/dynamic_table_view.dart';
 import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
+import 'package:dynamic_table/dynamic_table_widget/key_event_handlers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -17,8 +19,7 @@ class DynamicTableDateInputWidget extends StatefulWidget {
       required MouseCursor? mouseCursor,
       required this.value,
       required this.onChanged,
-      required this.onEditComplete,
-      required this.focusThisField,
+      required this.touchEditCallBacks,
       required this.focused,
       required this.displayBuilder})
       : _initialDate = initialDate,
@@ -44,8 +45,7 @@ class DynamicTableDateInputWidget extends StatefulWidget {
   final MouseCursor? _mouseCursor;
   final DateTime? value;
   final Function(DateTime? value, )? onChanged;
-  final void Function()? onEditComplete;
-  final void Function()? focusThisField;
+  final TouchEditCallBacks touchEditCallBacks;
   final bool focused;
   final String Function(DateTime?) displayBuilder;
 
@@ -83,7 +83,7 @@ class _DynamicTableDateInputWidgetState
   void showPicker() {
     _showPicker(widget.value ?? DateTime.now()).then((value) {
       widget.onChanged?.call(value, );
-      widget.onEditComplete?.call();
+      widget.touchEditCallBacks.focusNextField?.call();
       controller?.text = widget.displayBuilder(value);
     }, onError: (error) {if (error != Completion.Cancelled) throw error;});
   }
@@ -98,54 +98,20 @@ class _DynamicTableDateInputWidgetState
     focusNode?.addListener(() {
       if ((focusNode?.hasFocus ?? false) &&
           !widget.focused) {
-        widget.focusThisField?.call();
+        widget.touchEditCallBacks.focusThisEditingField?.call();
       }
     });
     datePickerIconFocusNode?.addListener(() {
       if ((focusNode?.hasFocus ?? false) &&
           !widget.focused) {
-        widget.focusThisField?.call();
+        widget.touchEditCallBacks.focusThisEditingField?.call();
       }
     });
 
-    focusNode?.onKeyEvent = (node, event) {
-      if (widget.onEditComplete != null &&
-          (event.logicalKey ==
-              // ignore: curly_braces_in_flow_control_structures
-              LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
-        widget.onEditComplete?.call();
-        return KeyEventResult.handled;
-      } else {
-                return KeyEventResult.handled;
-              }
+    focusNode?.onKeyEvent = (node, event) => event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField)
+    .chain([LogicalKeyboardKey.enter], () => (!widget._readOnly)? widget.touchEditCallBacks.focusNextField : showPicker).result();
 
-      // ignore: curly_braces_in_flow_control_structures
-      if ((event.logicalKey == LogicalKeyboardKey.enter)) if (event
-          is KeyDownEvent) {
-        if (!widget._readOnly) {
-          widget.onEditComplete?.call();
-        } else {
-          showPicker.call();
-        }
-        return KeyEventResult.handled;
-      } else {
-        return KeyEventResult.handled;
-      }
-      return KeyEventResult.ignored;
-    };
-
-    datePickerIconFocusNode?.onKeyEvent = (node, event) {
-      if (widget.onEditComplete != null &&
-          (event.logicalKey ==
-              // ignore: curly_braces_in_flow_control_structures
-              LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
-        widget.onEditComplete?.call();
-        return KeyEventResult.handled;
-      } else {
-                return KeyEventResult.handled;
-              }
-      return KeyEventResult.ignored;
-    };
+    datePickerIconFocusNode?.onKeyEvent = (node, event) => event.handleKeyIfCallBackExistAndCallOnlyOnKeyDown(LogicalKeyboardKey.tab, widget.touchEditCallBacks.focusNextField);
 
     controller?.text = widget.displayBuilder(widget.value);
     if (!widget._readOnly) {
@@ -208,7 +174,7 @@ class _DynamicTableDateInputWidgetState
       mouseCursor: widget._mouseCursor,
       readOnly: widget._readOnly,
       onEditingComplete: () =>
-          widget.onEditComplete?.call(),
+          widget.touchEditCallBacks.focusNextField?.call(),
     );
   }
 }

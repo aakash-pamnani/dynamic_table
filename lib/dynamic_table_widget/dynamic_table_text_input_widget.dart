@@ -1,4 +1,6 @@
+import 'package:dynamic_table/dynamic_table_source/dynamic_table_view.dart';
 import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
+import 'package:dynamic_table/dynamic_table_widget/key_event_handlers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -41,8 +43,7 @@ class DynamicTableTextInputWidget extends StatefulWidget {
     required MouseCursor? mouseCursor,
     required this.value,
     required this.onChanged,
-    required this.onEditComplete,
-    required this.focusThisField,
+    required this.touchEditCallBacks,
     required this.focused,
   }) : _keyboardType = keyboardType, _maxLines = maxLines, _decoration = decoration, _textCapitalization = textCapitalization, _textInputAction = textInputAction, _style = style, _strutStyle = strutStyle, _textDirection = textDirection, _textAlign = textAlign, _textAlignVertical = textAlignVertical, _readOnly = readOnly, _showCursor = showCursor, _obscuringCharacter = obscuringCharacter, _obscureText = obscureText, _autocorrect = autocorrect, _smartDashesType = smartDashesType, _smartQuotesType = smartQuotesType, _enableSuggestions = enableSuggestions, _maxLengthEnforcement = maxLengthEnforcement, _minLines = minLines, _expands = expands, _maxLength = maxLength, _inputFormatters = inputFormatters, _enabled = enabled, _cursorWidth = cursorWidth, _cursorHeight = cursorHeight, _cursorRadius = cursorRadius, _cursorColor = cursorColor, _keyboardAppearance = keyboardAppearance, _scrollPadding = scrollPadding, _scrollPhysics = scrollPhysics, _autofillHints = autofillHints, _autovalidateMode = autovalidateMode, _mouseCursor = mouseCursor;
 
@@ -82,8 +83,7 @@ class DynamicTableTextInputWidget extends StatefulWidget {
   final MouseCursor? _mouseCursor;
   final String? value;
   final Function(String? value, )? onChanged;
-  final void Function()? onEditComplete;
-  final void Function()? focusThisField;
+  final TouchEditCallBacks touchEditCallBacks;
   final bool focused;
 
   @override
@@ -94,6 +94,19 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
   TextEditingController? textEditingController;
   FocusNode? focusNode;
 
+  bool _isMultilineTextField() {
+    return (widget._keyboardType == TextInputType.multiline ||
+        (widget._keyboardType == null && widget._maxLines > 1));
+  }
+
+  bool _hasTextReachedMaxLinesLimit() {
+    return (("\n"
+                  .allMatches(textEditingController?.text ?? "")
+                  .length +
+              1) >=
+          widget._maxLines);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -101,42 +114,13 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
     focusNode = FocusNode();
     focusNode?.addListener(() {
       if ((focusNode?.hasFocus??false) && !widget.focused) {
-        widget.focusThisField?.call();
+        widget.touchEditCallBacks.focusThisEditingField?.call();
       }
     });
 
-    focusNode?.onKeyEvent = (node, event) {
-      if (widget._keyboardType == TextInputType.multiline ||
-          (widget._keyboardType == null &&
-              // ignore: curly_braces_in_flow_control_structures
-              widget._maxLines > 1)) if (widget.onEditComplete != null &&
-          (event.logicalKey == LogicalKeyboardKey.enter)) {
-                if ((("\n"
-                  .allMatches(textEditingController?.text ?? "")
-                  .length +
-              1) >=
-          widget._maxLines)) {
-            if (event is KeyDownEvent) {
-        widget.onEditComplete!.call();
-        return KeyEventResult.handled;
-      } else {
-            return KeyEventResult.handled;
-              }
-          }
-          }
+    focusNode?.onKeyEvent = (node, event) => event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown([LogicalKeyboardKey.enter], widget.touchEditCallBacks.focusNextField, handleOnCondition: () => (_isMultilineTextField() && _hasTextReachedMaxLinesLimit()),)
+    .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField).result();
 
-      if (widget.onEditComplete != null &&
-          (event.logicalKey ==
-              // ignore: curly_braces_in_flow_control_structures
-              LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
-        widget.onEditComplete!.call();
-        return KeyEventResult.handled;
-      } else {
-                return KeyEventResult.handled;
-              }
-
-      return KeyEventResult.ignored;
-    };
     focusNode?.focus(widget.focused);
     textEditingController?.text = widget.value ?? "";
   }
@@ -209,7 +193,7 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
       autofillHints: widget._autofillHints,
       autovalidateMode: widget._autovalidateMode,
       mouseCursor: widget._mouseCursor,
-      onEditingComplete: () => widget.onEditComplete?.call(),
+      onEditingComplete: () => widget.touchEditCallBacks.focusNextField?.call(),
     );
   }
 }

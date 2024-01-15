@@ -4,7 +4,7 @@ import 'package:dynamic_table/dynamic_table_source/dynamic_table_source.dart';
 import 'package:dynamic_table/dynamic_table_source/reference.dart';
 
 mixin DynamicTableEditables
-    implements DynamicTableSourceView, DynamicTableSourceConfig {
+    implements DynamicTableSourceQuery, DynamicTableEditablesConfig {
   DynamicTableShiftableData getData();
   DynamicTableEditingValues getEditingValues();
 
@@ -36,7 +36,7 @@ mixin DynamicTableEditables
   }
 
   void updateSortByColumnIndex(int sortByColumnIndex) {
-    if (sortByColumnIndex < 0 || sortByColumnIndex >= getColumnsLength()) {
+    if (sortByColumnIndex < 0 || sortByColumnIndex >= getColumnsQuery().getColumnsLength()) {
       throw Exception('Index out of bounds');
     }
     getData().updateSortByColumnIndex(sortByColumnIndex);
@@ -53,7 +53,7 @@ mixin DynamicTableEditables
   }
 
   void insertRow(Reference<int> index, {List<Comparable<dynamic>?>? values, bool isEditing = false}) {
-    if (values != null && values.length != getColumnsLength()) {
+    if (values != null && values.length != getColumnsQuery().getColumnsLength()) {
       throw Exception('Values length must match columns');
     }
     if (index < 0 || index > getDataLength()) {
@@ -109,7 +109,7 @@ mixin DynamicTableEditables
   }
 
   void updateRow(Reference<int> index, List<Comparable<dynamic>?> values) {
-    if (values.length != getColumnsLength()) {
+    if (values.length != getColumnsQuery().getColumnsLength()) {
       throw Exception('Values length must match columns');
     }
     if (index < 0 || index >= getDataLength()) {
@@ -158,9 +158,6 @@ mixin DynamicTableEditables
     if (index < 0 || index >= getDataLength()) {
       throw Exception('Index out of bounds');
     }
-    if (!selectable) {
-      return;
-    }
     if (getData().isSelected(index) == isSelected) return;
     getData().selectRow(index, isSelected: isSelected);
   }
@@ -173,7 +170,7 @@ mixin DynamicTableEditables
 
   List<Comparable<dynamic>?> getCurrentValues(Reference<int> row) {
     List<Comparable<dynamic>?> newValue = [];
-    for (int column = 0; column < getColumnsLength(); column++) {
+    for (int column = 0; column < getColumnsQuery().getColumnsLength(); column++) {
       newValue.add(getCurrentValue(row, column));
     }
     return newValue;

@@ -422,6 +422,7 @@ class DynamicTableState extends State<DynamicTable> {
       onRowDelete: widget.onRowDelete,
       onRowSave: widget.onRowSave,
       pageTo: (rowIndex) => _paginatedDataTableState.currentState?.pageTo(rowIndex),
+      triggerTableStateUpdate: () => setState(() {},)
     );
   }
 
@@ -491,7 +492,7 @@ class DynamicTableState extends State<DynamicTable> {
           ),
         ...?widget.actions,
       ],
-      columns: _source.getTableColumns(setTableState: setState),
+      columns: _source.getTableColumns(),
       sortColumnIndex: _source.sortColumnIndex,
       sortAscending: _source.sortOrder.toBool(),
       onSelectAll: (value) {

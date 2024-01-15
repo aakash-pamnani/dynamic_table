@@ -1,4 +1,6 @@
+import 'package:dynamic_table/dynamic_table_source/dynamic_table_view.dart';
 import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
+import 'package:dynamic_table/dynamic_table_widget/key_event_handlers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -13,8 +15,7 @@ class DynamicTableAutocompleteWidget extends StatelessWidget {
     required AutocompleteOptionsViewBuilder<String>? optionsViewBuilder,
     required this.value,
     required this.onChanged,
-    required this.onEditComplete,
-    required this.focusThisField,
+    required this.touchEditCallBacks,
     required this.focused,
   })  : _optionsBuilder = optionsBuilder,
         _displayStringForOption = displayStringForOption,
@@ -30,9 +31,10 @@ class DynamicTableAutocompleteWidget extends StatelessWidget {
   final double _optionsMaxHeight;
   final AutocompleteOptionsViewBuilder<String>? _optionsViewBuilder;
   final String? value;
-  final Function(String value, )? onChanged;
-  final void Function()? onEditComplete;
-  final void Function()? focusThisField;
+  final Function(
+    String value,
+  )? onChanged;
+  final TouchEditCallBacks touchEditCallBacks;
   final bool focused;
 
   @override
@@ -44,35 +46,28 @@ class DynamicTableAutocompleteWidget extends StatelessWidget {
           (context, textEditingController, focusNode, onFieldSubmitted) {
         textEditingController.text = value ?? "";
         textEditingController.addListener(() {
-          onChanged?.call(textEditingController.text, );
+          onChanged?.call(
+            textEditingController.text,
+          );
         });
 
         focusNode.addListener(() {
           if ((focusNode.hasFocus) && !focused) {
-            focusThisField?.call();
+            touchEditCallBacks.focusThisEditingField?.call();
           }
         });
 
-        focusNode.onKeyEvent = (node, event) {
-          if (onEditComplete != null &&
-              (event.logicalKey == LogicalKeyboardKey.enter ||
-                  // ignore: curly_braces_in_flow_control_structures
-                  event.logicalKey == LogicalKeyboardKey.tab)) if (event
-              is KeyDownEvent) {
-            onEditComplete?.call();
-            return KeyEventResult.handled;
-          } else {
-                    return KeyEventResult.handled;
-                  }
-          return KeyEventResult.ignored;
-        };
+        focusNode.onKeyEvent = (node, event) => event
+            .handleKeysIfCallBackExistAndCallOnlyOnKeyDown(
+                [LogicalKeyboardKey.enter, LogicalKeyboardKey.tab],
+                touchEditCallBacks.focusNextField).result();
         focusNode.focus(focused);
         return _fieldViewBuilder(
             context, textEditingController, focusNode, onFieldSubmitted);
       },
       onSelected: (value) {
         _onSelected?.call(value);
-        onEditComplete?.call();
+        touchEditCallBacks.focusNextField?.call();
       },
       optionsMaxHeight: _optionsMaxHeight,
       optionsViewBuilder: _optionsViewBuilder,

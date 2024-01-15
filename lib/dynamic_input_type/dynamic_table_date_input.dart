@@ -39,22 +39,21 @@ class DynamicTableDateInput extends DynamicTableInputType<DateTime> {
   final String Function(DateTime?) _displayBuilder;
 
   @override
-  Widget displayWidget(DateTime? value, bool focused, void Function()? onEditComplete, ) {
+  Widget displayWidget(DateTime? value, bool focused, TouchEditCallBacks touchEditCallBacks) {
     return DefaultDisplayWidget<DateTime>(
       value: value,
       focused: focused,
       displayBuilder: _displayBuilder,
-      onEditComplete: onEditComplete,
+      touchEditCallBacks: touchEditCallBacks,
     );
   }
 
   Widget editingWidget(
       DateTime? value,
       Function(DateTime? value, )? onChanged,
-      void Function()? onEditComplete,
-      void Function()? focusThisField,
+      TouchEditCallBacks touchEditCallBacks,
       bool focused) {
-    return DynamicTableDateInputWidget(initialDate: _initialDate, lastDate: _lastDate, readOnly: _readOnly, decoration: _decoration, style: _style, strutStyle: _strutStyle, textDirection: _textDirection, textAlign: _textAlign, textAlignVertical: _textAlignVertical, mouseCursor: _mouseCursor, value: value, onChanged: onChanged, onEditComplete: onEditComplete, focusThisField: focusThisField, focused: focused, displayBuilder: _displayBuilder);
+    return DynamicTableDateInputWidget(initialDate: _initialDate, lastDate: _lastDate, readOnly: _readOnly, decoration: _decoration, style: _style, strutStyle: _strutStyle, textDirection: _textDirection, textAlign: _textAlign, textAlignVertical: _textAlignVertical, mouseCursor: _mouseCursor, value: value, onChanged: onChanged, touchEditCallBacks: touchEditCallBacks, focused: focused, displayBuilder: _displayBuilder);
   }
 
   @override

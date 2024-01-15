@@ -28,7 +28,6 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
     AlignmentGeometry alignment = AlignmentDirectional.centerStart,
     BorderRadius? borderRadius,
   })  : _itemsBuilder = itemsBuilder,
-        _dependentOnColumn = dependentOnColumn,
         _displayBuilder = displayBuilder,
         _selectedItemBuilder = selectedItemBuilder,
         _hint = hint,
@@ -49,17 +48,18 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
         _enableFeedback = enableFeedback,
         _alignment = alignment,
         _borderRadius = borderRadius,
+        
         super(
         // dynamicTableInput: DynamicTableInput.dropdown,
-        ) {
-    dependentOn = _dependentOnColumn;
+        dependentOn: dependentOnColumn,
+        ) {;
   }
 
   T? getFirstValue() {
-    if (dependentValue == null) {
+    if (_dependentValue == null) {
       return null;
     }
-    return _itemsBuilder(dependentValue!).firstOrNull?.value;
+    return _itemsBuilder(_dependentValue!).firstOrNull?.value;
   }
 
   bool hasSelectionValues(W dependentValue) {
@@ -67,12 +67,12 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
   }
 
   @override
-  Widget displayWidget(T? value, bool focused, void Function()? onEditComplete, ) {
+  Widget displayWidget(T? value, bool focused, TouchEditCallBacks touchEditCallBacks, ) {
     return DefaultDisplayWidget<T>(
       displayBuilder: _displayBuilder,
       value: value,
       focused: focused,
-      onEditComplete: onEditComplete,
+      touchEditCallBacks: touchEditCallBacks,
     );
   }
 
@@ -80,11 +80,10 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
   Widget editingWidget(
       T? value,
       Function(T? value)? onChanged,
-      void Function()? onEditComplete,
-      void Function()? focusThisField,
+      TouchEditCallBacks touchEditCallBacks,
       bool focused) {
     return DynamicTableDependentDropdownWidget<T, W>(
-        dependentValue: dependentValue,
+        dependentValue: _dependentValue,
         itemsBuilder: _itemsBuilder,
         selectedItemBuilder: _selectedItemBuilder,
         hint: _hint,
@@ -107,8 +106,7 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
         borderRadius: _borderRadius,
         value: value,
         onChanged: onChanged,
-        onEditComplete: onEditComplete,
-        focusThisField: focusThisField,
+        touchEditCallBacks: touchEditCallBacks,
         focused: focused);
   }
 
@@ -134,10 +132,19 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
   final AlignmentGeometry _alignment;
   final BorderRadius? _borderRadius;
 
-  W? dependentValue;
-  int _dependentOnColumn;
+  W? _dependentValue;
 
-  int get dependentOnColumn => _dependentOnColumn;
+  W? get dependentValue => _dependentValue;
+
+  int get dependentOnColumn => _dependentOn!;
+
+  bool setDefaultDependentValue(W? dependentValue) {
+    if (_dependentValue == null || _dependentValue != dependentValue) {
+      _dependentValue = dependentValue;
+      return true;
+    }
+    return false;
+  }
 
   @override
   void dispose() {}

@@ -32,12 +32,12 @@ class DynamicTableAutocompleteInput extends DynamicTableInputType<String> {
   final AutocompleteOptionsViewBuilder<String>? _optionsViewBuilder;
 
   @override
-  Widget displayWidget(String? value, bool focused, void Function()? onEditComplete, ) {
+  Widget displayWidget(String? value, bool focused, TouchEditCallBacks touchEditCallBacks, ) {
     return DefaultDisplayWidget<String>(
       displayBuilder: _displayBuilder,
       value: value,
       focused: focused,
-      onEditComplete: onEditComplete,
+      touchEditCallBacks: touchEditCallBacks,
     );
   }
 
@@ -45,7 +45,7 @@ class DynamicTableAutocompleteInput extends DynamicTableInputType<String> {
       BuildContext context,
       TextEditingController textEditingController,
       FocusNode focusNode,
-      VoidCallback onFieldSubmitted) {
+      void Function() onFieldSubmitted) {
     return TextFormField(
       controller: textEditingController,
       focusNode: focusNode,
@@ -57,8 +57,7 @@ class DynamicTableAutocompleteInput extends DynamicTableInputType<String> {
   Widget editingWidget(
       String? value,
       Function(String value, )? onChanged,
-      void Function()? onEditComplete,
-      void Function()? focusThisField,
+      TouchEditCallBacks touchEditCallBacks,
       bool focused) {
     return DynamicTableAutocompleteWidget(
         optionsBuilder: _optionsBuilder,
@@ -69,8 +68,7 @@ class DynamicTableAutocompleteInput extends DynamicTableInputType<String> {
         optionsViewBuilder: _optionsViewBuilder,
         value: value,
         onChanged: onChanged,
-        onEditComplete: onEditComplete,
-        focusThisField: focusThisField,
+        touchEditCallBacks: touchEditCallBacks,
         focused: focused);
   }
 
