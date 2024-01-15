@@ -96,7 +96,9 @@ class _DynamicTableDropdownWidgetState<T>
       }
     });
 
-    _focusNode?.onKeyEvent = (node, event) => event.handleKeyIfCallBackExistAndCallOnlyOnKeyDown(LogicalKeyboardKey.tab, widget.touchEditCallBacks.focusNextField);
+    _focusNode?.onKeyEvent = (node, event) => event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusPreviousField, withShift: true)
+    .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField)
+    .chain([LogicalKeyboardKey.escape], widget.touchEditCallBacks.cancelEdit).result();
 
     _focusNode?.focus(widget.focused);
   }

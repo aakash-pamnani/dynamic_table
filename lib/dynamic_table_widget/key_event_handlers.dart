@@ -3,19 +3,28 @@ import 'package:flutter/services.dart';
 
 typedef ChainedKeyEventResult = ({KeyEventResult keyEventResult, bool keyHandled});
 
+extension ContainsAnyCheck<T> on Set<T> {
+  bool containsAny(Iterable<T> other) {
+    for (T value in other) {
+      if (this.contains(value)) return true;
+    }
+    return false;
+  }
+}
+
 class ChainHandlingKeys {
   ChainHandlingKeys(
       {required ChainedKeyEventResult keyEventResult,
       required ChainHandlingKeys chainedCallBack(
           List<LogicalKeyboardKey> logicalKeys, void callBack()?,
-          {bool handleOnCondition()?})})
+          {bool handleOnCondition()?, bool? withShift})})
       : _keyEventResult = keyEventResult,
         _chainedCallBack = chainedCallBack;
 
   ChainedKeyEventResult _keyEventResult;
   ChainHandlingKeys Function(
       List<LogicalKeyboardKey> logicalKeys, void Function()? callBack,
-      {bool Function()? handleOnCondition}) _chainedCallBack;
+      {bool Function()? handleOnCondition, bool? withShift}) _chainedCallBack;
 
   KeyEventResult result() {
     return _keyEventResult.keyEventResult;
@@ -23,12 +32,12 @@ class ChainHandlingKeys {
 
   ChainHandlingKeys chain(
       List<LogicalKeyboardKey> logicalKeys, void callBack()?,
-      {bool handleOnCondition()?}) {
+      {bool handleOnCondition()?, bool? withShift}) {
     if (_keyEventResult.keyHandled) {
       return this;
     }
     return _chainedCallBack(logicalKeys, callBack,
-        handleOnCondition: handleOnCondition);
+        handleOnCondition: handleOnCondition, withShift: withShift);
   }
 }
 
@@ -48,25 +57,31 @@ extension KeyEventHandlers on KeyEvent {
         [logicalKey], callBack).keyEventResult;
   }
 
+  bool _anyKeyPressed(List<LogicalKeyboardKey> logicalKeys, {bool? withShift}) {
+    return logicalKeys.contains(this.logicalKey)
+    && (withShift==null || HardwareKeyboard.instance.logicalKeysPressed.containsAny([LogicalKeyboardKey.shift, LogicalKeyboardKey.shiftLeft, LogicalKeyboardKey.shiftRight]));
+  }
+
   ChainedKeyEventResult _handleKeysIfCallBackExistAndCallOnlyOnKeyDown(
       List<LogicalKeyboardKey> logicalKeys, void callBack()?,
-      {bool handleOnCondition()?}) {
+      {bool handleOnCondition()?, bool? withShift}) {
+    final anyKeyPressed = _anyKeyPressed(logicalKeys, withShift: withShift);
     // ignore: curly_braces_in_flow_control_structures
     if (handleOnCondition?.call() ?? true) if (callBack != null &&
-        (logicalKeys.contains(this.logicalKey))) {
-      return (keyEventResult: this._handleKeyAndCallOnlyOnKeyDown(callBack), keyHandled: true);
+        (anyKeyPressed)) {
+      return (keyEventResult: this._handleKeyAndCallOnlyOnKeyDown(callBack), keyHandled: anyKeyPressed);
     }
 
-    return (keyEventResult: KeyEventResult.ignored, keyHandled: logicalKeys.contains(this.logicalKey));
+    return (keyEventResult: KeyEventResult.ignored, keyHandled: anyKeyPressed);
   }
 
   ChainHandlingKeys handleKeysIfCallBackExistAndCallOnlyOnKeyDown(
       List<LogicalKeyboardKey> logicalKeys, void callBack()?,
-      {bool handleOnCondition()?}) {
+      {bool handleOnCondition()?, bool? withShift}) {
     return ChainHandlingKeys(
       keyEventResult: _handleKeysIfCallBackExistAndCallOnlyOnKeyDown(
           logicalKeys, callBack,
-          handleOnCondition: handleOnCondition),
+          handleOnCondition: handleOnCondition, withShift: withShift),
       chainedCallBack: handleKeysIfCallBackExistAndCallOnlyOnKeyDown,
     );
   }

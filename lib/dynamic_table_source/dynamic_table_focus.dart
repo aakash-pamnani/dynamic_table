@@ -14,7 +14,7 @@ mixin DynamicTableFocus implements DynamicTableSourceQuery {
     var isRowOutOfFocus =
         () => !(focus.row >= 0 && focus.row < getDataLength());
     var isColumnOutOfFocus = () => !(focus.column >= -1 &&
-        focus.column < getColumnsQuery().getColumnsLength());
+        focus.column <= getColumnsQuery().getColumnsLength());
     var doesRowExceedDataLength = () => focus.row >= getDataLength();
 
     if (isRowOutOfFocus() && isColumnOutOfFocus()) {
@@ -37,7 +37,7 @@ mixin DynamicTableFocus implements DynamicTableSourceQuery {
     return focus;
   }
 
-  bool isColumnNotAFocusTarget(DynamicTableFocusData focus, int columnIncrement) {
+  bool _isColumnNotAFocusTarget(DynamicTableFocusData focus, int columnIncrement) {
     return (!getColumnsQuery()
             .isColumnEditable(focus.column + columnIncrement) ||
         isDropdownColumnAndHasNoDropdownValues(
@@ -49,7 +49,7 @@ mixin DynamicTableFocus implements DynamicTableSourceQuery {
     var columnIncrement = 1;
     while (((focus.column + columnIncrement) <
             getColumnsQuery().getColumnsLength()) &&
-        isColumnNotAFocusTarget(focus, columnIncrement)) {
+        _isColumnNotAFocusTarget(focus, columnIncrement)) {
       columnIncrement = columnIncrement + 1;
     }
     return (
@@ -64,7 +64,7 @@ mixin DynamicTableFocus implements DynamicTableSourceQuery {
       moveToPreviousEditableColumn(DynamicTableFocusData focus) {
     var columnIncrement = -1;
     while (((focus.column + columnIncrement) > -1) &&
-        isColumnNotAFocusTarget(focus, columnIncrement)) {
+        _isColumnNotAFocusTarget(focus, columnIncrement)) {
       columnIncrement = columnIncrement - 1;
     }
     return (

@@ -78,7 +78,9 @@ class _DynamicTableDependentDropdownWidgetState<T, W> extends State<DynamicTable
         widget.touchEditCallBacks.focusThisEditingField?.call();
       }
     });
-    _focusNode?.onKeyEvent = (node, event) => event.handleKeyIfCallBackExistAndCallOnlyOnKeyDown(LogicalKeyboardKey.tab, widget.touchEditCallBacks.focusNextField);
+    _focusNode?.onKeyEvent = (node, event) => event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusPreviousField, withShift: true)
+    .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField)
+    .chain([LogicalKeyboardKey.escape], widget.touchEditCallBacks.cancelEdit).result();
     _focusNode?.focus(widget.focused);
   }
 

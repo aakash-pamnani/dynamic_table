@@ -59,8 +59,10 @@ class DynamicTableAutocompleteWidget extends StatelessWidget {
 
         focusNode.onKeyEvent = (node, event) => event
             .handleKeysIfCallBackExistAndCallOnlyOnKeyDown(
-                [LogicalKeyboardKey.enter, LogicalKeyboardKey.tab],
-                touchEditCallBacks.focusNextField).result();
+                [LogicalKeyboardKey.tab],
+                touchEditCallBacks.focusPreviousField, withShift: true)
+                .chain([LogicalKeyboardKey.enter, LogicalKeyboardKey.tab], touchEditCallBacks.focusNextField)
+                .chain([LogicalKeyboardKey.escape], touchEditCallBacks.cancelEdit).result();
         focusNode.focus(focused);
         return _fieldViewBuilder(
             context, textEditingController, focusNode, onFieldSubmitted);

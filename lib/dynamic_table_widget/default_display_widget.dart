@@ -36,8 +36,10 @@ class _DefaultDisplayWidgetState<T> extends State<DefaultDisplayWidget<T>> {
     super.initState();
     focusNode = new FocusNode();
     focusNode?.onKeyEvent = (node, event) =>
-        event.handleKeyIfCallBackExistAndCallOnlyOnKeyDown(
-            LogicalKeyboardKey.tab, widget.touchEditCallBacks.focusNextField);
+        event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown(
+            [LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusPreviousField, withShift: true)
+            .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField)
+            .chain([LogicalKeyboardKey.enter], widget.touchEditCallBacks.edit).result();
     focusNode?.focus(widget._focused);
   }
 

@@ -119,7 +119,9 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
     });
 
     focusNode?.onKeyEvent = (node, event) => event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown([LogicalKeyboardKey.enter], widget.touchEditCallBacks.focusNextField, handleOnCondition: () => (_isMultilineTextField() && _hasTextReachedMaxLinesLimit()),)
-    .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField).result();
+    .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusPreviousField, withShift: true)
+    .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField)
+    .chain([LogicalKeyboardKey.escape], widget.touchEditCallBacks.cancelEdit).result();
 
     focusNode?.focus(widget.focused);
     textEditingController?.text = widget.value ?? "";

@@ -202,7 +202,7 @@ mixin DynamicTableView
           ? () => focusThisField(index, columnIndex)
           : null,
       focusThisNonEditingField: (enableTouchMode && !showEditingWidget)
-          ? () => focusThisField(index, columnIndex)
+          ? () { focusThisField(index, columnIndex); }
           : null,
       cancelEdit: (enableTouchMode && showEditingWidget)
           ? () => cancelRow(index)
