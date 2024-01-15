@@ -7,7 +7,7 @@ mixin DynamicTableFocus implements DynamicTableSourceQuery {
   void updateFocus(DynamicTableFocusData? focus);
 
   //TODO: focus the selection list in the dropdown controls instead of the outter container
-  //TODO: in editing cell if esc key is pressed then cancel the editing
+  //TODO: when moving focus to a cell that is before the currently focused cell the focus in not gained on the destination (except for the double tap for edit functionality), fix the bug
   DynamicTableFocusData resetFocus(DynamicTableFocusData? focus) {
     if (focus == null) return DynamicTableFocusData(row: 0, column: -1);
 
