@@ -117,7 +117,7 @@ class _DynamicTableDateInputWidgetState
     .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField)
     .chain([LogicalKeyboardKey.escape], widget.touchEditCallBacks.cancelEdit).result();
 
-    controller?.text = widget.displayBuilder(widget.value);
+    if (controller?.text != widget.displayBuilder(widget.value)) controller?.text = widget.displayBuilder(widget.value);
     if (!widget._readOnly) {
       focusNode?.focus(widget.focused);
     } else {
@@ -128,7 +128,7 @@ class _DynamicTableDateInputWidgetState
   @override
   void didUpdateWidget(DynamicTableDateInputWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    controller?.text = widget.displayBuilder(widget.value);
+    if (controller?.text != widget.displayBuilder(widget.value)) controller?.text = widget.displayBuilder(widget.value);
     if (!widget._readOnly) {
       focusNode?.focus(widget.focused);
     } else {

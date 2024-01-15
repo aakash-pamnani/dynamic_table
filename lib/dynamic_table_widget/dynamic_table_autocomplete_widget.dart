@@ -44,7 +44,7 @@ class DynamicTableAutocompleteWidget extends StatelessWidget {
       displayStringForOption: _displayStringForOption,
       fieldViewBuilder:
           (context, textEditingController, focusNode, onFieldSubmitted) {
-        textEditingController.text = value ?? "";
+        if (textEditingController.text != value) textEditingController.text = value ?? "";
         textEditingController.addListener(() {
           onChanged?.call(
             textEditingController.text,

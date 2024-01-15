@@ -124,14 +124,14 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
     .chain([LogicalKeyboardKey.escape], widget.touchEditCallBacks.cancelEdit).result();
 
     focusNode?.focus(widget.focused);
-    textEditingController?.text = widget.value ?? "";
+    if (textEditingController?.text != widget.value) textEditingController?.text = widget.value ?? "";
   }
 
   @override
   void didUpdateWidget(DynamicTableTextInputWidget oldWidget){
     super.didUpdateWidget(oldWidget);
     focusNode?.focus(widget.focused);
-    textEditingController?.text = widget.value ?? "";
+    if (textEditingController?.text != widget.value) textEditingController?.text = widget.value ?? "";
   }
 
   @override
