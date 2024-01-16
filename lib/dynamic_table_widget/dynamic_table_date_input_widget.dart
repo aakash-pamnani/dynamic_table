@@ -44,7 +44,9 @@ class DynamicTableDateInputWidget extends StatefulWidget {
   final TextAlignVertical? _textAlignVertical;
   final MouseCursor? _mouseCursor;
   final DateTime? value;
-  final Function(DateTime? value, )? onChanged;
+  final Function(
+    DateTime? value,
+  )? onChanged;
   final TouchEditCallBacks touchEditCallBacks;
   final bool focused;
   final String Function(DateTime?) displayBuilder;
@@ -54,9 +56,7 @@ class DynamicTableDateInputWidget extends StatefulWidget {
       _DynamicTableDateInputWidgetState();
 }
 
-enum Completion {
-  Completed, Cancelled
-}
+enum Completion { Completed, Cancelled }
 
 class _DynamicTableDateInputWidgetState
     extends State<DynamicTableDateInputWidget> {
@@ -82,10 +82,14 @@ class _DynamicTableDateInputWidgetState
 
   void showPicker() {
     _showPicker(widget.value ?? DateTime.now()).then((value) {
-      widget.onChanged?.call(value, );
+      widget.onChanged?.call(
+        value,
+      );
       widget.touchEditCallBacks.focusNextField?.call();
       controller?.text = widget.displayBuilder(value);
-    }, onError: (error) {if (error != Completion.Cancelled) throw error;});
+    }, onError: (error) {
+      if (error != Completion.Cancelled) throw error;
+    });
   }
 
   @override
@@ -95,29 +99,43 @@ class _DynamicTableDateInputWidgetState
     focusNode = FocusNode();
     datePickerIconFocusNode = FocusNode();
 
+    widget.touchEditCallBacks.updateFocusCache?.call(identity: this, () => setState(() {
+          focusNode?.unfocus();
+          datePickerIconFocusNode?.unfocus();
+        }), () => (!widget._readOnly)? focusNode : datePickerIconFocusNode);
+
     focusNode?.addListener(() {
-      if ((focusNode?.hasFocus ?? false) &&
-          !widget.focused) {
+      if ((focusNode?.hasFocus ?? false) && !widget.focused) {
         widget.touchEditCallBacks.focusThisEditingField?.call();
       }
     });
     datePickerIconFocusNode?.addListener(() {
-      if ((focusNode?.hasFocus ?? false) &&
-          !widget.focused) {
+      if ((focusNode?.hasFocus ?? false) && !widget.focused) {
         widget.touchEditCallBacks.focusThisEditingField?.call();
       }
     });
 
-    focusNode?.onKeyEvent = (node, event) => event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusPreviousField, withShift: true)
-    .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField)
-    .chain([LogicalKeyboardKey.enter], () => (!widget._readOnly)? widget.touchEditCallBacks.focusNextField : showPicker)
-    .chain([LogicalKeyboardKey.escape], widget.touchEditCallBacks.cancelEdit).result();
+    focusNode?.onKeyEvent = (node, event) => event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown(
+        [LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusPreviousField,
+        withShift:
+            true).chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField).chain(
+        [LogicalKeyboardKey.enter],
+        () =>
+            (!widget._readOnly) ? widget.touchEditCallBacks.focusNextField : showPicker).chain(
+        [LogicalKeyboardKey.escape], widget.touchEditCallBacks.cancelEdit).result();
 
-    datePickerIconFocusNode?.onKeyEvent = (node, event) => event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusPreviousField, withShift: true)
-    .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField)
-    .chain([LogicalKeyboardKey.escape], widget.touchEditCallBacks.cancelEdit).result();
+    datePickerIconFocusNode?.onKeyEvent = (node, event) =>
+        event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown(
+            [LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusPreviousField,
+            withShift: true).chain([
+          LogicalKeyboardKey.tab
+        ], widget.touchEditCallBacks.focusNextField).chain(
+            [LogicalKeyboardKey.escape],
+            widget.touchEditCallBacks.cancelEdit).result();
 
-    if (controller?.text != widget.displayBuilder(widget.value)) controller?.text = widget.displayBuilder(widget.value);
+    if (controller?.text != widget.displayBuilder(widget.value)) {
+      controller?.text = widget.displayBuilder(widget.value);
+    }
     if (!widget._readOnly) {
       focusNode?.focus(widget.focused);
     } else {
@@ -128,7 +146,9 @@ class _DynamicTableDateInputWidgetState
   @override
   void didUpdateWidget(DynamicTableDateInputWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (controller?.text != widget.displayBuilder(widget.value)) controller?.text = widget.displayBuilder(widget.value);
+    if (controller?.text != widget.displayBuilder(widget.value)) {
+      controller?.text = widget.displayBuilder(widget.value);
+    }
     if (!widget._readOnly) {
       focusNode?.focus(widget.focused);
     } else {
@@ -147,6 +167,7 @@ class _DynamicTableDateInputWidgetState
     controller = null;
     focusNode = null;
     datePickerIconFocusNode = null;
+    widget.touchEditCallBacks.clearFocusCache?.call(identity: this);
   }
 
   @override
@@ -177,8 +198,7 @@ class _DynamicTableDateInputWidgetState
       textAlignVertical: widget._textAlignVertical,
       mouseCursor: widget._mouseCursor,
       readOnly: widget._readOnly,
-      onEditingComplete: () =>
-          widget.touchEditCallBacks.focusNextField?.call(),
+      onEditingComplete: () => widget.touchEditCallBacks.focusNextField?.call(),
     );
   }
 }

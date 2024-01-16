@@ -1,9 +1,14 @@
 import 'package:dynamic_table/dynamic_input_type/dynamic_table_input_type.dart';
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_action.dart';
+import 'package:dynamic_table/dynamic_table_source/dynamic_table_focus_data.dart';
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_shiftable_data.dart';
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_source.dart';
 import 'package:dynamic_table/dynamic_table_source/reference.dart';
+import 'package:dynamic_table/dynamic_table_source/shifting_map.dart';
 import 'package:flutter/material.dart';
+
+typedef UnfocusFocusNodes = void Function ();
+typedef GetFocusNode = FocusNode? Function();
 
 class TouchEditCallBacks {
   final void Function()? focusPreviousField;
@@ -12,6 +17,8 @@ class TouchEditCallBacks {
   final void Function()? focusThisNonEditingField;
   final void Function()? cancelEdit;
   final void Function()? edit;
+  final void Function(UnfocusFocusNodes unfocusFocusNodes, GetFocusNode getFocusNode, {required Object identity})? updateFocusCache;
+  final void Function({required Object identity})? clearFocusCache;
 
   const TouchEditCallBacks(
       {this.focusPreviousField,
@@ -19,7 +26,9 @@ class TouchEditCallBacks {
       this.focusThisEditingField,
       this.focusThisNonEditingField,
       this.cancelEdit,
-      this.edit});
+      this.edit,
+      this.updateFocusCache,
+      this.clearFocusCache});
 }
 
 mixin DynamicTableView
@@ -44,6 +53,60 @@ mixin DynamicTableView
   void setEditingValue(
       Reference<int> row, int column, Comparable<dynamic>? value);
   bool checkFocus(Reference<int> row, int column);
+  void callOnPreviousFocus(void callBack(DynamicTableFocusData focus, DynamicTableFocusData previousFocus));
+
+  final Map<int, Map<int, UnfocusFocusNodes>> _unfocusFocusNodesCache = {};
+  final Map<int, Map<int, GetFocusNode>> _getFocusNodeCache = {};
+  final Map<int, Map<int, Object>> _identities = {};
+
+  void shiftViewCache(Map<int, int> shiftData) {
+    _unfocusFocusNodesCache.shiftKeys(shiftData, getDataLength());
+    _getFocusNodeCache.shiftKeys(shiftData, getDataLength());
+    _identities.shiftKeys(shiftData, getDataLength());
+  }
+
+  void _updateFocusCache(
+      Reference<int> row, int column, UnfocusFocusNodes unfocusFocusNodes, GetFocusNode getFocusNode, { required Object identity }) {
+    if (!_unfocusFocusNodesCache.containsKey(row.value)) _unfocusFocusNodesCache[row.value] = {};
+    if (!_getFocusNodeCache.containsKey(row.value)) _getFocusNodeCache[row.value] = {};
+    if (!_identities.containsKey(row.value)) _identities[row.value] = {};
+    _unfocusFocusNodesCache[row.value]![column] = unfocusFocusNodes;
+    _getFocusNodeCache[row.value]![column] = getFocusNode;
+    _identities[row.value]![column] = identity;
+  }
+
+  void _clearFocusCache(Reference<int> row, int column, {required Object identity}) {
+    if (_identities.containsKey(row.value) && _identities[row.value]!.containsKey(column) && _identities[row.value]![column] != identity) return;
+
+    if (_unfocusFocusNodesCache.containsKey(row.value) && _unfocusFocusNodesCache[row.value]!.containsKey(column)) {
+      _unfocusFocusNodesCache[row.value]!.remove(column);
+    }
+    if (_unfocusFocusNodesCache.containsKey(row.value) && _unfocusFocusNodesCache[row.value]!.isEmpty) {
+      _unfocusFocusNodesCache.remove(row.value);
+    }
+
+    if (_getFocusNodeCache.containsKey(row.value) && _getFocusNodeCache[row.value]!.containsKey(column)) {
+      _getFocusNodeCache[row.value]!.remove(column);
+    }
+    if (_getFocusNodeCache.containsKey(row.value) && _getFocusNodeCache[row.value]!.isEmpty) {
+      _getFocusNodeCache.remove(row.value);
+    }
+
+    if (_identities.containsKey(row.value) && _identities[row.value]!.containsKey(column)) {
+      _identities[row.value]!.remove(column);
+    }
+    if (_identities.containsKey(row.value) && _identities[row.value]!.isEmpty) {
+      _identities.remove(row.value);
+    }
+  }
+
+  void unfocusPreviousFocusNodes() {
+    callOnPreviousFocus((focus, previousFocus) {
+      if (_unfocusFocusNodesCache.containsKey(previousFocus.row) && _unfocusFocusNodesCache[previousFocus.row]!.containsKey(previousFocus.column)) {
+        _unfocusFocusNodesCache[previousFocus.row]![previousFocus.column]!();
+      }
+    });
+  }
 
   void _onSort(int column, bool order) {
     updateSortByColumnIndex(column);
@@ -202,7 +265,9 @@ mixin DynamicTableView
           ? () => focusThisField(index, columnIndex)
           : null,
       focusThisNonEditingField: (enableTouchMode && !showEditingWidget)
-          ? () { focusThisField(index, columnIndex); }
+          ? () {
+              focusThisField(index, columnIndex);
+            }
           : null,
       cancelEdit: (enableTouchMode && showEditingWidget)
           ? () => cancelRow(index)
@@ -210,6 +275,12 @@ mixin DynamicTableView
       edit: (enableTouchMode && !showEditingWidget)
           ? () => tapToEdit(index, columnIndex)
           : null,
+      updateFocusCache: (UnfocusFocusNodes unfocusFocusNodes, GetFocusNode getFocusNode, {required Object identity}) => _updateFocusCache(
+                  index,
+                  columnIndex,
+                  unfocusFocusNodes,
+                  getFocusNode, identity: identity),
+      clearFocusCache: ({required Object identity}) => _clearFocusCache(index, columnIndex, identity: identity),
     );
 
     return DataCell(

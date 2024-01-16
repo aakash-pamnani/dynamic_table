@@ -153,12 +153,14 @@ class DynamicTableSource extends DataTableSource
   void _onShift(Map<int, int> shiftData) {
     shiftEditingValues(shiftData);
     _focus = shiftFocus(_focus, shiftData);
+    shiftViewCache(shiftData);
     pageTo(getFocus().row);
   }
 
   @override
   void updateFocus(DynamicTableFocusData? focus) {
-    _focus = focus;
+    _focus = focus != null? DynamicTableFocusData(row: focus.row, column: focus.column, previous: _focus): null;
+    unfocusPreviousFocusNodes();
     notifyListeners();
     pageTo(getFocus().row);
   }

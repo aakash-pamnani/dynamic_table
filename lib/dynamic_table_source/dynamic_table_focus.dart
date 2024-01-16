@@ -7,7 +7,6 @@ mixin DynamicTableFocus implements DynamicTableSourceQuery {
   void updateFocus(DynamicTableFocusData? focus);
 
   //TODO: focus the selection list in the dropdown controls instead of the outter container
-  //TODO: when moving focus to a cell that is before the currently focused cell the focus in not gained on the destination (except for the double tap for edit functionality), fix the bug
   DynamicTableFocusData resetFocus(DynamicTableFocusData? focus) {
     if (focus == null) return DynamicTableFocusData(row: 0, column: -1);
 
@@ -74,11 +73,25 @@ mixin DynamicTableFocus implements DynamicTableSourceQuery {
     );
   }
 
-  DynamicTableFocusData getFocus() {
-    var focus = resetFocus(getRawFocus());
+  DynamicTableFocusData _parseFocus(DynamicTableFocusData? focus) {
+    focus = resetFocus(focus);
     if (focus.column == -1) focus = moveToNextEditableColumn(focus).focus;
     if (focus.column == getColumnsQuery().getColumnsLength()) focus = moveToPreviousEditableColumn(focus).focus;
     return focus;
+  }
+
+  DynamicTableFocusData getFocus() {
+    var focus = _parseFocus(getRawFocus());
+    var previousFocus = getRawFocus() != null? _parseFocus(getRawFocus()!.previous) : null;
+    return DynamicTableFocusData(row: focus.row, column: focus.column, previous: previousFocus);
+  }
+
+  void callOnPreviousFocus(void callBack(DynamicTableFocusData focus, DynamicTableFocusData previousFocus)) {
+    var focus = getRawFocus();
+    if (focus?.previous != null) {
+      var focus = getFocus();
+      callBack(focus, focus.previous!);
+    }
   }
 
   bool checkFocus(Reference<int> row, int column) {
@@ -145,10 +158,6 @@ mixin DynamicTableFocus implements DynamicTableSourceQuery {
 
   DynamicTableFocusData? shiftFocus(
       DynamicTableFocusData? focus, Map<int, int> shiftData) {
-    if (focus != null && shiftData.containsKey(focus.row)) {
-      return DynamicTableFocusData(
-          row: shiftData[focus.row]!, column: focus.column);
-    }
-    return focus;
+    return focus?.shift(shiftData);
   }
 }

@@ -35,6 +35,9 @@ class _DefaultDisplayWidgetState<T> extends State<DefaultDisplayWidget<T>> {
   void initState() {
     super.initState();
     focusNode = new FocusNode();
+    widget.touchEditCallBacks.updateFocusCache?.call(identity: this, () => setState(() {
+      focusNode?.unfocus();
+    }), () => focusNode);
     focusNode?.onKeyEvent = (node, event) =>
         event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown(
             [LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusPreviousField, withShift: true)
@@ -55,6 +58,7 @@ class _DefaultDisplayWidgetState<T> extends State<DefaultDisplayWidget<T>> {
     focusNode?.unfocus();
     focusNode?.dispose();
     focusNode = null;
+    widget.touchEditCallBacks.clearFocusCache?.call(identity: this);
   }
 
   @override
