@@ -6,8 +6,12 @@ class DynamicTableFocusData {
   final DynamicTableFocusData? previous;
 
   @override
-  String toString() {
-    return 'row: ' + row.toString() + ' | ' + 'column: ' + column.toString();
+  String toString({bool? doNotPrintPrevious}) {
+    return 'row: ' + row.toString() + ' | ' + 'column: ' + column.toString() + ((!(doNotPrintPrevious??false))? (' :previous: ' + (previous?.toString(doNotPrintPrevious: true) ?? 'nil')) : '');
+  }
+
+  DynamicTableFocusData update(DynamicTableFocusData focus) {
+    return DynamicTableFocusData(row: focus.row, column: focus.column, previous: this);
   }
 
   DynamicTableFocusData shift(

@@ -11,9 +11,9 @@ class DefaultDisplayWidget<T> extends StatefulWidget {
     required T? value,
     required focused,
     required this.touchEditCallBacks,
-  }) : _displayBuilder = displayBuilder,
-      _value = value,
-      _focused = focused;
+  })  : _displayBuilder = displayBuilder,
+        _value = value,
+        _focused = focused;
 
   final String Function(T? value)? _displayBuilder;
   final T? _value;
@@ -21,12 +21,13 @@ class DefaultDisplayWidget<T> extends StatefulWidget {
   final TouchEditCallBacks touchEditCallBacks;
 
   @override
-  State<DefaultDisplayWidget<T>> createState() => _DefaultDisplayWidgetState<T>();
+  State<DefaultDisplayWidget<T>> createState() =>
+      _DefaultDisplayWidgetState<T>();
 }
 
 class _DefaultDisplayWidgetState<T> extends State<DefaultDisplayWidget<T>> {
   String _defaultDisplayBuilder(T? value) {
-    return value?.toString()??'';
+    return value?.toString() ?? '';
   }
 
   FocusNode? focusNode;
@@ -35,14 +36,23 @@ class _DefaultDisplayWidgetState<T> extends State<DefaultDisplayWidget<T>> {
   void initState() {
     super.initState();
     focusNode = new FocusNode();
-    widget.touchEditCallBacks.updateFocusCache?.call(identity: this, () => setState(() {
-      focusNode?.unfocus();
-    }), () => focusNode);
+    widget.touchEditCallBacks.updateFocusCache?.call(
+        identity: this,
+        UpdateFocusNodeCallBacks(
+            unfocusFocusNodes: () => setState(() {
+                  focusNode?.unfocus();
+                }),
+            focusFocusNodes: () => setState(() {
+                  focusNode?.requestFocus();
+                })));
     focusNode?.onKeyEvent = (node, event) =>
-        event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown(
-            [LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusPreviousField, withShift: true)
-            .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField)
-            .chain([LogicalKeyboardKey.enter], widget.touchEditCallBacks.edit).result();
+        event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown([
+          LogicalKeyboardKey.tab
+        ],
+            widget.touchEditCallBacks.focusPreviousField, withShift: true).chain([
+          LogicalKeyboardKey.tab
+        ], widget.touchEditCallBacks.focusNextField).chain(
+            [LogicalKeyboardKey.enter], widget.touchEditCallBacks.edit).result();
     focusNode?.focus(widget._focused);
   }
 
@@ -63,6 +73,10 @@ class _DefaultDisplayWidgetState<T> extends State<DefaultDisplayWidget<T>> {
 
   @override
   Widget build(BuildContext context) {
-    return Focus(child: Text((widget._displayBuilder ?? _defaultDisplayBuilder).call(widget._value)), focusNode: focusNode,);
+    return Focus(
+      child: Text((widget._displayBuilder ?? _defaultDisplayBuilder)
+          .call(widget._value)),
+      focusNode: focusNode,
+    );
   }
 }

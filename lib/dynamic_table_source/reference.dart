@@ -9,6 +9,15 @@ class Reference<T> {
     _value = value;
     return this;
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (!(other is T)) return false;
+    return this.value == other;
+  }
+
+  @override
+  int get hashCode => value.hashCode;
 }
 
 extension Operations on Reference<int> {
@@ -30,6 +39,10 @@ extension Operations on Reference<int> {
 
   void shift(Map<int, int> shiftData) {
     if (shiftData[this.value]!=null) this._update(shiftData[this.value]!);
+  }
+
+  Reference<int> clone() {
+    return Reference<int>(value: this.value);
   }
 
 }

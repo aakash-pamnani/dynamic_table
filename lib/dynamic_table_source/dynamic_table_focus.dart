@@ -3,8 +3,9 @@ import 'package:dynamic_table/dynamic_table_source/dynamic_table_source.dart';
 import 'package:dynamic_table/dynamic_table_source/reference.dart';
 
 mixin DynamicTableFocus implements DynamicTableSourceQuery {
-  DynamicTableFocusData? getRawFocus();
-  void updateFocus(DynamicTableFocusData? focus);
+
+  DynamicTableFocusData getRawFocus();
+  void updateFocus(DynamicTableFocusData focus);
 
   //TODO: focus the selection list in the dropdown controls instead of the outter container
   DynamicTableFocusData resetFocus(DynamicTableFocusData? focus) {
@@ -23,7 +24,7 @@ mixin DynamicTableFocus implements DynamicTableSourceQuery {
     //resetting row focus if it is out of focus
     if (isRowOutOfFocus()) {
       if (doesRowExceedDataLength()) {
-        return DynamicTableFocusData(row: getDataLength() - 1, column: -1);
+        return DynamicTableFocusData(row: getDataLength() - 1, column: getColumnsQuery().getColumnsLength());
       }
       return DynamicTableFocusData(row: 0, column: -1);
     }
@@ -82,16 +83,13 @@ mixin DynamicTableFocus implements DynamicTableSourceQuery {
 
   DynamicTableFocusData getFocus() {
     var focus = _parseFocus(getRawFocus());
-    var previousFocus = getRawFocus() != null? _parseFocus(getRawFocus()!.previous) : null;
+    var previousFocus = _parseFocus(getRawFocus().previous);
     return DynamicTableFocusData(row: focus.row, column: focus.column, previous: previousFocus);
   }
 
-  void callOnPreviousFocus(void callBack(DynamicTableFocusData focus, DynamicTableFocusData previousFocus)) {
-    var focus = getRawFocus();
-    if (focus?.previous != null) {
-      var focus = getFocus();
-      callBack(focus, focus.previous!);
-    }
+  void callOnFocus(void callBack(DynamicTableFocusData focus, DynamicTableFocusData? previousFocus)) {
+    var focus = getFocus();
+    callBack(focus, focus.previous);
   }
 
   bool checkFocus(Reference<int> row, int column) {
@@ -102,7 +100,7 @@ mixin DynamicTableFocus implements DynamicTableSourceQuery {
   void _focusPreviousRow(Reference<int> row,
       {void onFocusPreviousRow(Reference<int> oldRow)?}) {
     //checking if first row
-    if (getRawFocus() != null && getRawFocus()!.row == 0) {
+    if (getRawFocus().row == 0) {
       return;
     }
     updateFocus(DynamicTableFocusData(row: row.value - 1, column: getColumnsQuery().getColumnsLength()));
@@ -127,7 +125,7 @@ mixin DynamicTableFocus implements DynamicTableSourceQuery {
     updateFocus(DynamicTableFocusData(row: row.value + 1, column: -1));
     onFocusNextRow?.call(row);
     //checking if last row
-    if (getRawFocus() != null && getRawFocus()!.row == (getDataLength())) {
+    if (getRawFocus().row == (getDataLength())) {
       onFocusLastRow?.call();
     }
   }
@@ -152,12 +150,30 @@ mixin DynamicTableFocus implements DynamicTableSourceQuery {
     onFocusThisField?.call(row);
   }
 
-  void focusThisRow(Reference<int> row) {
-    updateFocus(DynamicTableFocusData(row: row.value, column: -1));
+  bool isRowWithinRange(TableRowRange? tableRowRange) {
+    var focus = getRawFocus();
+    if (tableRowRange == null || (tableRowRange.startIndex == null && tableRowRange.endIndex == null)) return true;
+    return ((tableRowRange.startIndex==null || focus.row >= tableRowRange.startIndex!)
+      && (tableRowRange.endIndex==null || focus.row <= tableRowRange.endIndex!));
   }
 
-  DynamicTableFocusData? shiftFocus(
-      DynamicTableFocusData? focus, Map<int, int> shiftData) {
-    return focus?.shift(shiftData);
+  bool isRowNotWithinRange(TableRowRange? tableRowRange) {
+    var focus = getRawFocus();
+    if (tableRowRange == null || (tableRowRange.startIndex == null && tableRowRange.endIndex == null)) return true;
+    return !((tableRowRange.startIndex==null || focus.row >= tableRowRange.startIndex!)
+      && (tableRowRange.endIndex==null || focus.row <= tableRowRange.endIndex!));
+  }
+
+  void focusThisRow(Reference<int> row, {TableRowRange? tableRowRange}) {
+    if (isRowNotWithinRange(tableRowRange)) updateFocus(DynamicTableFocusData(row: row.value, column: -1));
+  }
+
+  DynamicTableFocusData shiftFocus(
+      DynamicTableFocusData focus, Map<int, int> shiftData) {
+    var newFocus = focus.shift(shiftData);
+
+    [LoggerName.focusCache].info(() => 'shifting focus');
+    [LoggerName.focusCache].info(() => 'focus: ' + newFocus.toString() + ' | ' + 'previous: ' + (newFocus.previous).toString());
+    return newFocus;
   }
 }

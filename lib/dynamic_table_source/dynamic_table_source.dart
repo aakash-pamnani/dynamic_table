@@ -7,9 +7,23 @@ import 'package:dynamic_table/dynamic_table_source/dynamic_table_shiftable_data.
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_view.dart';
 import 'package:dynamic_table/dynamic_table_source/reference.dart';
 import 'package:dynamic_table/dynamic_table_source/sort_order.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_column.dart';
+import 'package:logging/logging.dart';
+
+enum LoggerName {
+  focusCache, focusing
+}
+
+extension Logging on List<LoggerName> {
+  void info(String Function () getMessage) {
+    this.forEach((loggerName) { final log = Logger(loggerName.name); if (log.isLoggable(Level.INFO)) log.info(getMessage()); });
+  }
+}
+
+typedef TableRowRange = ({int? startIndex, int? endIndex});
 
 abstract class DynamicTableSourceQuery {
   int getDataLength();
@@ -61,13 +75,31 @@ class DynamicTableSource extends DataTableSource
       List<Comparable<dynamic>?> oldValue,
       List<Comparable<dynamic>?> newValue)? onRowSave;
 
+  final TableRowRange Function() tableRowVisibleRange;
   final void Function(int rowIndex) pageTo;
   final void Function() triggerTableStateUpdate;
 
   final DynamicTableColumnsQuery _columnsQuery;
   late DynamicTableShiftableData _data;
   final DynamicTableEditingValues _editingValues;
-  DynamicTableFocusData? _focus;
+  DynamicTableFocusData _focus = DynamicTableFocusData(row: 0, column: 0);
+
+  void _initialiseLogger() {
+    // root config
+    hierarchicalLoggingEnabled = true;
+    // ignore: curly_braces_in_flow_control_structures
+    Logger.root.onRecord.listen((event) { if (event.message.isNotEmpty) if (kDebugMode) {
+      print(event.message);
+    } });
+
+    // focus cache log
+    final Logger focusCacheLog = Logger(LoggerName.focusCache.name);
+    focusCacheLog.level = Level.OFF;
+
+    // focusing log
+    final Logger focusingLog = Logger(LoggerName.focusing.name);
+    focusingLog.level = Level.OFF;
+  }
 
   void updateConfig({
     String? actionColumnTitle,
@@ -121,6 +153,7 @@ class DynamicTableSource extends DataTableSource
     this.onRowEdit,
     this.onRowDelete,
     this.onRowSave,
+    required this.tableRowVisibleRange,
     required this.pageTo,
     required this.triggerTableStateUpdate
   })  : _columnsQuery = DynamicTableColumnsQuery(columns),
@@ -128,13 +161,14 @@ class DynamicTableSource extends DataTableSource
             columnsQuery: DynamicTableColumnsQuery(columns)) {
     _data = DynamicTableShiftableData(data,
         onShift: _onShift, columnsQuery: _columnsQuery);
+    _initialiseLogger();
   }
 
   @override
   DynamicTableColumnsQuery getColumnsQuery() => _columnsQuery;
 
   @override
-  DynamicTableFocusData? getRawFocus() => _focus;
+  DynamicTableFocusData getRawFocus() => _focus;
 
   @override
   DynamicTableEditingValues getEditingValues() => _editingValues;
@@ -153,16 +187,24 @@ class DynamicTableSource extends DataTableSource
   void _onShift(Map<int, int> shiftData) {
     shiftEditingValues(shiftData);
     _focus = shiftFocus(_focus, shiftData);
+    [LoggerName.focusing].info(() => 'focus shifted: ' + _focus.toString());
     shiftViewCache(shiftData);
-    pageTo(getFocus().row);
+    updateFocusNodes();
   }
 
   @override
-  void updateFocus(DynamicTableFocusData? focus) {
-    _focus = focus != null? DynamicTableFocusData(row: focus.row, column: focus.column, previous: _focus): null;
-    unfocusPreviousFocusNodes();
-    notifyListeners();
-    pageTo(getFocus().row);
+  ({bool newFocusSet}) updateFocusNodes({DynamicTableFocusData? cachedFocus, UnfinishedFocusUpdateData? cachedUnfinishedFocusUpdateData, bool? secondaryUpdate}) {
+    Future.delayed(Duration.zero, () => pageTo(getFocus().row));
+    final ({bool newFocusSet}) updated = super.updateFocusNodes(cachedFocus: cachedFocus, cachedUnfinishedFocusUpdateData: cachedUnfinishedFocusUpdateData, secondaryUpdate: secondaryUpdate);
+    //if (updated.newFocusSet) Future.delayed(Duration.zero, () => pageTo(getFocus().row));
+    return updated;
+  }
+
+  @override
+  void updateFocus(DynamicTableFocusData focus) {
+    _focus = _focus.update(focus);
+    [LoggerName.focusCache, LoggerName.focusing].info(() => 'focus update: ' + _focus.toString());
+    updateFocusNodes();
   }
 
   @override
@@ -217,6 +259,11 @@ class DynamicTableSource extends DataTableSource
     triggerTableStateUpdate();
   }
 
+  void focusRow(int rowIndex, {TableRowRange? tableRowRange}) {
+    super.focusThisRow(Reference<int>(value: rowIndex), tableRowRange: tableRowRange);
+    notifyListeners();
+  }
+
   @override
   bool isDropdownColumnAndHasNoDropdownValues(
       Reference<int> row, int columnIndex) {
@@ -234,7 +281,7 @@ class DynamicTableSource extends DataTableSource
 
   @override
   DataRow? getRow(int index) {
-    return buildRow(Reference<int>(value: index));
+    return buildRow(index);
   }
 
   @override

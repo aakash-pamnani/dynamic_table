@@ -60,9 +60,15 @@ class _DynamicTableAutocompleteWidgetState extends State<DynamicTableAutocomplet
 
         _textEditingController = textEditingController;
         _focusNode = focusNode;
-        widget.touchEditCallBacks.updateFocusCache?.call(identity: this, () => setState(() {
-          focusNode.unfocus();
-        }), () => focusNode);
+        widget.touchEditCallBacks.updateFocusCache?.call(
+        identity: this,
+        UpdateFocusNodeCallBacks(
+            unfocusFocusNodes: () => setState(() {
+                  focusNode.unfocus();
+                }),
+            focusFocusNodes: () => setState(() {
+                  focusNode.requestFocus();
+                })));
 
         focusNode.addListener(() {
           if ((focusNode.hasFocus) && !widget.focused) {

@@ -99,10 +99,20 @@ class _DynamicTableDateInputWidgetState
     focusNode = FocusNode();
     datePickerIconFocusNode = FocusNode();
 
-    widget.touchEditCallBacks.updateFocusCache?.call(identity: this, () => setState(() {
-          focusNode?.unfocus();
-          datePickerIconFocusNode?.unfocus();
-        }), () => (!widget._readOnly)? focusNode : datePickerIconFocusNode);
+    widget.touchEditCallBacks.updateFocusCache?.call(
+        identity: this,
+        UpdateFocusNodeCallBacks(
+            unfocusFocusNodes: () => setState(() {
+                  focusNode?.unfocus();
+                  datePickerIconFocusNode?.unfocus();
+                }),
+            focusFocusNodes: () => setState(() {
+                  if (!widget._readOnly) {
+                    focusNode?.requestFocus();
+                  } else {
+                    datePickerIconFocusNode?.requestFocus();
+                  }
+                })));
 
     focusNode?.addListener(() {
       if ((focusNode?.hasFocus ?? false) && !widget.focused) {

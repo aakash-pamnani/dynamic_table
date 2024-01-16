@@ -38,7 +38,7 @@ class DynamicTable extends StatefulWidget {
   ///
   ///
 
-  //TODO:validate widget configuration
+  //TODO: validate widget configuration
 
   DynamicTable(
       {super.key,
@@ -401,6 +401,12 @@ class DynamicTableState extends State<DynamicTable> {
   List<DynamicTableDataColumn> _columns = [];
 
   int _rowsPerPage = 10;
+  // ignore: unused_field
+  int _firstRowIndex = 0;
+
+  int get _lastRowIndex => (_firstRowIndex + (_rowsPerPage-1));
+
+  TableRowRange get _tableRowVisibleRange => (startIndex: _firstRowIndex, endIndex: _lastRowIndex);
 
   void _buildColumns() {
     _columns = [...widget.columns];
@@ -421,6 +427,7 @@ class DynamicTableState extends State<DynamicTable> {
       onRowEdit: widget.onRowEdit,
       onRowDelete: widget.onRowDelete,
       onRowSave: widget.onRowSave,
+      tableRowVisibleRange: () => _tableRowVisibleRange,
       pageTo: (rowIndex) => _paginatedDataTableState.currentState?.pageTo(rowIndex),
       triggerTableStateUpdate: () => setState(() {},)
     );
@@ -451,7 +458,7 @@ class DynamicTableState extends State<DynamicTable> {
       onRowDelete: widget.onRowDelete,
       onRowSave: widget.onRowSave,
     );
-    _source.updateRowsByKeyByDiffChecking(widget.rows);
+    _source.updateRowsByKeyByDiffChecking(widget.rows);//ERROR: row reference not updated
   }
 
   @override
@@ -466,9 +473,9 @@ class DynamicTableState extends State<DynamicTable> {
             label: const Text("Add Row"),
             onPressed: () {
               if (widget.addRowAtTheEnd) {
-                _source.addRowLast();
+                _source.addRowLast(); //ERROR: row reference not updated
               } else {
-                _source.addRow();
+                _source.addRow(); //ERROR: row reference not updated
               }
             },
           ),
@@ -492,7 +499,7 @@ class DynamicTableState extends State<DynamicTable> {
           ),
         ...?widget.actions,
       ],
-      columns: _source.getTableColumns(),
+      columns: _source.getTableColumns(), //ERROR: row reference not updated
       sortColumnIndex: _source.sortColumnIndex,
       sortAscending: _source.sortOrder.toBool(),
       onSelectAll: (value) {
@@ -507,17 +514,19 @@ class DynamicTableState extends State<DynamicTable> {
       showCheckboxColumn: widget.showCheckboxColumn,
       showFirstLastButtons: widget.showFirstLastButtons,
       initialFirstRowIndex: widget.initialFirstRowIndex,
-      onPageChanged: widget.onPageChanged,
+      onPageChanged: (firstRowIndex) {
+        _firstRowIndex = firstRowIndex;
+        _source.focusRow(firstRowIndex, tableRowRange: _tableRowVisibleRange);
+        widget.onPageChanged?.call(firstRowIndex);
+      },
       rowsPerPage: _rowsPerPage,
       availableRowsPerPage: widget.availableRowsPerPage,
-      onRowsPerPageChanged: widget.onRowsPerPageChanged != null
-          ? (value) {
+      onRowsPerPageChanged: (value) {
               setState(() {
                 _rowsPerPage = value!;
               });
               widget.onRowsPerPageChanged?.call(value);
-            }
-          : null,
+            },
       dragStartBehavior: widget.dragStartBehavior,
       arrowHeadColor: widget.arrowHeadColor,
       source: _source,

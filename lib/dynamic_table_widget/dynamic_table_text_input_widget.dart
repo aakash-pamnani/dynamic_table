@@ -112,10 +112,16 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
     super.initState();
     textEditingController = TextEditingController();
     focusNode = FocusNode();
-
-    widget.touchEditCallBacks.updateFocusCache?.call(identity: this, () => setState(() {
-          focusNode?.unfocus();
-        }), () => focusNode);
+    
+    widget.touchEditCallBacks.updateFocusCache?.call(
+        identity: this,
+        UpdateFocusNodeCallBacks(
+            unfocusFocusNodes: () => setState(() {
+                  focusNode?.unfocus();
+                }),
+            focusFocusNodes: () => setState(() {
+                  focusNode?.requestFocus();
+                })));
     focusNode?.addListener(() {
       if ((focusNode?.hasFocus??false) && !widget.focused) {
         widget.touchEditCallBacks.focusThisEditingField?.call();

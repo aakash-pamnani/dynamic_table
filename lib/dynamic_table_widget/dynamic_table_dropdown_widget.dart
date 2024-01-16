@@ -90,10 +90,16 @@ class _DynamicTableDropdownWidgetState<T>
   void initState() {
     super.initState();
     _focusNode = FocusNode();
-
-    widget.touchEditCallBacks.updateFocusCache?.call(identity: this, () => setState(() {
-          _focusNode?.unfocus();
-        }), () => _focusNode);
+    
+    widget.touchEditCallBacks.updateFocusCache?.call(
+        identity: this,
+        UpdateFocusNodeCallBacks(
+            unfocusFocusNodes: () => setState(() {
+                  _focusNode?.unfocus();
+                }),
+            focusFocusNodes: () => setState(() {
+                  _focusNode?.requestFocus();
+                })));
     _focusNode?.addListener(() {
       if ((_focusNode?.hasFocus??false) && !widget.focused) {
         widget.touchEditCallBacks.focusThisEditingField?.call();
