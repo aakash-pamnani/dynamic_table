@@ -18,7 +18,7 @@ enum LoggerName implements LoggerNameBase {
   focusCache, focusing;
 
   @override
-  String get name => this.name;
+  String get loggerName => this.name;
 }
 
 typedef TableRowRange = ({int? startIndex, int? endIndex});
