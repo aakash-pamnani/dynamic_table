@@ -2,7 +2,7 @@ import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_cell.dart';
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_row.dart';
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_columns_query.dart';
 import 'package:dynamic_table/dynamic_table_source/fetch_till_empty_iterator.dart';
-import 'package:dynamic_table/dynamic_table_source/fetching_first_or_null.dart';
+import 'package:dynamic_table/dynamic_table_source/iterable_extension.dart';
 import 'package:dynamic_table/dynamic_table_source/reference.dart';
 import 'package:dynamic_table/dynamic_table_source/shifting_map.dart';
 import 'package:dynamic_table/dynamic_table_source/sort_order.dart';

@@ -1,10 +1,10 @@
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_focus_data.dart';
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_source.dart';
 import 'package:dynamic_table/dynamic_table_source/reference.dart';
+import 'package:dynamic_table/utils/logging.dart';
 
 mixin DynamicTableFocus implements DynamicTableSourceQuery {
 
-  DynamicTableFocusData getRawFocus();
   void updateFocus(DynamicTableFocusData focus);
 
   //TODO: focus the selection list in the dropdown controls instead of the outter container
@@ -150,22 +150,8 @@ mixin DynamicTableFocus implements DynamicTableSourceQuery {
     onFocusThisField?.call(row);
   }
 
-  bool isRowWithinRange(TableRowRange? tableRowRange) {
-    var focus = getRawFocus();
-    if (tableRowRange == null || (tableRowRange.startIndex == null && tableRowRange.endIndex == null)) return true;
-    return ((tableRowRange.startIndex==null || focus.row >= tableRowRange.startIndex!)
-      && (tableRowRange.endIndex==null || focus.row <= tableRowRange.endIndex!));
-  }
-
-  bool isRowNotWithinRange(TableRowRange? tableRowRange) {
-    var focus = getRawFocus();
-    if (tableRowRange == null || (tableRowRange.startIndex == null && tableRowRange.endIndex == null)) return true;
-    return !((tableRowRange.startIndex==null || focus.row >= tableRowRange.startIndex!)
-      && (tableRowRange.endIndex==null || focus.row <= tableRowRange.endIndex!));
-  }
-
   void focusThisRow(Reference<int> row, {TableRowRange? tableRowRange}) {
-    if (isRowNotWithinRange(tableRowRange)) updateFocus(DynamicTableFocusData(row: row.value, column: -1));
+    if (DynamicTableSourceQuery.isRowNotWithinRange(getRawFocus(), tableRowRange)??true) updateFocus(DynamicTableFocusData(row: row.value, column: -1));
   }
 
   DynamicTableFocusData shiftFocus(

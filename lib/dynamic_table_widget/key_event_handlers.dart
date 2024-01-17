@@ -1,16 +1,8 @@
+import 'package:dynamic_table/dynamic_table_source/iterable_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 typedef ChainedKeyEventResult = ({KeyEventResult keyEventResult, bool keyHandled});
-
-extension ContainsAnyCheck<T> on Set<T> {
-  bool containsAny(Iterable<T> other) {
-    for (T value in other) {
-      if (this.contains(value)) return true;
-    }
-    return false;
-  }
-}
 
 class ChainHandlingKeys {
   ChainHandlingKeys(

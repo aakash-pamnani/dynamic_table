@@ -401,7 +401,6 @@ class DynamicTableState extends State<DynamicTable> {
   List<DynamicTableDataColumn> _columns = [];
 
   int _rowsPerPage = 10;
-  // ignore: unused_field
   int _firstRowIndex = 0;
 
   int get _lastRowIndex => (_firstRowIndex + (_rowsPerPage-1));
@@ -458,7 +457,7 @@ class DynamicTableState extends State<DynamicTable> {
       onRowDelete: widget.onRowDelete,
       onRowSave: widget.onRowSave,
     );
-    _source.updateRowsByKeyByDiffChecking(widget.rows);//ERROR: row reference not updated
+    _source.updateRowsByKeyByDiffChecking(widget.rows);
   }
 
   @override
@@ -473,9 +472,9 @@ class DynamicTableState extends State<DynamicTable> {
             label: const Text("Add Row"),
             onPressed: () {
               if (widget.addRowAtTheEnd) {
-                _source.addRowLast(); //ERROR: row reference not updated
+                _source.addRowLast();
               } else {
-                _source.addRow(); //ERROR: row reference not updated
+                _source.addRow();
               }
             },
           ),
@@ -499,7 +498,7 @@ class DynamicTableState extends State<DynamicTable> {
           ),
         ...?widget.actions,
       ],
-      columns: _source.getTableColumns(), //ERROR: row reference not updated
+      columns: _source.getTableColumns(),
       sortColumnIndex: _source.sortColumnIndex,
       sortAscending: _source.sortOrder.toBool(),
       onSelectAll: (value) {

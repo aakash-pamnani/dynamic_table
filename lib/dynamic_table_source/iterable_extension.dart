@@ -13,3 +13,12 @@ extension FetchingFirstOrNull<T> on Iterable<T> {
     }
   }
 }
+
+extension ContainsAnyCheck<T> on Iterable<T> {
+  bool containsAny(Iterable<T> other) {
+    for (T value in other) {
+      if (this.contains(value)) return true;
+    }
+    return false;
+  }
+}

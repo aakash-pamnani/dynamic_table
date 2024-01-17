@@ -7,29 +7,49 @@ import 'package:dynamic_table/dynamic_table_source/dynamic_table_shiftable_data.
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_view.dart';
 import 'package:dynamic_table/dynamic_table_source/reference.dart';
 import 'package:dynamic_table/dynamic_table_source/sort_order.dart';
+import 'package:dynamic_table/utils/logging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_column.dart';
 import 'package:logging/logging.dart';
 
-enum LoggerName {
-  focusCache, focusing
-}
+enum LoggerName implements LoggerNameBase {
+  focusCache, focusing;
 
-extension Logging on List<LoggerName> {
-  void info(String Function () getMessage) {
-    this.forEach((loggerName) { final log = Logger(loggerName.name); if (log.isLoggable(Level.INFO)) log.info(getMessage()); });
-  }
+  @override
+  String get name => this.name;
 }
 
 typedef TableRowRange = ({int? startIndex, int? endIndex});
 
+//TODO: make Reference of row inaccessible outside source module
 abstract class DynamicTableSourceQuery {
   int getDataLength();
+  Comparable<dynamic>? getKeyOfRowIndex(Reference<int> row);
+  bool isSelected(Reference<int> row);
+  bool isEditing(Reference<int> row);
   DynamicTableColumnsQuery getColumnsQuery();
   bool isDropdownColumnAndHasNoDropdownValues(
       Reference<int> row, int columnIndex);
+  bool isColumnEditableAndIfDropdownColumnThenHasDropdownValues(
+      Reference<int> row, int columnIndex);
+  bool checkFocus(Reference<int> row, int column);
+  DynamicTableFocusData getRawFocus();
+  DynamicTableFocusData getFocus();
+  TableRowRange Function() get tableRowVisibleRange;
+
+  static bool? isRowWithinRange(DynamicTableFocusData? focus, TableRowRange? tableRowRange) {
+    if (focus == null || tableRowRange == null || (tableRowRange.startIndex == null && tableRowRange.endIndex == null)) return null;
+    return ((tableRowRange.startIndex==null || focus.row >= tableRowRange.startIndex!)
+      && (tableRowRange.endIndex==null || focus.row <= tableRowRange.endIndex!));
+  }
+
+  static bool? isRowNotWithinRange(DynamicTableFocusData? focus, TableRowRange? tableRowRange) {
+    final _isRowWithinRange = isRowWithinRange(focus, tableRowRange);
+    if (_isRowWithinRange == null) return null;
+    return !_isRowWithinRange;
+  }
 }
 
 abstract class DynamicTableEditablesConfig {
@@ -177,9 +197,16 @@ class DynamicTableSource extends DataTableSource
   DynamicTableShiftableData getData() => _data;
 
   @override
-  int getDataLength() {
-    return getData().getDataLength();
-  }
+  int getDataLength() => getData().getDataLength();
+
+  @override
+  Comparable<dynamic>? getKeyOfRowIndex(Reference<int> row) => getData().getKeyOfRowIndex(row);
+
+  @override
+  bool isSelected(Reference<int> row) => getData().isSelected(row);
+
+  @override
+  bool isEditing(Reference<int> row) => getData().isEditing(row);
 
   SortOrder get sortOrder => getData().sortOrder;
   int get sortColumnIndex => getData().sortByColumnIndex;

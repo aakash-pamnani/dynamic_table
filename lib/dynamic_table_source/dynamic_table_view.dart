@@ -1,17 +1,17 @@
 import 'package:dynamic_table/dynamic_input_type/dynamic_table_input_type.dart';
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_action.dart';
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_focus_data.dart';
-import 'package:dynamic_table/dynamic_table_source/dynamic_table_shiftable_data.dart';
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_source.dart';
 import 'package:dynamic_table/dynamic_table_source/reference.dart';
 import 'package:dynamic_table/dynamic_table_source/shifting_map.dart';
+import 'package:dynamic_table/utils/logging.dart';
 import 'package:flutter/material.dart';
 
 class UpdateFocusNodeCallBacks {
   final void Function() unfocusFocusNodes;
   final void Function() focusFocusNodes;
 
-  UpdateFocusNodeCallBacks(
+  const UpdateFocusNodeCallBacks(
       {required this.unfocusFocusNodes, required this.focusFocusNodes});
 }
 
@@ -41,7 +41,7 @@ class UnfinishedFocusUpdateData {
   final bool clearPreviousFocus;
   final bool setThisFocus;
 
-  UnfinishedFocusUpdateData(
+  const UnfinishedFocusUpdateData(
       {required this.clearPreviousFocus, required this.setThisFocus});
 
   UnfinishedFocusUpdateData clone(
@@ -67,14 +67,11 @@ class UnfinishedFocusUpdateData {
 
 mixin DynamicTableView
     implements DynamicTableSourceQuery, DynamicTableViewConfig {
-  DynamicTableShiftableData getData();
   void selectRow(Reference<int> index, {required bool isSelected});
   void updateSortByColumnIndex(int sortByColumnIndex);
   void editRow(Reference<int> row);
   void cancelRow(Reference<int> row);
   void deleteRow(Reference<int> index);
-  bool isColumnEditableAndIfDropdownColumnThenHasDropdownValues(
-      Reference<int> row, int columnIndex);
   bool saveRow(Reference<int> row);
   void focusThisField(Reference<int> row, int column,
       {void onFocusThisField(Reference<int> row)?});
@@ -86,14 +83,9 @@ mixin DynamicTableView
   Comparable<dynamic>? getCurrentValue(Reference<int> row, int column);
   void setEditingValue(
       Reference<int> row, int column, Comparable<dynamic>? value);
-  bool checkFocus(Reference<int> row, int column);
-  DynamicTableFocusData getRawFocus();
-  DynamicTableFocusData getFocus();
   void callOnFocus(
       void callBack(
           DynamicTableFocusData focus, DynamicTableFocusData? previousFocus));
-  bool isRowWithinRange(TableRowRange? tableRowRange);
-  TableRowRange Function() get tableRowVisibleRange;
 
   final Map<int, Map<int, UpdateFocusNodeCallBacks>>
       _updateFocusNodeCallBacksCache = {};
@@ -101,14 +93,14 @@ mixin DynamicTableView
   final Map<int, Map<int, UnfinishedFocusUpdateData>>
       _unfinishedFocusUpdateDataCache = {};
 
-  Set<Reference<int>> currentBuiltRows = Set();
+  Set<Reference<int>> _currentBuiltRows = Set();
 
   void shiftViewCache(Map<int, int> shiftData) {
     [LoggerName.focusCache].info(() => shiftData.toString());
     _updateFocusNodeCallBacksCache.shiftKeys(shiftData, getDataLength());
     _identities.shiftKeys(shiftData, getDataLength());
     _unfinishedFocusUpdateDataCache.shiftKeys(shiftData, getDataLength());
-    currentBuiltRows.forEach((row) {
+    _currentBuiltRows.forEach((row) {
       row.shift(shiftData);
     });
   }
@@ -201,13 +193,9 @@ mixin DynamicTableView
       UnfinishedFocusUpdateData? cachedUnfinishedFocusUpdateData,
       bool? secondaryUpdate}) {
     bool isNotSecondaryUpdate() => !(secondaryUpdate ?? false);
-    bool isTableCellPositionVisible(DynamicTableFocusData? focus) {
-      if (focus == null) return false;
+    bool? isTableCellPositionVisible(DynamicTableFocusData? focus) {
       final TableRowRange visibleRowRange = tableRowVisibleRange();
-      return ((visibleRowRange.startIndex == null ||
-              focus.row >= visibleRowRange.startIndex!) ||
-          (visibleRowRange.endIndex == null ||
-              focus.row <= visibleRowRange.endIndex!));
+      return DynamicTableSourceQuery.isRowWithinRange(focus, visibleRowRange);
     }
 
     UnfinishedFocusUpdateData? couldNotClearPreviousFocus(
@@ -299,14 +287,14 @@ mixin DynamicTableView
     }
 
     void callOnCachedFocus() {
-      if (isTableCellPositionVisible(cachedFocus) &&
+      if ((isTableCellPositionVisible(cachedFocus)??false) &&
           (cachedUnfinishedFocusUpdateData?.clearPreviousFocus ?? false)) {
         [LoggerName.focusCache].info(() =>
             'focus nodes update: previous focus: ' + cachedFocus.toString());
         _clearPreviousFocus(cachedFocus);
       }
 
-      if (isTableCellPositionVisible(cachedFocus) &&
+      if ((isTableCellPositionVisible(cachedFocus)??false) &&
           (cachedUnfinishedFocusUpdateData?.setThisFocus ?? false)) {
         [LoggerName.focusCache]
             .info(() => 'focus nodes update: focus: ' + cachedFocus.toString());
@@ -351,35 +339,40 @@ mixin DynamicTableView
   }
 
   DataRow? buildRow(int index) {
-    Reference<int> rowIndex = Reference<int>(value: index);
-    currentBuiltRows.remove(rowIndex);
-    currentBuiltRows.add(rowIndex);
+    Reference<int> Function() getRowReferenceCloner() {
+      Reference<int> rowIndex = Reference<int>(value: index);
+      _currentBuiltRows.remove(rowIndex);
+      _currentBuiltRows.add(rowIndex);
+      return () => rowIndex.clone();
+    }
+    final cloneRowReference = getRowReferenceCloner();
+    final KeyOfRowReference = getKeyOfRowIndex(cloneRowReference());
     var datarow = DataRow(
-      key: getData().getKeyOfRowIndex(rowIndex) != null
-          ? ValueKey<Comparable<dynamic>>(getData().getKeyOfRowIndex(rowIndex)!)
+      key: KeyOfRowReference != null
+          ? ValueKey<Comparable<dynamic>>(KeyOfRowReference)
           : null,
-      selected: getData().isSelected(rowIndex),
+      selected: isSelected(cloneRowReference()),
       onSelectChanged: selectable
           ? (value) {
-              selectRow(rowIndex, isSelected: value ?? false);
+              selectRow(cloneRowReference(), isSelected: value ?? false);
             }
           : null,
-      cells: _buildRowCells(rowIndex),
+      cells: _buildRowCells(cloneRowReference),
     );
     return datarow;
   }
 
-  List<DataCell> _buildRowCells(Reference<int> rowIndex) {
+  List<DataCell> _buildRowCells(Reference<int> cloneRowReference()) {
     List<DataCell> cellsList =
         List.generate(getColumnsQuery().getColumnsLength(), (index) => index)
             .map((column) {
-      return _buildDataCell(rowIndex, column);
+      return _buildDataCell(cloneRowReference, column);
     }).toList();
-    cellsList.addAll(_addActionsInCell(rowIndex));
+    cellsList.addAll(_addActionsInCell(cloneRowReference));
     return cellsList;
   }
 
-  List<DataCell> _addActionsInCell(Reference<int> rowIndex) {
+  List<DataCell> _addActionsInCell(Reference<int> cloneRowReference()) {
     List<DynamicTableAction> actions = [];
     List<DataCell> cellsList = [];
 
@@ -388,7 +381,7 @@ mixin DynamicTableView
         DynamicTableActionEdit(
           showOnlyOnEditing: false,
           onPressed: () {
-            editRow(rowIndex.clone());
+            editRow(cloneRowReference());
           },
         ),
       );
@@ -399,7 +392,7 @@ mixin DynamicTableView
         DynamicTableActionSave(
           showOnlyOnEditing: true,
           onPressed: () {
-            saveRow(rowIndex.clone());
+            saveRow(cloneRowReference());
           },
         ),
       );
@@ -409,7 +402,7 @@ mixin DynamicTableView
       actions.add(DynamicTableActionCancel(
         showOnlyOnEditing: true,
         onPressed: () {
-          cancelRow(rowIndex.clone());
+          cancelRow(cloneRowReference());
         },
       ));
     }
@@ -419,13 +412,14 @@ mixin DynamicTableView
         showOnlyOnEditing: false,
         showAlways: !showDeleteOrCancelAction,
         onPressed: () {
-          deleteRow(rowIndex.clone());
+          deleteRow(cloneRowReference());
         },
       ));
     }
 
     if (actions.isNotEmpty) {
       DynamicTableActionsInput actionsInput = DynamicTableActionsInput();
+      final isRowEditing = isEditing(cloneRowReference());
       cellsList.add(
         DataCell(
           actionsInput.getChild(
@@ -433,15 +427,15 @@ mixin DynamicTableView
               if (element.showAlways) {
                 return true;
               } else if (element.showOnlyOnEditing &&
-                  getData().isEditing(rowIndex.clone())) {
+                  isRowEditing) {
                 return true;
               } else if (!element.showOnlyOnEditing &&
-                  !getData().isEditing(rowIndex.clone())) {
+                  !isRowEditing) {
                 return true;
               }
               return false;
             }).toList(),
-            isEditing: getData().isEditing(rowIndex.clone()),
+            isEditing: isRowEditing,
           ),
         ),
       );
@@ -449,33 +443,33 @@ mixin DynamicTableView
     return cellsList;
   }
 
-  DataCell _buildDataCell(Reference<int> rowIndex, int columnIndex) {
+  DataCell _buildDataCell(Reference<int> cloneRowReference(), int columnIndex) {
     void tapToEdit(Reference<int> row, int column) {
       focusThisField(row, column, onFocusThisField: (row) => editRow(row));
     }
 
-    final bool showEditingWidget = getData().isEditing(rowIndex.clone()) &&
+    final bool showEditingWidget = isEditing(cloneRowReference()) &&
         isColumnEditableAndIfDropdownColumnThenHasDropdownValues(
-            rowIndex.clone(), columnIndex);
+            cloneRowReference(), columnIndex);
     final bool enableTouchMode = (touchMode &&
         isColumnEditableAndIfDropdownColumnThenHasDropdownValues(
-            rowIndex.clone(), columnIndex));
+            cloneRowReference(), columnIndex));
     final touchEditCallBacks = TouchEditCallBacks(
       focusPreviousField: enableTouchMode
           ? (showEditingWidget
               ? () {
-                  focusPreviousField(rowIndex.clone(), columnIndex,
+                  focusPreviousField(cloneRowReference(), columnIndex,
                       onFocusPreviousRow: ((oldRow) => saveRow(oldRow)));
                 }
               : () {
-                  focusPreviousField(rowIndex.clone(), columnIndex);
+                  focusPreviousField(cloneRowReference(), columnIndex);
                 })
           : null,
       focusNextField: enableTouchMode
           ? (showEditingWidget
               ? () {
                   focusNextField(
-                    rowIndex.clone(),
+                    cloneRowReference(),
                     columnIndex,
                     onFocusNextRow: (oldRow) => saveRow(oldRow),
                     onFocusLastRow: () => addRowLast(),
@@ -483,39 +477,39 @@ mixin DynamicTableView
                 }
               : () {
                   focusNextField(
-                    rowIndex.clone(),
+                    cloneRowReference(),
                     columnIndex,
                     onFocusLastRow: () => addRowLast(),
                   );
                 })
           : null,
       focusThisEditingField: (enableTouchMode && showEditingWidget)
-          ? () => focusThisField(rowIndex.clone(), columnIndex)
+          ? () => focusThisField(cloneRowReference(), columnIndex)
           : null,
       focusThisNonEditingField: (enableTouchMode && !showEditingWidget)
           ? () {
-              focusThisField(rowIndex.clone(), columnIndex);
+              focusThisField(cloneRowReference(), columnIndex);
             }
           : null,
       cancelEdit: (enableTouchMode && showEditingWidget)
-          ? () => cancelRow(rowIndex.clone())
+          ? () => cancelRow(cloneRowReference())
           : null,
       edit: (enableTouchMode && !showEditingWidget)
-          ? () => tapToEdit(rowIndex.clone(), columnIndex)
+          ? () => tapToEdit(cloneRowReference(), columnIndex)
           : null,
       updateFocusCache: (UpdateFocusNodeCallBacks updateFocusNodeCallBacks,
               {required Object identity}) =>
           _updateFocusCache(
-              rowIndex.clone(), columnIndex, updateFocusNodeCallBacks,
+              cloneRowReference(), columnIndex, updateFocusNodeCallBacks,
               identity: identity),
       clearFocusCache: ({required Object identity}) =>
-          _clearFocusCache(rowIndex.clone(), columnIndex, identity: identity),
+          _clearFocusCache(cloneRowReference(), columnIndex, identity: identity),
     );
 
-    [LoggerName.focusCache].info(() => checkFocus(rowIndex.clone(), columnIndex)
+    [LoggerName.focusCache].info(() => checkFocus(cloneRowReference(), columnIndex)
         ? ('building focus : ' +
             'row: ' +
-            rowIndex.clone().value.toString() +
+            cloneRowReference().value.toString() +
             ' | column: ' +
             columnIndex.toString())
         : '');
@@ -526,19 +520,19 @@ mixin DynamicTableView
         getFocus().toString() +
         ' :at: ' +
         'row: ' +
-        rowIndex.clone().value.toString() +
+        cloneRowReference().value.toString() +
         ' | column: ' +
         columnIndex.toString());
 
     return DataCell(
       getColumnsQuery().getChildCallBack(columnIndex).call(
         focused:
-            enableTouchMode ? checkFocus(rowIndex.clone(), columnIndex) : false,
-        getCurrentValue(rowIndex.clone(), columnIndex),
+            enableTouchMode ? checkFocus(cloneRowReference(), columnIndex) : false,
+        getCurrentValue(cloneRowReference(), columnIndex),
         isEditing: showEditingWidget,
         onChanged: (value) {
           setEditingValue(
-              rowIndex.clone(), columnIndex, value as Comparable<dynamic>?);
+              cloneRowReference(), columnIndex, value as Comparable<dynamic>?);
         },
         touchEditCallBacks: touchEditCallBacks,
       ),
