@@ -45,7 +45,40 @@ class DynamicTableTextInputWidget extends StatefulWidget {
     required this.onChanged,
     required this.touchEditCallBacks,
     required this.focused,
-  }) : _keyboardType = keyboardType, _maxLines = maxLines, _decoration = decoration, _textCapitalization = textCapitalization, _textInputAction = textInputAction, _style = style, _strutStyle = strutStyle, _textDirection = textDirection, _textAlign = textAlign, _textAlignVertical = textAlignVertical, _readOnly = readOnly, _showCursor = showCursor, _obscuringCharacter = obscuringCharacter, _obscureText = obscureText, _autocorrect = autocorrect, _smartDashesType = smartDashesType, _smartQuotesType = smartQuotesType, _enableSuggestions = enableSuggestions, _maxLengthEnforcement = maxLengthEnforcement, _minLines = minLines, _expands = expands, _maxLength = maxLength, _inputFormatters = inputFormatters, _enabled = enabled, _cursorWidth = cursorWidth, _cursorHeight = cursorHeight, _cursorRadius = cursorRadius, _cursorColor = cursorColor, _keyboardAppearance = keyboardAppearance, _scrollPadding = scrollPadding, _scrollPhysics = scrollPhysics, _autofillHints = autofillHints, _autovalidateMode = autovalidateMode, _mouseCursor = mouseCursor;
+  })  : _keyboardType = keyboardType,
+        _maxLines = maxLines,
+        _decoration = decoration,
+        _textCapitalization = textCapitalization,
+        _textInputAction = textInputAction,
+        _style = style,
+        _strutStyle = strutStyle,
+        _textDirection = textDirection,
+        _textAlign = textAlign,
+        _textAlignVertical = textAlignVertical,
+        _readOnly = readOnly,
+        _showCursor = showCursor,
+        _obscuringCharacter = obscuringCharacter,
+        _obscureText = obscureText,
+        _autocorrect = autocorrect,
+        _smartDashesType = smartDashesType,
+        _smartQuotesType = smartQuotesType,
+        _enableSuggestions = enableSuggestions,
+        _maxLengthEnforcement = maxLengthEnforcement,
+        _minLines = minLines,
+        _expands = expands,
+        _maxLength = maxLength,
+        _inputFormatters = inputFormatters,
+        _enabled = enabled,
+        _cursorWidth = cursorWidth,
+        _cursorHeight = cursorHeight,
+        _cursorRadius = cursorRadius,
+        _cursorColor = cursorColor,
+        _keyboardAppearance = keyboardAppearance,
+        _scrollPadding = scrollPadding,
+        _scrollPhysics = scrollPhysics,
+        _autofillHints = autofillHints,
+        _autovalidateMode = autovalidateMode,
+        _mouseCursor = mouseCursor;
 
   final TextInputType? _keyboardType;
   final int _maxLines;
@@ -82,15 +115,19 @@ class DynamicTableTextInputWidget extends StatefulWidget {
   final AutovalidateMode? _autovalidateMode;
   final MouseCursor? _mouseCursor;
   final String? value;
-  final Function(String? value, )? onChanged;
+  final Function(
+    String? value,
+  )? onChanged;
   final TouchEditCallBacks touchEditCallBacks;
   final bool focused;
 
   @override
-  State<DynamicTableTextInputWidget> createState() => _DynamicTableTextInputWidgetState();
+  State<DynamicTableTextInputWidget> createState() =>
+      _DynamicTableTextInputWidgetState();
 }
 
-class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidget> {
+class _DynamicTableTextInputWidgetState
+    extends State<DynamicTableTextInputWidget> {
   TextEditingController? textEditingController;
   FocusNode? focusNode;
 
@@ -100,11 +137,17 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
   }
 
   bool _hasTextReachedMaxLinesLimit() {
-    return (("\n"
-                  .allMatches(textEditingController?.text ?? "")
-                  .length +
-              1) >=
-          widget._maxLines);
+    return (("\n".allMatches(textEditingController?.text ?? "").length + 1) >=
+        widget._maxLines);
+  }
+
+  bool isTextWithinMaxLinesLimit(String text) {
+    return ("\n".allMatches(text).length + 1) <= widget._maxLines;
+  }
+
+  void _initFocusAndEditingController() {
+    focusNode?.focus(widget.focused);
+    textEditingController?.text = widget.value ?? "";
   }
 
   @override
@@ -112,7 +155,8 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
     super.initState();
     textEditingController = TextEditingController();
     focusNode = FocusNode();
-    
+
+    textEditingController?.addListener(() { widget.onChanged?.call(textEditingController?.text); });
     widget.touchEditCallBacks.updateFocusCache?.call(
         identity: this,
         UpdateFocusNodeCallBacks(
@@ -122,26 +166,33 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
             focusFocusNodes: () => setState(() {
                   focusNode?.requestFocus();
                 })));
-    focusNode?.addListener(() {
-      if ((focusNode?.hasFocus??false) && !widget.focused) {
-        widget.touchEditCallBacks.focusThisEditingField?.call();
-      }
-    });
 
-    focusNode?.onKeyEvent = (node, event) => event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown([LogicalKeyboardKey.enter], widget.touchEditCallBacks.focusNextField, handleOnCondition: () => (_isMultilineTextField() && _hasTextReachedMaxLinesLimit()),)
-    .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusPreviousField, withShift: true)
-    .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField)
-    .chain([LogicalKeyboardKey.escape], widget.touchEditCallBacks.cancelEdit).result();
+    focusNode?.onKeyEvent = (node, event) => event
+          .handleKeysIfCallBackExistAndCallOnlyOnKeyDown(debugLabel: "Text Input")
+          .chain(
+            [LogicalKeyboardKey.enter],
+            widget.touchEditCallBacks.focusNextField,
+            handleOnCondition: () =>
+            (!_isMultilineTextField() || _isMultilineTextField() && _hasTextReachedMaxLinesLimit()),
+          ).chain(
+            [LogicalKeyboardKey.tab],
+            widget.touchEditCallBacks.focusPreviousField, withShift: true)
+          .chain(
+            [LogicalKeyboardKey.tab],
+            widget.touchEditCallBacks.focusNextField)
+          .chain(
+            [LogicalKeyboardKey.escape],
+            widget.touchEditCallBacks.cancelEdit)
+          .result();
 
-    focusNode?.focus(widget.focused);
-    if (textEditingController?.text != widget.value) textEditingController?.text = widget.value ?? "";
+    _initFocusAndEditingController();
   }
 
   @override
-  void didUpdateWidget(DynamicTableTextInputWidget oldWidget){
+  void didUpdateWidget(DynamicTableTextInputWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    focusNode?.focus(widget.focused);
-    if (textEditingController?.text != widget.value) textEditingController?.text = widget.value ?? "";
+ 
+    _initFocusAndEditingController();
   }
 
   @override
@@ -159,9 +210,6 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
   Widget build(BuildContext context) {
     return TextFormField(
       focusNode: focusNode,
-      onChanged: (value) {
-        widget.onChanged?.call(value, );
-      },
       controller: textEditingController,
       decoration: widget._decoration ??
           const InputDecoration(
@@ -189,11 +237,12 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
       minLines: widget._minLines,
       expands: widget._expands,
       maxLength: widget._maxLength,
-      // onTap: onTap,
-      // onTapOutside: onTapOutside,
-      // validator: validator,
-      inputFormatters: [...?widget._inputFormatters,
-        TextInputFormatter.withFunction((oldValue, newValue) => ("\n".allMatches(newValue.text).length+1) <= widget._maxLines ? newValue : oldValue)
+      inputFormatters: [
+        ...?widget._inputFormatters,
+        TextInputFormatter.withFunction((oldValue, newValue) =>
+            isTextWithinMaxLinesLimit(newValue.text)
+                ? newValue
+                : oldValue)
       ],
       enabled: widget._enabled,
       cursorWidth: widget._cursorWidth,
@@ -206,7 +255,6 @@ class _DynamicTableTextInputWidgetState extends State<DynamicTableTextInputWidge
       autofillHints: widget._autofillHints,
       autovalidateMode: widget._autovalidateMode,
       mouseCursor: widget._mouseCursor,
-      onEditingComplete: () => widget.touchEditCallBacks.focusNextField?.call(),
     );
   }
 }

@@ -1,35 +1,64 @@
-import 'package:dynamic_table/dynamic_table_source/iterable_extension.dart';
+import 'package:dynamic_table/dynamic_table_widget/key_event_detection.dart';
+import 'package:dynamic_table/dynamic_table_widget/logging.dart';
+import 'package:dynamic_table/utils/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-typedef ChainedKeyEventResult = ({KeyEventResult keyEventResult, bool keyHandled});
+typedef ChainEntryCallable = ChainedKeyEventResult Function(
+    List<LogicalKeyboardKey> mainKeysRequested, void Function()? callBack,
+    {bool Function()? handleOnCondition,
+    bool? withShift,
+    bool? withAlt,
+    bool? withCtrl,
+    bool? withCtrlAndShift,
+    bool? withCtrlAndAlt,
+    bool? withAltAndShift});
+
+typedef ChainedKeyEventResult = ({
+  KeyEventResult keyEventResult,
+  bool keyHandled
+});
 
 class ChainHandlingKeys {
   ChainHandlingKeys(
-      {required ChainedKeyEventResult keyEventResult,
-      required ChainHandlingKeys chainedCallBack(
-          List<LogicalKeyboardKey> logicalKeys, void callBack()?,
-          {bool handleOnCondition()?, bool? withShift})})
-      : _keyEventResult = keyEventResult,
+      {ChainedKeyEventResult chainedKeyEventResult = (
+        keyEventResult: KeyEventResult.ignored,
+        keyHandled: false
+      ),
+      required ChainEntryCallable chainedCallBack})
+      : _chainedKeyEventResult = chainedKeyEventResult,
         _chainedCallBack = chainedCallBack;
 
-  ChainedKeyEventResult _keyEventResult;
-  ChainHandlingKeys Function(
-      List<LogicalKeyboardKey> logicalKeys, void Function()? callBack,
-      {bool Function()? handleOnCondition, bool? withShift}) _chainedCallBack;
+  ChainedKeyEventResult _chainedKeyEventResult;
+  ChainEntryCallable _chainedCallBack;
 
   KeyEventResult result() {
-    return _keyEventResult.keyEventResult;
+    return _chainedKeyEventResult.keyEventResult;
   }
 
   ChainHandlingKeys chain(
-      List<LogicalKeyboardKey> logicalKeys, void callBack()?,
-      {bool handleOnCondition()?, bool? withShift}) {
-    if (_keyEventResult.keyHandled) {
+      List<LogicalKeyboardKey> mainKeysRequested, void Function()? callBack,
+      {bool Function()? handleOnCondition,
+      bool? withShift,
+      bool? withAlt,
+      bool? withCtrl,
+      bool? withCtrlAndShift,
+      bool? withCtrlAndAlt,
+      bool? withAltAndShift}) {
+    if (_chainedKeyEventResult.keyHandled) {
       return this;
     }
-    return _chainedCallBack(logicalKeys, callBack,
-        handleOnCondition: handleOnCondition, withShift: withShift);
+    final chainedKeyEventResult = _chainedCallBack(mainKeysRequested, callBack,
+        handleOnCondition: handleOnCondition,
+        withShift: withShift,
+        withAlt: withAlt,
+        withCtrl: withCtrl,
+        withCtrlAndShift: withCtrlAndShift,
+        withCtrlAndAlt: withCtrlAndAlt,
+        withAltAndShift: withAltAndShift);
+    return ChainHandlingKeys(
+        chainedKeyEventResult: chainedKeyEventResult,
+        chainedCallBack: _chainedCallBack);
   }
 }
 
@@ -37,6 +66,7 @@ extension KeyEventHandlers on KeyEvent {
   KeyEventResult _handleKeyAndCallOnlyOnKeyDown(void callBack()?) {
     if (this is KeyDownEvent) {
       callBack?.call();
+      [LoggingWidget.loggingKeyEvent].info(() => "callback called..");
       return KeyEventResult.handled;
     } else {
       return KeyEventResult.handled;
@@ -44,37 +74,52 @@ extension KeyEventHandlers on KeyEvent {
   }
 
   KeyEventResult handleKeyIfCallBackExistAndCallOnlyOnKeyDown(
-      LogicalKeyboardKey logicalKey, void callBack()?) {
+      LogicalKeyboardKey mainKeyRequested, void callBack()?) {
     return _handleKeysIfCallBackExistAndCallOnlyOnKeyDown(
-        [logicalKey], callBack).keyEventResult;
-  }
-
-  bool _anyKeyPressed(List<LogicalKeyboardKey> logicalKeys, {bool? withShift}) {
-    return logicalKeys.contains(this.logicalKey)
-    && (withShift==null || HardwareKeyboard.instance.logicalKeysPressed.containsAny([LogicalKeyboardKey.shift, LogicalKeyboardKey.shiftLeft, LogicalKeyboardKey.shiftRight]));
+            [mainKeyRequested], callBack)
+        .keyEventResult;
   }
 
   ChainedKeyEventResult _handleKeysIfCallBackExistAndCallOnlyOnKeyDown(
-      List<LogicalKeyboardKey> logicalKeys, void callBack()?,
-      {bool handleOnCondition()?, bool? withShift}) {
-    final anyKeyPressed = _anyKeyPressed(logicalKeys, withShift: withShift);
+      List<LogicalKeyboardKey> mainKeysRequested, void Function()? callBack,
+      {bool Function()? handleOnCondition,
+      bool? withShift,
+      bool? withAlt,
+      bool? withCtrl,
+      bool? withCtrlAndShift,
+      bool? withCtrlAndAlt,
+      bool? withAltAndShift}) {
+    final isAnyKeyPressed = anyKeyPressed(mainKeysRequested,
+        withShift: withShift,
+        withCtrl: withCtrl,
+        withAlt: withAlt,
+        withCtrlAndShift: withCtrlAndShift,
+        withCtrlAndAlt: withCtrlAndAlt,
+        withAltAndShift: withAltAndShift);
+
     // ignore: curly_braces_in_flow_control_structures
     if (handleOnCondition?.call() ?? true) if (callBack != null &&
-        (anyKeyPressed)) {
-      return (keyEventResult: this._handleKeyAndCallOnlyOnKeyDown(callBack), keyHandled: anyKeyPressed);
+        (isAnyKeyPressed)) {
+      [LoggingWidget.loggingKeyEvent].info(() => "handling key event");
+      return (
+        keyEventResult: this._handleKeyAndCallOnlyOnKeyDown(callBack),
+        keyHandled: isAnyKeyPressed
+      );
     }
 
-    return (keyEventResult: KeyEventResult.ignored, keyHandled: anyKeyPressed);
+    return (
+      keyEventResult: KeyEventResult.ignored,
+      keyHandled: isAnyKeyPressed
+    );
   }
 
-  ChainHandlingKeys handleKeysIfCallBackExistAndCallOnlyOnKeyDown(
-      List<LogicalKeyboardKey> logicalKeys, void callBack()?,
-      {bool handleOnCondition()?, bool? withShift}) {
+  ChainHandlingKeys handleKeysIfCallBackExistAndCallOnlyOnKeyDown({String? debugLabel}) {
+    // ignore: curly_braces_in_flow_control_structures
+    if (debugLabel != null) {
+      [LoggingWidget.loggingKeyEvent].info(() => "handing key event on : " + debugLabel);
+    }
     return ChainHandlingKeys(
-      keyEventResult: _handleKeysIfCallBackExistAndCallOnlyOnKeyDown(
-          logicalKeys, callBack,
-          handleOnCondition: handleOnCondition, withShift: withShift),
-      chainedCallBack: handleKeysIfCallBackExistAndCallOnlyOnKeyDown,
+      chainedCallBack: _handleKeysIfCallBackExistAndCallOnlyOnKeyDown,
     );
   }
 }

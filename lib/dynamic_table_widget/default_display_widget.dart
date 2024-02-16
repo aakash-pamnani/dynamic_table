@@ -1,6 +1,6 @@
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_view.dart';
-import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
 import 'package:dynamic_table/dynamic_table_widget/key_event_handlers.dart';
+import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -46,19 +46,14 @@ class _DefaultDisplayWidgetState<T> extends State<DefaultDisplayWidget<T>> {
                   focusNode?.requestFocus();
                 })));
     focusNode?.onKeyEvent = (node, event) =>
-        event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown([
+        event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown(debugLabel: "Default Display").chain([
           LogicalKeyboardKey.tab
         ],
             widget.touchEditCallBacks.focusPreviousField, withShift: true).chain([
           LogicalKeyboardKey.tab
         ], widget.touchEditCallBacks.focusNextField).chain(
             [LogicalKeyboardKey.enter], widget.touchEditCallBacks.edit).result();
-    focusNode?.focus(widget._focused);
-  }
 
-  @override
-  void didUpdateWidget(DefaultDisplayWidget<T> oldWidget) {
-    super.didUpdateWidget(oldWidget);
     focusNode?.focus(widget._focused);
   }
 

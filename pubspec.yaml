@@ -6,17 +6,18 @@ repository: https://github.com/aakash-pamnani/dynamic_table
 issue_tracker: https://github.com/aakash-pamnani/dynamic_table/issues
 
 environment:
-  sdk: ">=3.0.0"
-  flutter: ">=1.17.0"
+  sdk: ">=3.2.3"
+  flutter: ">=3.16.5"
 
 dependencies:
   flutter:
     sdk: flutter
+  intl: ^0.19.0
   logging: ^1.2.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+  flutter_lints: ^3.0.1
 
 flutter:

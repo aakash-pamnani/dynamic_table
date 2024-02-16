@@ -21,8 +21,8 @@ enum MyDataField {
 
 class MyApp extends StatefulWidget {
   const MyApp({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -206,6 +206,7 @@ class _MyAppState extends State<MyApp> {
                     lastDate: DateTime.now().add(
                       const Duration(days: 365),
                     ),
+                    readOnly: false
                   ),
                 ),
                 DynamicTableDataColumn(

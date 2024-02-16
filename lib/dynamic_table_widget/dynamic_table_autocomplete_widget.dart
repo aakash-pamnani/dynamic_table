@@ -44,6 +44,7 @@ class DynamicTableAutocompleteWidget extends StatefulWidget {
 class _DynamicTableAutocompleteWidgetState extends State<DynamicTableAutocompleteWidget> {
   FocusNode? _focusNode;
   TextEditingController? _textEditingController;
+
   @override
   Widget build(BuildContext context) {
     return Autocomplete<String>(
@@ -51,18 +52,12 @@ class _DynamicTableAutocompleteWidgetState extends State<DynamicTableAutocomplet
       displayStringForOption: widget._displayStringForOption,
       fieldViewBuilder:
           (context, textEditingController, focusNode, onFieldSubmitted) {
-        if (textEditingController.text != widget.value) textEditingController.text = widget.value ?? "";
-        textEditingController.addListener(() {
-          widget.onChanged?.call(
-            textEditingController.text,
-          );
-        });
-
         _textEditingController = textEditingController;
         _focusNode = focusNode;
+
         widget.touchEditCallBacks.updateFocusCache?.call(
-        identity: this,
-        UpdateFocusNodeCallBacks(
+          identity: this,
+          UpdateFocusNodeCallBacks(
             unfocusFocusNodes: () => setState(() {
                   focusNode.unfocus();
                 }),
@@ -70,23 +65,21 @@ class _DynamicTableAutocompleteWidgetState extends State<DynamicTableAutocomplet
                   focusNode.requestFocus();
                 })));
 
-        focusNode.addListener(() {
-          if ((focusNode.hasFocus) && !widget.focused) {
-            widget.touchEditCallBacks.focusThisEditingField?.call();
-          }
-        });
-
         focusNode.onKeyEvent = (node, event) => event
-            .handleKeysIfCallBackExistAndCallOnlyOnKeyDown(
+            .handleKeysIfCallBackExistAndCallOnlyOnKeyDown(debugLabel: "Auto-complete")
+              .chain(
                 [LogicalKeyboardKey.tab],
                 widget.touchEditCallBacks.focusPreviousField, withShift: true)
                 .chain([LogicalKeyboardKey.enter, LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField)
                 .chain([LogicalKeyboardKey.escape], widget.touchEditCallBacks.cancelEdit).result();
+
         focusNode.focus(widget.focused);
+        textEditingController.text = widget.value ?? "";
         return widget._fieldViewBuilder(
             context, textEditingController, focusNode, onFieldSubmitted);
       },
       onSelected: (value) {
+        widget.onChanged?.call(value);
         widget._onSelected?.call(value);
         widget.touchEditCallBacks.focusNextField?.call();
       },

@@ -86,6 +86,10 @@ class _DynamicTableDropdownWidgetState<T>
     extends State<DynamicTableDropdownWidget<T>> {
   FocusNode? _focusNode;
 
+  void _initFocus() {
+    _focusNode?.focus(widget.focused);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -100,23 +104,19 @@ class _DynamicTableDropdownWidgetState<T>
             focusFocusNodes: () => setState(() {
                   _focusNode?.requestFocus();
                 })));
-    _focusNode?.addListener(() {
-      if ((_focusNode?.hasFocus??false) && !widget.focused) {
-        widget.touchEditCallBacks.focusThisEditingField?.call();
-      }
-    });
 
-    _focusNode?.onKeyEvent = (node, event) => event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusPreviousField, withShift: true)
+    _focusNode?.onKeyEvent = (node, event) => event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown(debugLabel: "Dropdown")
+    .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusPreviousField, withShift: true)
     .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField)
     .chain([LogicalKeyboardKey.escape], widget.touchEditCallBacks.cancelEdit).result();
 
-    _focusNode?.focus(widget.focused);
+    _initFocus();
   }
 
   @override
   void didUpdateWidget(DynamicTableDropdownWidget<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _focusNode?.focus(widget.focused);
+    _initFocus();
   }
 
   @override

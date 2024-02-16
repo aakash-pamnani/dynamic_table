@@ -7,6 +7,7 @@ import 'package:dynamic_table/dynamic_table_source/dynamic_table_shiftable_data.
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_view.dart';
 import 'package:dynamic_table/dynamic_table_source/reference.dart';
 import 'package:dynamic_table/dynamic_table_source/sort_order.dart';
+import 'package:dynamic_table/dynamic_table_widget/logging.dart';
 import 'package:dynamic_table/utils/logging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -114,11 +115,14 @@ class DynamicTableSource extends DataTableSource
 
     // focus cache log
     final Logger focusCacheLog = Logger(LoggerName.focusCache.name);
-    focusCacheLog.level = Level.OFF;
+    focusCacheLog.level = Level.INFO;
 
     // focusing log
     final Logger focusingLog = Logger(LoggerName.focusing.name);
-    focusingLog.level = Level.OFF;
+    focusingLog.level = Level.INFO;
+
+    Logger(LoggingWidget.loggingFocus.name).level = Level.OFF;
+    Logger(LoggingWidget.loggingKeyEvent.name).level = Level.OFF;
   }
 
   void updateConfig({
@@ -276,7 +280,6 @@ class DynamicTableSource extends DataTableSource
   void setEditingValue(
       Reference<int> row, int column, Comparable<dynamic>? value) {
     super.setEditingValue(row, column, value);
-    notifyListeners();
   }
 
   @override

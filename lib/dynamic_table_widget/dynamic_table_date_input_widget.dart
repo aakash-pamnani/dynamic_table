@@ -1,6 +1,11 @@
+import 'dart:async';
+
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_view.dart';
+import 'package:dynamic_table/dynamic_table_widget/completion.dart';
 import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
 import 'package:dynamic_table/dynamic_table_widget/key_event_handlers.dart';
+import 'package:dynamic_table/dynamic_table_widget/logging.dart';
+import 'package:dynamic_table/utils/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -21,7 +26,8 @@ class DynamicTableDateInputWidget extends StatefulWidget {
       required this.onChanged,
       required this.touchEditCallBacks,
       required this.focused,
-      required this.displayBuilder})
+      required this.displayBuilder,
+      required this.tryParseDate})
       : _initialDate = initialDate,
         _lastDate = lastDate,
         _readOnly = readOnly,
@@ -50,13 +56,12 @@ class DynamicTableDateInputWidget extends StatefulWidget {
   final TouchEditCallBacks touchEditCallBacks;
   final bool focused;
   final String Function(DateTime?) displayBuilder;
+  final DateTime? Function(String?) tryParseDate;
 
   @override
   State<DynamicTableDateInputWidget> createState() =>
       _DynamicTableDateInputWidgetState();
 }
-
-enum Completion { Completed, Cancelled }
 
 class _DynamicTableDateInputWidgetState
     extends State<DynamicTableDateInputWidget> {
@@ -64,7 +69,7 @@ class _DynamicTableDateInputWidgetState
   FocusNode? focusNode;
   FocusNode? datePickerIconFocusNode;
 
-  Future<DateTime> _showPicker(DateTime selectedDate) async {
+  Future<ActionCompletionResult<DateTime>> _showPicker(DateTime selectedDate) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: selectedDate,
@@ -72,24 +77,43 @@ class _DynamicTableDateInputWidgetState
       lastDate: widget._lastDate,
     );
     if (picked == null) {
-      return Future.error(Completion.Cancelled);
+      return Future.value(ActionCompletionResult.cancel());
     }
     if (picked != selectedDate) {
-      selectedDate = picked;
+      return Future.value(ActionCompletionResult.edit(picked));
     }
-    return selectedDate;
+    return Future.value(ActionCompletionResult.complete(selectedDate));
   }
 
-  void showPicker() {
-    _showPicker(widget.value ?? DateTime.now()).then((value) {
-      widget.onChanged?.call(
-        value,
-      );
-      widget.touchEditCallBacks.focusNextField?.call();
-      controller?.text = widget.displayBuilder(value);
-    }, onError: (error) {
-      if (error != Completion.Cancelled) throw error;
+  void showPicker(DateTime? selectedDate) async {
+    await _showPicker(selectedDate??DateTime.now())
+        .then<ActionCompletionResult<DateTime>>((value) {
+      if (value.status == ActionCompletion.Edited) {
+        controller?.text =
+            widget.displayBuilder(value.data.editedValue?.editedValue);
+      }
+      if (value.status == ActionCompletion.Edited
+      || value.status == ActionCompletion.Completed) {
+        widget.touchEditCallBacks.focusNextField?.call();
+      }
+      return value;
     });
+  }
+
+  void _focusThisWidget({ required bool isFocused}) {
+    if (!widget._readOnly) {
+      focusNode?.focus(isFocused);
+      [LoggingWidget.loggingFocus].info(() => 'DateInput: focusing date input text input control.');
+    }
+    else {
+      [LoggingWidget.loggingFocus].info(() => 'DateInput: focusing date input calender icon.');
+      datePickerIconFocusNode?.focus(isFocused);
+    }
+  }
+
+  void _initFocusAndEditingController() {
+    controller?.text = widget.displayBuilder(widget.value);
+    _focusThisWidget(isFocused: widget.focused);
   }
 
   @override
@@ -103,39 +127,36 @@ class _DynamicTableDateInputWidgetState
         identity: this,
         UpdateFocusNodeCallBacks(
             unfocusFocusNodes: () => setState(() {
-                  focusNode?.unfocus();
-                  datePickerIconFocusNode?.unfocus();
+                  _focusThisWidget(isFocused: false);
                 }),
             focusFocusNodes: () => setState(() {
-                  if (!widget._readOnly) {
-                    focusNode?.requestFocus();
-                  } else {
-                    datePickerIconFocusNode?.requestFocus();
-                  }
+                  _focusThisWidget(isFocused: true);
                 })));
 
-    focusNode?.addListener(() {
-      if ((focusNode?.hasFocus ?? false) && !widget.focused) {
-        widget.touchEditCallBacks.focusThisEditingField?.call();
-      }
-    });
-    datePickerIconFocusNode?.addListener(() {
-      if ((focusNode?.hasFocus ?? false) && !widget.focused) {
-        widget.touchEditCallBacks.focusThisEditingField?.call();
-      }
+    controller?.addListener(() {
+      var value = widget.tryParseDate(controller?.text);
+      widget.onChanged?.call(value);
     });
 
-    focusNode?.onKeyEvent = (node, event) => event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown(
+    focusNode?.onKeyEvent = (node, event) { return event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown(debugLabel: "Date Input Text Field")
+    .chain(
         [LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusPreviousField,
         withShift:
             true).chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField).chain(
         [LogicalKeyboardKey.enter],
-        () =>
-            (!widget._readOnly) ? widget.touchEditCallBacks.focusNextField : showPicker).chain(
-        [LogicalKeyboardKey.escape], widget.touchEditCallBacks.cancelEdit).result();
+        () {
+            if (!widget._readOnly) { 
+              widget.touchEditCallBacks.focusNextField?.call();
+            }
+            else {
+              showPicker(widget.tryParseDate(controller?.text));
+            }
+          }).chain(
+        [LogicalKeyboardKey.escape], widget.touchEditCallBacks.cancelEdit).result();};
 
     datePickerIconFocusNode?.onKeyEvent = (node, event) =>
-        event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown(
+        event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown(debugLabel: "Date Input Button")
+        .chain(
             [LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusPreviousField,
             withShift: true).chain([
           LogicalKeyboardKey.tab
@@ -143,27 +164,13 @@ class _DynamicTableDateInputWidgetState
             [LogicalKeyboardKey.escape],
             widget.touchEditCallBacks.cancelEdit).result();
 
-    if (controller?.text != widget.displayBuilder(widget.value)) {
-      controller?.text = widget.displayBuilder(widget.value);
-    }
-    if (!widget._readOnly) {
-      focusNode?.focus(widget.focused);
-    } else {
-      datePickerIconFocusNode?.focus(widget.focused);
-    }
+    _initFocusAndEditingController();
   }
 
   @override
   void didUpdateWidget(DynamicTableDateInputWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (controller?.text != widget.displayBuilder(widget.value)) {
-      controller?.text = widget.displayBuilder(widget.value);
-    }
-    if (!widget._readOnly) {
-      focusNode?.focus(widget.focused);
-    } else {
-      datePickerIconFocusNode?.focus(widget.focused);
-    }
+    _initFocusAndEditingController();
   }
 
   @override
@@ -187,8 +194,9 @@ class _DynamicTableDateInputWidgetState
       focusNode: focusNode,
       inputFormatters: [
         TextInputFormatter.withFunction((oldValue, newValue) =>
-            RegExp(r'^(\d{0,2}\/?){0,2}(\d{0,4}\/?){0,1}$')
-                    .hasMatch(newValue.text)
+            //RegExp(r'^(\d{0,2}\/?){0,2}(\d{0,4}\/?){0,1}$')
+            //        .hasMatch(newValue.text)
+            widget.tryParseDate(newValue.text)!= null
                 ? newValue
                 : oldValue)
       ],
@@ -198,7 +206,7 @@ class _DynamicTableDateInputWidgetState
           focusNode: datePickerIconFocusNode,
           child: widget._decoration?.suffixIcon ??
               const Icon(Icons.calendar_today),
-          onTap: showPicker,
+          onTap: () => showPicker(widget.tryParseDate(controller?.text)),
         ),
       ),
       style: widget._style,
@@ -208,7 +216,6 @@ class _DynamicTableDateInputWidgetState
       textAlignVertical: widget._textAlignVertical,
       mouseCursor: widget._mouseCursor,
       readOnly: widget._readOnly,
-      onEditingComplete: () => widget.touchEditCallBacks.focusNextField?.call(),
     );
   }
 }
