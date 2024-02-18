@@ -32,10 +32,7 @@ class _DefaultDisplayWidgetState<T> extends State<DefaultDisplayWidget<T>> {
 
   FocusNode? focusNode;
 
-  @override
-  void initState() {
-    super.initState();
-    focusNode = new FocusNode();
+  void _init() {
     widget.touchEditCallBacks.updateFocusCache?.call(
         identity: this,
         UpdateFocusNodeCallBacks(
@@ -55,6 +52,19 @@ class _DefaultDisplayWidgetState<T> extends State<DefaultDisplayWidget<T>> {
             [LogicalKeyboardKey.enter], widget.touchEditCallBacks.edit).result();
 
     focusNode?.focus(widget._focused);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    focusNode = new FocusNode();
+    _init();
+  }
+
+  @override
+  void didUpdateWidget(DefaultDisplayWidget<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _init();
   }
 
   @override

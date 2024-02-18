@@ -16,7 +16,7 @@ import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_column.dart'
 import 'package:logging/logging.dart';
 
 enum LoggerName implements LoggerNameBase {
-  focusCache, focusing;
+  focusCache, focusing, editing;
 
   @override
   String get loggerName => this.name;

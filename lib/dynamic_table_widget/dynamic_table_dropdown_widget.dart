@@ -86,15 +86,7 @@ class _DynamicTableDropdownWidgetState<T>
     extends State<DynamicTableDropdownWidget<T>> {
   FocusNode? _focusNode;
 
-  void _initFocus() {
-    _focusNode?.focus(widget.focused);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _focusNode = FocusNode();
-    
+  void _init() {
     widget.touchEditCallBacks.updateFocusCache?.call(
         identity: this,
         UpdateFocusNodeCallBacks(
@@ -110,13 +102,21 @@ class _DynamicTableDropdownWidgetState<T>
     .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField)
     .chain([LogicalKeyboardKey.escape], widget.touchEditCallBacks.cancelEdit).result();
 
-    _initFocus();
+    _focusNode?.focus(widget.focused);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+
+    _init();
   }
 
   @override
   void didUpdateWidget(DynamicTableDropdownWidget<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _initFocus();
+    _init();
   }
 
   @override

@@ -145,18 +145,9 @@ class _DynamicTableTextInputWidgetState
     return ("\n".allMatches(text).length + 1) <= widget._maxLines;
   }
 
-  void _initFocusAndEditingController() {
-    focusNode?.focus(widget.focused);
-    textEditingController?.text = widget.value ?? "";
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    textEditingController = TextEditingController();
-    focusNode = FocusNode();
-
+  void _init() {
     textEditingController?.addListener(() { widget.onChanged?.call(textEditingController?.text); });
+
     widget.touchEditCallBacks.updateFocusCache?.call(
         identity: this,
         UpdateFocusNodeCallBacks(
@@ -185,14 +176,24 @@ class _DynamicTableTextInputWidgetState
             widget.touchEditCallBacks.cancelEdit)
           .result();
 
-    _initFocusAndEditingController();
+    focusNode?.focus(widget.focused);
+    textEditingController?.text = widget.value ?? "";
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    textEditingController = TextEditingController();
+    focusNode = FocusNode();
+
+    _init();
   }
 
   @override
   void didUpdateWidget(DynamicTableTextInputWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
  
-    _initFocusAndEditingController();
+    _init();
   }
 
   @override

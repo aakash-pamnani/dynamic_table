@@ -111,18 +111,7 @@ class _DynamicTableDateInputWidgetState
     }
   }
 
-  void _initFocusAndEditingController() {
-    controller?.text = widget.displayBuilder(widget.value);
-    _focusThisWidget(isFocused: widget.focused);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    controller = TextEditingController();
-    focusNode = FocusNode();
-    datePickerIconFocusNode = FocusNode();
-
+  void _init() {
     widget.touchEditCallBacks.updateFocusCache?.call(
         identity: this,
         UpdateFocusNodeCallBacks(
@@ -164,13 +153,24 @@ class _DynamicTableDateInputWidgetState
             [LogicalKeyboardKey.escape],
             widget.touchEditCallBacks.cancelEdit).result();
 
-    _initFocusAndEditingController();
+    controller?.text = widget.displayBuilder(widget.value);
+    _focusThisWidget(isFocused: widget.focused);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    controller = TextEditingController();
+    focusNode = FocusNode();
+    datePickerIconFocusNode = FocusNode();
+
+    _init();
   }
 
   @override
   void didUpdateWidget(DynamicTableDateInputWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _initFocusAndEditingController();
+    _init();
   }
 
   @override

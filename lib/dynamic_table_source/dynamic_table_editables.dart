@@ -33,6 +33,7 @@ mixin DynamicTableEditables
 
     getData().markAsEditing(index);
     getEditingValues().setDefaultIfAbsent(index, currentValues: getCurrentValues(index));
+    print("edited index: " + index.value.toString());
   }
 
   void updateSortByColumnIndex(int sortByColumnIndex) {
@@ -115,7 +116,9 @@ mixin DynamicTableEditables
     if (index < 0 || index >= getDataLength()) {
       throw Exception('Index out of bounds');
     }
+    print("updating row: " + index.value.toString());
     getData().updateRow(index, values);
+    print("clearing from editing: " + index.value.toString());
     unmarkFromEditingAndClearEditingValues(index);
   }
 
@@ -144,12 +147,14 @@ mixin DynamicTableEditables
       newValue = response;
     }
 
+    print("inner update row: " + row.value.toString());
     updateRow(row, newValue);
     return true;
   }
 
   bool autoSaveRows() {
     return getData().getAllEditingRowIndices().map((row) {
+      print("auto saving row");
       return saveRow(row);
     }).every((e) => e);
   }

@@ -25,6 +25,7 @@ class TouchEditCallBacks {
   final void Function(UpdateFocusNodeCallBacks updateFocusNodeCallBacks,
       {required Object identity})? updateFocusCache;
   final void Function({required Object identity})? clearFocusCache;
+  final String Function()? debugMessage;
 
   const TouchEditCallBacks(
       {this.focusPreviousField,
@@ -34,7 +35,8 @@ class TouchEditCallBacks {
       this.cancelEdit,
       this.edit,
       this.updateFocusCache,
-      this.clearFocusCache});
+      this.clearFocusCache,
+      this.debugMessage});
 }
 
 class UnfinishedFocusUpdateData {
@@ -96,7 +98,7 @@ mixin DynamicTableView
   Set<Reference<int>> _currentBuiltRows = Set();
 
   void shiftViewCache(Map<int, int> shiftData) {
-    [LoggerName.focusCache].info(() => shiftData.toString());
+    [LoggerName.focusCache, LoggerName.editing].info(() => "Shifting: " + shiftData.toString());
     _updateFocusNodeCallBacksCache.shiftKeys(shiftData, getDataLength());
     _identities.shiftKeys(shiftData, getDataLength());
     _unfinishedFocusUpdateDataCache.shiftKeys(shiftData, getDataLength());
@@ -111,7 +113,7 @@ mixin DynamicTableView
       _unfinishedFocusUpdateDataCache[focus.row] = {};
     }
     if (unfinishedFocusUpdateData.hasUnfinishedUpdates()) {
-      [LoggerName.focusCache].info(() =>
+      [LoggerName.focusCache, LoggerName.editing].info(() =>
           'has unfinished updates: ' +
           focus.toString() +
           ' | unfinished updates: ' +
@@ -119,7 +121,7 @@ mixin DynamicTableView
       _unfinishedFocusUpdateDataCache[focus.row]![focus.column] =
           unfinishedFocusUpdateData;
     } else {
-      [LoggerName.focusCache]
+      [LoggerName.focusCache, LoggerName.editing]
           .info(() => 'has no unfinished updates: ' + focus.toString());
       _unfinishedFocusUpdateDataCache[focus.row]!.remove(focus.column);
     }
@@ -135,6 +137,14 @@ mixin DynamicTableView
     _updateFocusNodeCallBacksCache[row.value]![column] =
         updateFocusNodeCallBacks;
     _identities[row.value]![column] = identity;
+
+    [LoggerName.focusCache, LoggerName.editing].info(() =>
+        'stored focus cache: ' +
+        ' :at: ' +
+        'row: ' +
+        row.value.toString() +
+        ' | column: ' +
+        column.toString());
 
     if (_unfinishedFocusUpdateDataCache.containsKey(row.value) &&
         _unfinishedFocusUpdateDataCache[row.value]!.containsKey(column)) {
@@ -179,7 +189,7 @@ mixin DynamicTableView
     if (_identities.containsKey(row.value) && _identities[row.value]!.isEmpty) {
       _identities.remove(row.value);
     }
-    [LoggerName.focusCache].info(() =>
+    [LoggerName.focusCache, LoggerName.editing].info(() =>
         'cleared focus cache: ' +
         ' :at: ' +
         'row: ' +
@@ -233,6 +243,7 @@ mixin DynamicTableView
     }
 
     void _clearPreviousFocus(DynamicTableFocusData? previousFocus) {
+      print("clearing previous focus: " + previousFocus.toString());
       UnfinishedFocusUpdateData unfinishedFocusUpdateData =
           UnfinishedFocusUpdateData(
               clearPreviousFocus: false, setThisFocus: false);
@@ -245,7 +256,7 @@ mixin DynamicTableView
       if (_updateFocusNodeCallBacksCache.containsKey(previousFocus.row) &&
           _updateFocusNodeCallBacksCache[previousFocus.row]!
               .containsKey(previousFocus.column)) {
-        [LoggerName.focusCache].info(() => 'cleared previous focus');
+        [LoggerName.focusCache, LoggerName.editing].info(() => 'cleared previous focus');
         _updateFocusNodeCallBacksCache[previousFocus.row]![
                 previousFocus.column]!
             .unfocusFocusNodes();
@@ -264,13 +275,14 @@ mixin DynamicTableView
     }
 
     void _setThisFocus(DynamicTableFocusData focus) {
+      print("setting this focus: " + focus.toString());
       UnfinishedFocusUpdateData unfinishedFocusUpdateData =
           UnfinishedFocusUpdateData(
               clearPreviousFocus: false, setThisFocus: false);
       if (_updateFocusNodeCallBacksCache.containsKey(focus.row) &&
           _updateFocusNodeCallBacksCache[focus.row]!
               .containsKey(focus.column)) {
-        [LoggerName.focusCache].info(() => 'set new focus');
+        [LoggerName.focusCache, LoggerName.editing].info(() => 'set new focus');
         _updateFocusNodeCallBacksCache[focus.row]![focus.column]!
             .focusFocusNodes();
         unfinishedFocusUpdateData =
@@ -339,6 +351,7 @@ mixin DynamicTableView
   }
 
   DataRow? buildRow(int index) {
+    print("Building Row: " + index.toString());
     Reference<int> Function() getRowReferenceCloner() {
       Reference<int> rowIndex = Reference<int>(value: index);
       _currentBuiltRows.remove(rowIndex);
@@ -504,6 +517,7 @@ mixin DynamicTableView
               identity: identity),
       clearFocusCache: ({required Object identity}) =>
           _clearFocusCache(cloneRowReference(), columnIndex, identity: identity),
+      debugMessage: () => "row: " + cloneRowReference().value.toString(),
     );
 
     [LoggerName.focusCache].info(() => checkFocus(cloneRowReference(), columnIndex)
