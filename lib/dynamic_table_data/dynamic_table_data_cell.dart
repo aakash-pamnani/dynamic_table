@@ -6,7 +6,7 @@ import 'package:flutter/gestures.dart';
 /// in the [DynamicTable], in the new [DynamicTableDataRow] constructor's `cells`
 /// argument.
 class DynamicTableDataCell {
-  dynamic value;
+  Comparable<dynamic>? value;
 
   /// If this is true, the default text style for the cell is changed
   /// to be appropriate for placeholder text.
@@ -64,6 +64,8 @@ class DynamicTableDataCell {
 
   final void Function()? onTapCancel;
 
+  final bool focused;
+
   /// Creates an object to hold the data for a cell in a [DynamicTable].
   ///
   /// The first argument is the data to show for the cell,
@@ -81,5 +83,6 @@ class DynamicTableDataCell {
     this.onTapDown,
     this.onDoubleTap,
     this.onTapCancel,
+    this.focused = false
   });
 }
