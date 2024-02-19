@@ -9,6 +9,8 @@ import 'package:dynamic_table/utils/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+//TODO: in text input mode restrict the date to be within the initial and last dates as given by the widget
+//TODO: make date editable incrementally in text input mode
 class DynamicTableDateInputWidget extends StatefulWidget {
   const DynamicTableDateInputWidget(
       {super.key,
