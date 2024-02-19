@@ -243,7 +243,7 @@ mixin DynamicTableView
     }
 
     void _clearPreviousFocus(DynamicTableFocusData? previousFocus) {
-      print("clearing previous focus: " + previousFocus.toString());
+      [LoggerName.editing].info(() => "clearing previous focus: " + previousFocus.toString());
       UnfinishedFocusUpdateData unfinishedFocusUpdateData =
           UnfinishedFocusUpdateData(
               clearPreviousFocus: false, setThisFocus: false);
@@ -275,7 +275,7 @@ mixin DynamicTableView
     }
 
     void _setThisFocus(DynamicTableFocusData focus) {
-      print("setting this focus: " + focus.toString());
+      [LoggerName.editing].info(() => "setting this focus: " + focus.toString());
       UnfinishedFocusUpdateData unfinishedFocusUpdateData =
           UnfinishedFocusUpdateData(
               clearPreviousFocus: false, setThisFocus: false);
@@ -351,7 +351,7 @@ mixin DynamicTableView
   }
 
   DataRow? buildRow(int index) {
-    print("Building Row: " + index.toString());
+    [LoggerName.editing].info(() => "Building Row: " + index.toString());
     Reference<int> Function() getRowReferenceCloner() {
       Reference<int> rowIndex = Reference<int>(value: index);
       _currentBuiltRows.remove(rowIndex);

@@ -115,11 +115,15 @@ class DynamicTableSource extends DataTableSource
 
     // focus cache log
     final Logger focusCacheLog = Logger(LoggerName.focusCache.name);
-    focusCacheLog.level = Level.INFO;
+    focusCacheLog.level = Level.OFF;
 
     // focusing log
     final Logger focusingLog = Logger(LoggerName.focusing.name);
-    focusingLog.level = Level.INFO;
+    focusingLog.level = Level.OFF;
+
+    // editing log
+    final Logger editingLog = Logger(LoggerName.focusing.name);
+    editingLog.level = Level.OFF;
 
     Logger(LoggingWidget.loggingFocus.name).level = Level.OFF;
     Logger(LoggingWidget.loggingKeyEvent.name).level = Level.OFF;
