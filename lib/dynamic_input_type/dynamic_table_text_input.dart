@@ -114,17 +114,16 @@ class DynamicTableTextInput extends DynamicTableInputType<String> {
   final MouseCursor? _mouseCursor;
 
   @override
-  Widget displayWidget(String? value, bool focused, void Function()? onEditComplete) {
-    return DefaultDisplayWidget<String>(value: value, focused: focused, onEditComplete: onEditComplete);
+  Widget displayWidget(String? value, bool focused, TouchEditCallBacks touchEditCallBacks) {
+    return DefaultDisplayWidget<String>(value: value, focused: focused, touchEditCallBacks: touchEditCallBacks);
   }
 
   @override
   Widget editingWidget(String? value,
       Function(String? value)? onChanged,
-      void Function()? onEditComplete, 
-      void Function()? focusThisField,
+      TouchEditCallBacks touchEditCallBacks,
       bool focused) {
-    return DynamicTableTextInputWidget(keyboardType: _keyboardType, maxLines: _maxLines, decoration: _decoration, textCapitalization: _textCapitalization, textInputAction: _textInputAction, style: _style, strutStyle: _strutStyle, textDirection: _textDirection, textAlign: _textAlign, textAlignVertical: _textAlignVertical, readOnly: _readOnly, showCursor: _showCursor, obscuringCharacter: _obscuringCharacter, obscureText: _obscureText, autocorrect: _autocorrect, smartDashesType: _smartDashesType, smartQuotesType: _smartQuotesType, enableSuggestions: _enableSuggestions, maxLengthEnforcement: _maxLengthEnforcement, minLines: _minLines, expands: _expands, maxLength: _maxLength, inputFormatters: _inputFormatters, enabled: _enabled, cursorWidth: _cursorWidth, cursorHeight: _cursorHeight, cursorRadius: _cursorRadius, cursorColor: _cursorColor, keyboardAppearance: _keyboardAppearance, scrollPadding: _scrollPadding, scrollPhysics: _scrollPhysics, autofillHints: _autofillHints, autovalidateMode: _autovalidateMode, mouseCursor: _mouseCursor, value: value, onChanged: onChanged, onEditComplete: onEditComplete, focused: focused, focusThisField: focusThisField);
+    return DynamicTableTextInputWidget(keyboardType: _keyboardType, maxLines: _maxLines, decoration: _decoration, textCapitalization: _textCapitalization, textInputAction: _textInputAction, style: _style, strutStyle: _strutStyle, textDirection: _textDirection, textAlign: _textAlign, textAlignVertical: _textAlignVertical, readOnly: _readOnly, showCursor: _showCursor, obscuringCharacter: _obscuringCharacter, obscureText: _obscureText, autocorrect: _autocorrect, smartDashesType: _smartDashesType, smartQuotesType: _smartQuotesType, enableSuggestions: _enableSuggestions, maxLengthEnforcement: _maxLengthEnforcement, minLines: _minLines, expands: _expands, maxLength: _maxLength, inputFormatters: _inputFormatters, enabled: _enabled, cursorWidth: _cursorWidth, cursorHeight: _cursorHeight, cursorRadius: _cursorRadius, cursorColor: _cursorColor, keyboardAppearance: _keyboardAppearance, scrollPadding: _scrollPadding, scrollPhysics: _scrollPhysics, autofillHints: _autofillHints, autovalidateMode: _autovalidateMode, mouseCursor: _mouseCursor, value: value, onChanged: onChanged, touchEditCallBacks: touchEditCallBacks, focused: focused);
   }
 
   @override

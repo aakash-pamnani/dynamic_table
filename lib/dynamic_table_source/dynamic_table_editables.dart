@@ -2,9 +2,10 @@ import 'package:dynamic_table/dynamic_table_source/dynamic_table_editing_values.
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_shiftable_data.dart';
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_source.dart';
 import 'package:dynamic_table/dynamic_table_source/reference.dart';
+import 'package:dynamic_table/utils/logging.dart';
 
 mixin DynamicTableEditables
-    implements DynamicTableSourceView, DynamicTableSourceConfig {
+    implements DynamicTableSourceQuery, DynamicTableEditablesConfig {
   DynamicTableShiftableData getData();
   DynamicTableEditingValues getEditingValues();
 
@@ -33,10 +34,11 @@ mixin DynamicTableEditables
 
     getData().markAsEditing(index);
     getEditingValues().setDefaultIfAbsent(index, currentValues: getCurrentValues(index));
+    [LoggerName.editing].info(() => "edited index: " + index.value.toString());
   }
 
   void updateSortByColumnIndex(int sortByColumnIndex) {
-    if (sortByColumnIndex < 0 || sortByColumnIndex >= getColumnsLength()) {
+    if (sortByColumnIndex < 0 || sortByColumnIndex >= getColumnsQuery().getColumnsLength()) {
       throw Exception('Index out of bounds');
     }
     getData().updateSortByColumnIndex(sortByColumnIndex);
@@ -53,7 +55,7 @@ mixin DynamicTableEditables
   }
 
   void insertRow(Reference<int> index, {List<Comparable<dynamic>?>? values, bool isEditing = false}) {
-    if (values != null && values.length != getColumnsLength()) {
+    if (values != null && values.length != getColumnsQuery().getColumnsLength()) {
       throw Exception('Values length must match columns');
     }
     if (index < 0 || index > getDataLength()) {
@@ -109,13 +111,15 @@ mixin DynamicTableEditables
   }
 
   void updateRow(Reference<int> index, List<Comparable<dynamic>?> values) {
-    if (values.length != getColumnsLength()) {
+    if (values.length != getColumnsQuery().getColumnsLength()) {
       throw Exception('Values length must match columns');
     }
     if (index < 0 || index >= getDataLength()) {
       throw Exception('Index out of bounds');
     }
+    [LoggerName.editing].info(() => "updating row: " + index.value.toString());
     getData().updateRow(index, values);
+    [LoggerName.editing].info(() => "clearing from editing: " + index.value.toString());
     unmarkFromEditingAndClearEditingValues(index);
   }
 
@@ -144,12 +148,14 @@ mixin DynamicTableEditables
       newValue = response;
     }
 
+    [LoggerName.editing].info(() => "inner update row: " + row.value.toString());
     updateRow(row, newValue);
     return true;
   }
 
   bool autoSaveRows() {
     return getData().getAllEditingRowIndices().map((row) {
+      [LoggerName.editing].info(() => "auto saving row");
       return saveRow(row);
     }).every((e) => e);
   }
@@ -157,9 +163,6 @@ mixin DynamicTableEditables
   void selectRow(Reference<int> index, {required bool isSelected}) {
     if (index < 0 || index >= getDataLength()) {
       throw Exception('Index out of bounds');
-    }
-    if (!selectable) {
-      return;
     }
     if (getData().isSelected(index) == isSelected) return;
     getData().selectRow(index, isSelected: isSelected);
@@ -173,7 +176,7 @@ mixin DynamicTableEditables
 
   List<Comparable<dynamic>?> getCurrentValues(Reference<int> row) {
     List<Comparable<dynamic>?> newValue = [];
-    for (int column = 0; column < getColumnsLength(); column++) {
+    for (int column = 0; column < getColumnsQuery().getColumnsLength(); column++) {
       newValue.add(getCurrentValue(row, column));
     }
     return newValue;

@@ -1,4 +1,6 @@
+import 'package:dynamic_table/dynamic_table_source/dynamic_table_view.dart';
 import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
+import 'package:dynamic_table/dynamic_table_widget/key_event_handlers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -28,8 +30,7 @@ class DynamicTableDependentDropdownWidget<T, W> extends StatefulWidget {
     required BorderRadius? borderRadius,
     required this.value,
     required this.onChanged,
-    required this.onEditComplete,
-    required this.focusThisField,
+    required this.touchEditCallBacks,
     required this.focused,
   }) : _itemsBuilder = itemsBuilder, _selectedItemBuilder = selectedItemBuilder, _hint = hint, _disabledHint = disabledHint, _elevation = elevation, _style = style, _icon = icon, _iconDisabledColor = iconDisabledColor, _iconEnabledColor = iconEnabledColor, _iconSize = iconSize, _isDense = isDense, _isExpanded = isExpanded, _itemHeight = itemHeight, _focusColor = focusColor, _dropdownColor = dropdownColor, _decoration = decoration, _menuMaxHeight = menuMaxHeight, _enableFeedback = enableFeedback, _alignment = alignment, _borderRadius = borderRadius;
 
@@ -57,8 +58,7 @@ class DynamicTableDependentDropdownWidget<T, W> extends StatefulWidget {
   final List<DropdownMenuItem<T>> Function(W dependentValue) _itemsBuilder;
   final T? value;
   final Function(T value, )? onChanged;
-  final void Function()? onEditComplete;
-  final void Function()? focusThisField;
+  final TouchEditCallBacks touchEditCallBacks;
   final bool focused;
 
   @override
@@ -69,34 +69,37 @@ class _DynamicTableDependentDropdownWidgetState<T, W> extends State<DynamicTable
 
   FocusNode? _focusNode;
 
+  void _init() {
+    widget.touchEditCallBacks.updateFocusCache?.call(
+        identity: this,
+        UpdateFocusNodeCallBacks(
+            unfocusFocusNodes: () => setState(() {
+                  _focusNode?.unfocus();
+                }),
+            focusFocusNodes: () => setState(() {
+                  _focusNode?.requestFocus();
+                })));
+
+    _focusNode?.onKeyEvent = (node, event) => event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown(debugLabel: "Dependent Dropdown")
+    .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusPreviousField, withShift: true)
+    .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField)
+    .chain([LogicalKeyboardKey.escape], widget.touchEditCallBacks.cancelEdit).result();
+
+    _focusNode?.focus(widget.focused);
+  }
+
   @override
   void initState() {
     super.initState();
     _focusNode = FocusNode();
-    _focusNode?.addListener(() {
-      if ((_focusNode?.hasFocus??false) && !widget.focused) {
-        widget.focusThisField?.call();
-      }
-    });
-    _focusNode?.onKeyEvent = (node, event) {
-      if (widget.onEditComplete != null &&
-          // ignore: curly_braces_in_flow_control_structures
-          (event.logicalKey == LogicalKeyboardKey.tab)) if (event
-          is KeyDownEvent) {
-        widget.onEditComplete?.call();
-        return KeyEventResult.handled;
-      } else {
-            return KeyEventResult.handled;
-          }
-      return KeyEventResult.ignored;
-    };
-    _focusNode?.focus(widget.focused);
+
+    _init();
   }
 
   @override
   void didUpdateWidget(DynamicTableDependentDropdownWidget<T, W> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _focusNode?.focus(widget.focused);
+    _init();
   }
 
   @override
@@ -105,6 +108,7 @@ class _DynamicTableDependentDropdownWidgetState<T, W> extends State<DynamicTable
     _focusNode?.unfocus();
     _focusNode?.dispose();
     _focusNode = null;
+    widget.touchEditCallBacks.clearFocusCache?.call(identity: this);
   }
 
   @override
@@ -132,7 +136,7 @@ class _DynamicTableDependentDropdownWidgetState<T, W> extends State<DynamicTable
       value: widget.value,
       onChanged: (value) {
         widget.onChanged?.call(value as T, );
-        widget.onEditComplete?.call();
+        widget.touchEditCallBacks.focusNextField?.call();
       },
       items: _items,
       selectedItemBuilder: widget._selectedItemBuilder,

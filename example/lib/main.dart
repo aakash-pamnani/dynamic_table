@@ -21,8 +21,8 @@ enum MyDataField {
 
 class MyApp extends StatefulWidget {
   const MyApp({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -188,17 +188,14 @@ class _MyAppState extends State<MyApp> {
                 DynamicTableDataColumn(
                     label:
                         Container(color: Colors.red, child: const Text("Name")),
-                    onSort: (columnIndex, ascending) {},
                     dynamicTableInputType: DynamicTableInputType.text()),
                 DynamicTableDataColumn(
                     label: const Text("Unique ID"),
                     isKeyColumn: true,
-                    onSort: (columnIndex, ascending) {},
                     isEditable: false,
                     dynamicTableInputType: DynamicTableInputType.text()),
                 DynamicTableDataColumn(
                   label: const Text("Birth Date"),
-                  onSort: (columnIndex, ascending) {},
                   dynamicTableInputType: DynamicTableInputType.date(
                     context: context,
                     decoration: const InputDecoration(
@@ -209,6 +206,7 @@ class _MyAppState extends State<MyApp> {
                     lastDate: DateTime.now().add(
                       const Duration(days: 365),
                     ),
+                    readOnly: false
                   ),
                 ),
                 DynamicTableDataColumn(
@@ -235,8 +233,6 @@ class _MyAppState extends State<MyApp> {
                 ),
                 DynamicTableDataColumn(
                   label: const Text("Other Info"),
-                  onSort: (columnIndex, ascending) {},
-                  isEditable: false,
                   dynamicTableInputType: DynamicTableInputType.text(
                     decoration: const InputDecoration(
                       hintText: "Enter Other Info",

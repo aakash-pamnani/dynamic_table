@@ -1,61 +1,23 @@
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_cell.dart';
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_row.dart';
+import 'package:dynamic_table/dynamic_table_source/dynamic_table_columns_query.dart';
+import 'package:dynamic_table/dynamic_table_source/fetch_till_empty_iterator.dart';
+import 'package:dynamic_table/dynamic_table_source/iterable_extension.dart';
 import 'package:dynamic_table/dynamic_table_source/reference.dart';
 import 'package:dynamic_table/dynamic_table_source/shifting_map.dart';
-
-/**
- * data has the saved values for each row, state information such as isEditing, isSaved and isSelected are also contained in data
- * editingValues has the current edited values of a row
- * keyColumn holds the column index which is considered the key of the data in the table
- */
-
-extension FetchingFirstOrNull<T> on Iterable<T> {
-  T? firstOrNull() {
-    if (this.isNotEmpty) {
-      return this.first;
-    } else {
-      return null;
-    }
-  }
-}
-
-class FetchTillEmptyIterator<T> implements Iterator<T> {
-  T? _current;
-  T? Function () _fetch;
-
-  FetchTillEmptyIterator(T? Function () fetch) : _fetch = fetch;
-
-  @override
-  T get current { if (_current != null) return _current!; throw Exception('No Value'); }
-
-  @override
-  bool moveNext() {
-    _current = _fetch();
-    return _current != null;
-  }
-}
-
-class DynamicTableIndicesFetchTillEmptyQueryResult with Iterable<Reference<int>> {
-  Reference<int>? Function () _fetch;
-
-  DynamicTableIndicesFetchTillEmptyQueryResult(Reference<int>? Function () fetch) : _fetch = fetch;
-
-  FetchTillEmptyIterator<Reference<int>> get iterator => FetchTillEmptyIterator(_fetch);
-  
-}
+import 'package:dynamic_table/dynamic_table_source/sort_order.dart';
 
 class DynamicTableShiftableData {
   DynamicTableShiftableData(
       Map<Comparable<dynamic>, List<Comparable<dynamic>?>> data,
       {void Function(Map<int, int> shiftData)? this.onShift,
-      required this.keyColumnIndex,
-      required this.columnsLength})
-      : sortByColumnIndex = keyColumnIndex {
+      required this.columnsQuery})
+      : sortByColumnIndex = columnsQuery.getKeyColumnIndex() {
     void _loadInitialData(
       Map<Comparable<dynamic>, List<Comparable<dynamic>?>> data,
     ) {
       var dataValues = _sortByColumn(data.values.toList(), sortByColumnIndex,
-          (value, column) => value[column]);
+          _sortOrder, (value, column) => value[column]);
       _data.addAll(dataValues
           .asMap()
           .map(
@@ -80,30 +42,36 @@ class DynamicTableShiftableData {
   }
 
   final List<DynamicTableDataRow> _data = [];
-  final int keyColumnIndex;
-  final int columnsLength;
   final void Function(Map<int, int> shiftData)? onShift;
+  final DynamicTableColumnsQuery columnsQuery;
   int sortByColumnIndex;
+  SortOrder _sortOrder = SortOrder.asc;
 
   final Map<int, Comparable<dynamic>> indexKeyMap = {};
 
+  SortOrder get sortOrder => _sortOrder;
+
   static List<U> _sortByColumn<U>(List<U> data, int sortColumnIndex,
-      Comparable<dynamic>? parseValue(U value, int column)) {
+      SortOrder order, Comparable<dynamic>? parseValue(U value, int column)) {
     data.sort((a, b) {
-      Comparable<dynamic>? parsedAValue = parseValue(a, sortColumnIndex);
-      Comparable<dynamic>? parsedBValue = parseValue(b, sortColumnIndex);
-      if (parsedBValue == null && parsedAValue == null) return 0;
-      if (parsedBValue == null) return -1;
-      if (parsedAValue == null) return 1;
-      return parsedAValue.compareTo(parsedBValue);
+      var comparator = () {
+        Comparable<dynamic>? parsedAValue = parseValue(a, sortColumnIndex);
+        Comparable<dynamic>? parsedBValue = parseValue(b, sortColumnIndex);
+        if (parsedBValue == null && parsedAValue == null) return 0;
+        if (parsedBValue == null) return -1;
+        if (parsedAValue == null) return 1;
+        return parsedAValue.compareTo(parsedBValue);
+      };
+      return order * comparator();
     });
     return data;
   }
 
   void _cacheIndexKeyMapping(
       Reference<int> row, Comparable<dynamic>? getValueByColumn(int column)) {
-    if (getValueByColumn(keyColumnIndex) != null) {
-      indexKeyMap[row.value] = getValueByColumn(keyColumnIndex)!;
+    if (getValueByColumn(columnsQuery.getKeyColumnIndex()) != null) {
+      indexKeyMap[row.value] =
+          getValueByColumn(columnsQuery.getKeyColumnIndex())!;
     }
   }
 
@@ -123,13 +91,13 @@ class DynamicTableShiftableData {
     }
 
     indexKeyMap.shiftKeys(shiftData, getDataLength());
-    if (shiftableRowReference!=null && shiftData[shiftableRowReference.value]!=null) shiftableRowReference.update(shiftData[shiftableRowReference.value]!);
+    shiftableRowReference?.shift(shiftData);
     onShift?.call(shiftData);
   }
 
   void _sort({Reference<int>? shiftableRowReference}) {
-    _sortByColumn(
-        _data, sortByColumnIndex, (value, column) => value.cells[column].value);
+    _sortByColumn(_data, sortByColumnIndex, _sortOrder,
+        (value, column) => value.cells[column].value);
     _shift(shiftableRowReference: shiftableRowReference);
   }
 
@@ -139,7 +107,7 @@ class DynamicTableShiftableData {
         row.value,
         DynamicTableDataRow(
             index: row.value,
-            cells: List.generate(columnsLength,
+            cells: List.generate(columnsQuery.getColumnsLength(),
                 (columnIndex) => DynamicTableDataCell(value: null))));
     _shift(shiftableRowReference: row);
   }
@@ -152,13 +120,19 @@ class DynamicTableShiftableData {
 
   // shifting
   void updateSortByColumnIndex(int sortByColumnIndex) {
-    this.sortByColumnIndex = sortByColumnIndex;
-    _sort();
+    if (this.sortByColumnIndex != sortByColumnIndex) {
+      _sortOrder = SortOrder.asc;
+      this.sortByColumnIndex = sortByColumnIndex;
+      _sort();
+    } else {
+      _sortOrder = _sortOrder.switchOrder();
+      _sort();
+    }
   }
 
   // shifting
   void updateRow(Reference<int> row, List<Comparable<dynamic>?> values) {
-    for (int index = 0; index < columnsLength; index++) {
+    for (int index = 0; index < columnsQuery.getColumnsLength(); index++) {
       _data[row.value].cells[index].value = values[index];
     }
     _cacheIndexKeyMapping(row, (column) => values[column]);
@@ -194,7 +168,7 @@ class DynamicTableShiftableData {
     Reference<int>? row = getRowIndexOfKey(key);
     if (row == null) return true;
     List<Comparable<dynamic>?> oldValues = getSavedValues(row);
-    if (!List.generate(columnsLength, (index) => index)
+    if (!List.generate(columnsQuery.getColumnsLength(), (index) => index)
         .every((column) => values[column] == oldValues[column])) return true;
     return false;
   }
@@ -248,32 +222,41 @@ class DynamicTableShiftableData {
   }
 
   DynamicTableIndicesFetchTillEmptyQueryResult getAllEditingRowIndices() {
-    return DynamicTableIndicesFetchTillEmptyQueryResult(() {
-      var row = _data
-        .where((element) => element.isEditing)
-        .firstOrNull()?.index;
-      return row != null? Reference<int>(value: row) : null;
-    },);
+    return DynamicTableIndicesFetchTillEmptyQueryResult(
+      () {
+        var row =
+            _data.where((element) => element.isEditing).firstOrNull()?.index;
+        return row != null ? Reference<int>(value: row) : null;
+      },
+    );
   }
 
-  DynamicTableIndicesFetchTillEmptyQueryResult getAllSelectedRowIndices({ bool filterByIndex(int index)? }) {
-    return DynamicTableIndicesFetchTillEmptyQueryResult(() {
-      var row = _data
-        .where((element) => element.selected)
-        .where((element) => filterByIndex?.call(element.index)??true)
-        .firstOrNull()?.index;
-      return row != null? Reference<int>(value: row) : null;
-    },);
+  DynamicTableIndicesFetchTillEmptyQueryResult getAllSelectedRowIndices(
+      {bool filterByIndex(int index)?}) {
+    return DynamicTableIndicesFetchTillEmptyQueryResult(
+      () {
+        var row = _data
+            .where((element) => element.selected)
+            .where((element) => filterByIndex?.call(element.index) ?? true)
+            .firstOrNull()
+            ?.index;
+        return row != null ? Reference<int>(value: row) : null;
+      },
+    );
   }
 
-  DynamicTableIndicesFetchTillEmptyQueryResult getAllUnSelectedRowIndices({ bool filterByIndex(int index)? }) {
-    return DynamicTableIndicesFetchTillEmptyQueryResult(() {
-      var row = _data
-        .where((element) => !element.selected)
-        .where((element) => filterByIndex?.call(element.index)??true)
-        .firstOrNull()?.index;
-      return row != null? Reference<int>(value: row) : null;
-    },);
+  DynamicTableIndicesFetchTillEmptyQueryResult getAllUnSelectedRowIndices(
+      {bool filterByIndex(int index)?}) {
+    return DynamicTableIndicesFetchTillEmptyQueryResult(
+      () {
+        var row = _data
+            .where((element) => !element.selected)
+            .where((element) => filterByIndex?.call(element.index) ?? true)
+            .firstOrNull()
+            ?.index;
+        return row != null ? Reference<int>(value: row) : null;
+      },
+    );
   }
 
   int getSelectedRowsCount() {

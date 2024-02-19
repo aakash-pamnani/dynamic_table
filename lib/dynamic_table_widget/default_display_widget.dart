@@ -1,3 +1,5 @@
+import 'package:dynamic_table/dynamic_table_source/dynamic_table_view.dart';
+import 'package:dynamic_table/dynamic_table_widget/key_event_handlers.dart';
 import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,51 +10,61 @@ class DefaultDisplayWidget<T> extends StatefulWidget {
     String Function(T? value)? displayBuilder,
     required T? value,
     required focused,
-    required this.onEditComplete,
-  }) : _displayBuilder = displayBuilder,
-      _value = value,
-      _focused = focused;
+    required this.touchEditCallBacks,
+  })  : _displayBuilder = displayBuilder,
+        _value = value,
+        _focused = focused;
 
   final String Function(T? value)? _displayBuilder;
   final T? _value;
   final bool _focused;
-  final void Function()? onEditComplete;
+  final TouchEditCallBacks touchEditCallBacks;
 
   @override
-  State<DefaultDisplayWidget<T>> createState() => _DefaultDisplayWidgetState<T>();
+  State<DefaultDisplayWidget<T>> createState() =>
+      _DefaultDisplayWidgetState<T>();
 }
 
 class _DefaultDisplayWidgetState<T> extends State<DefaultDisplayWidget<T>> {
   String _defaultDisplayBuilder(T? value) {
-    return value?.toString()??'';
+    return value?.toString() ?? '';
   }
 
   FocusNode? focusNode;
+
+  void _init() {
+    widget.touchEditCallBacks.updateFocusCache?.call(
+        identity: this,
+        UpdateFocusNodeCallBacks(
+            unfocusFocusNodes: () => setState(() {
+                  focusNode?.unfocus();
+                }),
+            focusFocusNodes: () => setState(() {
+                  focusNode?.requestFocus();
+                })));
+    focusNode?.onKeyEvent = (node, event) =>
+        event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown(debugLabel: "Default Display").chain([
+          LogicalKeyboardKey.tab
+        ],
+            widget.touchEditCallBacks.focusPreviousField, withShift: true).chain([
+          LogicalKeyboardKey.tab
+        ], widget.touchEditCallBacks.focusNextField).chain(
+            [LogicalKeyboardKey.enter], widget.touchEditCallBacks.edit).result();
+
+    focusNode?.focus(widget._focused);
+  }
 
   @override
   void initState() {
     super.initState();
     focusNode = new FocusNode();
-    focusNode?.onKeyEvent = (node, event) {
-      if (widget.onEditComplete != null &&
-          (event.logicalKey ==
-              // ignore: curly_braces_in_flow_control_structures
-              LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
-        widget.onEditComplete!.call();
-        return KeyEventResult.handled;
-      } else {
-                return KeyEventResult.handled;
-              }
-
-      return KeyEventResult.ignored;
-    };
-    focusNode?.focus(widget._focused);
+    _init();
   }
 
   @override
   void didUpdateWidget(DefaultDisplayWidget<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    focusNode?.focus(widget._focused);
+    _init();
   }
 
   @override
@@ -61,10 +73,15 @@ class _DefaultDisplayWidgetState<T> extends State<DefaultDisplayWidget<T>> {
     focusNode?.unfocus();
     focusNode?.dispose();
     focusNode = null;
+    widget.touchEditCallBacks.clearFocusCache?.call(identity: this);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Focus(child: Text((widget._displayBuilder ?? _defaultDisplayBuilder).call(widget._value)), focusNode: focusNode,);
+    return Focus(
+      child: Text((widget._displayBuilder ?? _defaultDisplayBuilder)
+          .call(widget._value)),
+      focusNode: focusNode,
+    );
   }
 }

@@ -3,7 +3,7 @@ part of 'dynamic_table_input_type.dart';
 class DynamicTableActionsInput
     extends DynamicTableInputType<List<DynamicTableAction>> {
   @override
-  Widget displayWidget(List<DynamicTableAction>? value, bool focused, void Function()? onEditComplete, ) {
+  Widget displayWidget(List<DynamicTableAction>? value, bool focused, TouchEditCallBacks touchEditCallBacks, ) {
     return Row(
       children: value!
           .map((e) => InkWell(
@@ -18,10 +18,9 @@ class DynamicTableActionsInput
 
   @override
   Widget editingWidget(List<DynamicTableAction>? value, Function? onChanged,
-      void Function()? onEditComplete,
-      void Function()? focusThisField,
+      TouchEditCallBacks touchEditCallBacks,
       bool focused) {
-    return displayWidget(value, focused, onEditComplete);
+    return displayWidget(value, focused, touchEditCallBacks);
   }
 
   @override

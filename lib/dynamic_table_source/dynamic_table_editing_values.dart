@@ -1,31 +1,12 @@
-import 'package:dynamic_table/dynamic_input_type/dynamic_table_input_type.dart';
-import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_column.dart';
+import 'package:dynamic_table/dynamic_table_source/dynamic_table_columns_query.dart';
 import 'package:dynamic_table/dynamic_table_source/reference.dart';
 import 'package:dynamic_table/dynamic_table_source/shifting_map.dart';
 
 class DynamicTableEditingValues {
-  DynamicTableEditingValues({required this.columns}) {
-    for (int i = 0; i < columns.length; i++) {
-      if (columns[i].dynamicTableInputType.dependentOn != null) {
-        int dependent = (columns[i].dynamicTableInputType
-                as DynamicTableDependentDropDownInput)
-            .dependentOn!;
-        if (dependentOn[dependent] == null) {
-          dependentOn[dependent] = [];
-        }
-        dependentOn[dependent]!.add(i);
-      }
-    }
-  }
+  DynamicTableEditingValues({required this.columnsQuery});
 
   Map<int, List<Comparable<dynamic>?>> _editingValues = {};
-  final List<DynamicTableDataColumn> columns;
-  //{1:[3,4]} 3 and 4th column are dependent on 1st column
-  final Map<int, List<int>> dependentOn = {};
-
-  int getColumnsLength() {
-    return columns.length;
-  }
+  final DynamicTableColumnsQuery columnsQuery;
 
   void shiftKeys(Map<int, int> shiftData, int dataLength) {
     _editingValues.shiftKeys(shiftData, dataLength);
@@ -49,71 +30,41 @@ class DynamicTableEditingValues {
 
   List<Comparable<dynamic>?> getEditingValues(Reference<int> row) {
     List<Comparable<dynamic>?> editingValues = [];
-    for (int column in List.generate(getColumnsLength(), (index) => index)) {
+    for (int column in List.generate(columnsQuery.getColumnsLength(), (index) => index)) {
       editingValues.add(getEditingValue(row, column));
     }
     return editingValues;
   }
 
-  void setEditingValue(Reference<int> row, int column, Comparable<dynamic>? value) {
+  void setEditingValue(
+      Reference<int> row, int column, Comparable<dynamic>? value) {
     setDefaultIfAbsent(row);
     _editingValues[row.value]![column] = value;
   }
 
-  void setDefaultIfAbsent(Reference<int> row, { List<Comparable<dynamic>?>? currentValues }) {
-    void fillEditingValuesIfAbsent(Reference<int> row, { List<Comparable<dynamic>?>? currentValues }) {
+  void setDefaultIfAbsent(Reference<int> row,
+      {List<Comparable<dynamic>?>? currentValues}) {
+    void fillEditingValuesIfAbsent(Reference<int> row,
+        {List<Comparable<dynamic>?>? currentValues}) {
       if (_editingValues[row.value] != null) return;
-      _editingValues[row.value] = currentValues ?? List.filled(getColumnsLength(), null);
+      _editingValues[row.value] =
+          currentValues ?? List.filled(columnsQuery.getColumnsLength(), null);
     }
 
     fillEditingValuesIfAbsent(row, currentValues: currentValues);
 
-    columns
-        .asMap()
-        .map(
-          (key, value) => MapEntry(key, (key, value)),
-        )
-        .values
-        .where((indexedColumn) => (indexedColumn.$2.dynamicTableInputType
-            is DynamicTableDropDownInput))
-        .forEach((indexedColumn) {
-      var dynamicTableInputType = indexedColumn.$2.dynamicTableInputType;
-      var columnIndex = indexedColumn.$1;
+    columnsQuery.setDefaultIfAbsent((column) => _editingValues[row.value]![column], (column, value) { _editingValues[row.value]![column] = value; });
+  }
 
-      if (_editingValues[row.value]![columnIndex] == null) {
-        _editingValues[row.value]![columnIndex] =
-            (dynamicTableInputType as DynamicTableDropDownInput<Comparable<dynamic>>)
-                .getFirstValue();
-      }
-    });
+  bool isDropdownColumnAndHasNoDropdownValues(
+      Reference<int> row, int columnIndex) {
+    return columnsQuery.isDropdownColumn(columnIndex) &&
+        !columnsQuery.hasDropdownValues((int columnIndex) => getEditingValue(row, columnIndex), columnIndex);
+  }
 
-    columns
-        .asMap()
-        .map(
-          (key, value) => MapEntry(key, (key, value)),
-        )
-        .values
-        .where((indexedColumn) =>
-            (indexedColumn.$2.dynamicTableInputType.dependentOn != null &&
-                indexedColumn.$2.dynamicTableInputType
-                    is DynamicTableDependentDropDownInput))
-        .forEach((indexedColumn) {
-      var dynamicTableInputType = indexedColumn.$2.dynamicTableInputType;
-      var columnIndex = indexedColumn.$1;
-
-      if ((dynamicTableInputType as DynamicTableDependentDropDownInput)
-                  .dependentValue ==
-              null ||
-          (dynamicTableInputType)
-                  .dependentValue !=
-              _editingValues[row.value]![dynamicTableInputType.dependentOn!]) {
-        (dynamicTableInputType)
-                .dependentValue =
-            _editingValues[row.value]![dynamicTableInputType.dependentOn!];
-        _editingValues[row.value]![columnIndex] =
-            (dynamicTableInputType as DynamicTableDependentDropDownInput<Comparable<dynamic>, Comparable<dynamic>>)
-                .getFirstValue();
-      }
-    });
+  bool ifDropdownColumnThenHasDropdownValues(
+      Reference<int> row, int columnIndex) {
+    return !columnsQuery.isDropdownColumn(columnIndex) ||
+        columnsQuery.hasDropdownValues((int columnIndex) => getEditingValue(row, columnIndex), columnIndex);
   }
 }

@@ -1,4 +1,5 @@
 import 'package:dynamic_table/dynamic_table.dart';
+import 'package:dynamic_table/dynamic_table_source/dynamic_table_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -8,6 +9,7 @@ import 'package:dynamic_table/dynamic_table_widget/dynamic_table_date_input_widg
 import 'package:dynamic_table/dynamic_table_widget/dynamic_table_dependent_dropdown_widget.dart';
 import 'package:dynamic_table/dynamic_table_widget/dynamic_table_dropdown_widget.dart';
 import 'package:dynamic_table/dynamic_table_widget/dynamic_table_text_input_widget.dart';
+import 'package:intl/intl.dart' show DateFormat;
 
 part 'dynamic_table_date_input.dart';
 part 'dynamic_table_text_input.dart';
@@ -17,37 +19,38 @@ part 'dynamic_table_autocomplete_input.dart';
 part 'dynamic_table_dependent_dropdown.dart';
 
 abstract class DynamicTableInputType<T extends Object> {
-  /// The value to display when the value is null (currently not usign this).
-  static String emptyValue = "N/A";
+  DynamicTableInputType({int? dependentOn}) : _dependentOn = dependentOn;
 
-  int? dependentOn;
+  /// The value to display when the value is null (currently not usign this).
+  static final String emptyValue = "N/A";
+
+  int? _dependentOn;
+  int? get dependentOn => _dependentOn;
 
   Type typeOf() => T;
 
   Widget getChild(T? value,
       {required bool isEditing,
       Function(T? value)? onChanged,
-      void Function()? onEditComplete,
-      void Function()? focusThisField,
+      TouchEditCallBacks touchEditCallBacks = const TouchEditCallBacks(),
       bool focused = false}) {
     if (isEditing) {
-      return editingWidget(value, onChanged, onEditComplete, focusThisField, focused);
+      return editingWidget(value, onChanged, touchEditCallBacks, focused);
     } else {
-      return displayWidget(value, focused, onEditComplete);
+      return displayWidget(value, focused, touchEditCallBacks);
     }
   }
 
   /// This is the widget which will be displayed when the [DynamicTableDataRow.isEditing] is true.
   Widget editingWidget(T? value,
       Function(T? value)? onChanged,
-      void Function()? onEditComplete,
-      void Function()? focusThisField,
+      TouchEditCallBacks touchEditCallBacks,
       // ignore: avoid_positional_boolean_parameters
       bool focused);
 
   /// This is the widget which will be displayed when the [DynamicTableDataRow.isEditing] is false.
   // ignore: avoid_positional_boolean_parameters
-  Widget displayWidget(T? value, bool focused, void Function()? onEditComplete);
+  Widget displayWidget(T? value, bool focused, TouchEditCallBacks touchEditCallBacks);
 
   void dispose();
 
@@ -148,7 +151,7 @@ abstract class DynamicTableInputType<T extends Object> {
     required BuildContext context,
     required DateTime initialDate,
     required DateTime lastDate,
-    String Function(DateTime)? formatDate,
+    DateFormat? dateFormat,
     InputDecoration? decoration = const InputDecoration(
       border: OutlineInputBorder(),
       suffixIcon: Icon(Icons.calendar_today),
@@ -168,7 +171,7 @@ abstract class DynamicTableInputType<T extends Object> {
     return DynamicTableDateInput(
       initialDate: initialDate,
       lastDate: lastDate,
-      formatDate: formatDate,
+      dateFormat: dateFormat,
       decoration: decoration,
       style: style,
       strutStyle: strutStyle,

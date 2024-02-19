@@ -51,7 +51,7 @@ class DynamicTableDropDownInput<T extends Object>
         // dynamicTableInput: DynamicTableInput.dropdown,
         );
   @override
-  Widget displayWidget(T? value, bool focused, void Function()? onEditComplete) {
+  Widget displayWidget(T? value, bool focused, TouchEditCallBacks touchEditCallBacks) {
     assert(
       _items.isEmpty ||
           value == null ||
@@ -68,7 +68,7 @@ class DynamicTableDropDownInput<T extends Object>
       displayBuilder: _displayBuilder,
       value: value,
       focused: focused,
-      onEditComplete: onEditComplete,
+      touchEditCallBacks: touchEditCallBacks,
     );
   }
 
@@ -95,15 +95,18 @@ class DynamicTableDropDownInput<T extends Object>
   final BorderRadius? _borderRadius;
 
   T? getFirstValue() {
-    return _items.first.value;
+    return _items.firstOrNull?.value;
+  }
+
+  bool hasSelectionValues() {
+    return _items.isNotEmpty;
   }
 
   @override
   Widget editingWidget(
       T? value,
       Function(T? value)? onChanged,
-      void Function()? onEditComplete,
-      void Function()? focusThisField,
+      TouchEditCallBacks touchEditCallBacks,
       bool focused) {
     return DynamicTableDropdownWidget<T>(
         items: _items,
@@ -128,8 +131,7 @@ class DynamicTableDropDownInput<T extends Object>
         borderRadius: _borderRadius,
         value: value,
         onChanged: onChanged,
-        onEditComplete: onEditComplete,
-        focusThisField: focusThisField,
+        touchEditCallBacks: touchEditCallBacks,
         focused: focused);
   }
 

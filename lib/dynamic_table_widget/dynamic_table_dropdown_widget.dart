@@ -1,4 +1,6 @@
+import 'package:dynamic_table/dynamic_table_source/dynamic_table_view.dart';
 import 'package:dynamic_table/dynamic_table_widget/focusing_extension.dart';
+import 'package:dynamic_table/dynamic_table_widget/key_event_handlers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -27,8 +29,7 @@ class DynamicTableDropdownWidget<T> extends StatefulWidget {
     required BorderRadius? borderRadius,
     this.value,
     this.onChanged,
-    required this.onEditComplete,
-    required this.focusThisField,
+    required this.touchEditCallBacks,
     required this.focused,
   })  : _items = items,
         _selectedItemBuilder = selectedItemBuilder,
@@ -73,8 +74,7 @@ class DynamicTableDropdownWidget<T> extends StatefulWidget {
   final BorderRadius? _borderRadius;
   final T? value;
   final Function(T? value, )? onChanged;
-  final void Function()? onEditComplete;
-  final void Function()? focusThisField;
+  final TouchEditCallBacks touchEditCallBacks;
   final bool focused;
 
   @override
@@ -86,36 +86,37 @@ class _DynamicTableDropdownWidgetState<T>
     extends State<DynamicTableDropdownWidget<T>> {
   FocusNode? _focusNode;
 
-  @override
-  void initState() {
-    super.initState();
-    _focusNode = FocusNode();
-    _focusNode?.addListener(() {
-      if ((_focusNode?.hasFocus??false) && !widget.focused) {
-        widget.focusThisField?.call();
-      }
-    });
+  void _init() {
+    widget.touchEditCallBacks.updateFocusCache?.call(
+        identity: this,
+        UpdateFocusNodeCallBacks(
+            unfocusFocusNodes: () => setState(() {
+                  _focusNode?.unfocus();
+                }),
+            focusFocusNodes: () => setState(() {
+                  _focusNode?.requestFocus();
+                })));
 
-    _focusNode?.onKeyEvent = (node, event) {
-      if (widget.onEditComplete != null &&
-          (event.logicalKey ==
-              // ignore: curly_braces_in_flow_control_structures
-              LogicalKeyboardKey.tab)) if (event is KeyDownEvent) {
-        widget.onEditComplete?.call();
-        return KeyEventResult.handled;
-      } else {
-                return KeyEventResult.handled;
-              }
-      return KeyEventResult.ignored;
-    };
+    _focusNode?.onKeyEvent = (node, event) => event.handleKeysIfCallBackExistAndCallOnlyOnKeyDown(debugLabel: "Dropdown")
+    .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusPreviousField, withShift: true)
+    .chain([LogicalKeyboardKey.tab], widget.touchEditCallBacks.focusNextField)
+    .chain([LogicalKeyboardKey.escape], widget.touchEditCallBacks.cancelEdit).result();
 
     _focusNode?.focus(widget.focused);
   }
 
   @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+
+    _init();
+  }
+
+  @override
   void didUpdateWidget(DynamicTableDropdownWidget<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _focusNode?.focus(widget.focused);
+    _init();
   }
 
   @override
@@ -124,6 +125,7 @@ class _DynamicTableDropdownWidgetState<T>
     _focusNode?.unfocus();
     _focusNode?.dispose();
     _focusNode = null;
+    widget.touchEditCallBacks.clearFocusCache?.call(identity: this);
   }
 
   @override
@@ -145,7 +147,7 @@ class _DynamicTableDropdownWidgetState<T>
       value: widget.value,
       onChanged: (value) {
         widget.onChanged?.call(value as T, );
-        widget.onEditComplete?.call();
+        widget.touchEditCallBacks.focusNextField?.call();
       },
       items: widget._items,
       selectedItemBuilder: (context) {

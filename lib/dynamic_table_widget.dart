@@ -38,11 +38,11 @@ class DynamicTable extends StatefulWidget {
   ///
   ///
 
+  //TODO: validate widget configuration
+
   DynamicTable(
       {super.key,
       this.header,
-      this.sortColumnIndex,
-      this.sortAscending = true,
       this.dataRowMinHeight = kMinInteractiveDimension,
       this.dataRowMaxHeight = kMinInteractiveDimension,
       this.headingRowHeight = 56.0,
@@ -127,17 +127,6 @@ class DynamicTable extends StatefulWidget {
   /// [actions] are still visible when items are selected.
 
   final Widget? header;
-
-  /// The current primary sort key's column.
-  ///
-  /// See [DataTable.sortColumnIndex].
-  final int? sortColumnIndex;
-
-  /// Whether the column mentioned in [sortColumnIndex], if any, is sorted
-  /// in ascending order.
-  ///
-  /// See [DataTable.sortAscending].
-  final bool sortAscending;
 
   /// The minimum height of each row (excluding the row that contains column headings).
   ///
@@ -405,11 +394,18 @@ class DynamicTable extends StatefulWidget {
 }
 
 class DynamicTableState extends State<DynamicTable> {
+  GlobalKey<PaginatedDataTableState> _paginatedDataTableState = GlobalKey();
+
   late DynamicTableSource _source;
 
   List<DynamicTableDataColumn> _columns = [];
 
   int _rowsPerPage = 10;
+  int _firstRowIndex = 0;
+
+  int get _lastRowIndex => (_firstRowIndex + (_rowsPerPage-1));
+
+  TableRowRange get _tableRowVisibleRange => (startIndex: _firstRowIndex, endIndex: _lastRowIndex);
 
   void _buildColumns() {
     _columns = [...widget.columns];
@@ -430,6 +426,9 @@ class DynamicTableState extends State<DynamicTable> {
       onRowEdit: widget.onRowEdit,
       onRowDelete: widget.onRowDelete,
       onRowSave: widget.onRowSave,
+      tableRowVisibleRange: () => _tableRowVisibleRange,
+      pageTo: (rowIndex) => _paginatedDataTableState.currentState?.pageTo(rowIndex),
+      triggerTableStateUpdate: () => setState(() {},)
     );
   }
 
@@ -464,6 +463,7 @@ class DynamicTableState extends State<DynamicTable> {
   @override
   Widget build(BuildContext context) {
     return PaginatedDataTable(
+      key: _paginatedDataTableState,
       header: widget.header,
       actions: [
         if (widget.showAddRowButton)
@@ -499,8 +499,8 @@ class DynamicTableState extends State<DynamicTable> {
         ...?widget.actions,
       ],
       columns: _source.getTableColumns(),
-      sortColumnIndex: widget.sortColumnIndex,
-      sortAscending: widget.sortAscending,
+      sortColumnIndex: _source.sortColumnIndex,
+      sortAscending: _source.sortOrder.toBool(),
       onSelectAll: (value) {
         _source.selectAllRows(isSelected: value ?? false);
         widget.onSelectAll?.call(value);
@@ -513,17 +513,19 @@ class DynamicTableState extends State<DynamicTable> {
       showCheckboxColumn: widget.showCheckboxColumn,
       showFirstLastButtons: widget.showFirstLastButtons,
       initialFirstRowIndex: widget.initialFirstRowIndex,
-      onPageChanged: widget.onPageChanged,
+      onPageChanged: (firstRowIndex) {
+        _firstRowIndex = firstRowIndex;
+        _source.focusRow(firstRowIndex, tableRowRange: _tableRowVisibleRange);
+        widget.onPageChanged?.call(firstRowIndex);
+      },
       rowsPerPage: _rowsPerPage,
       availableRowsPerPage: widget.availableRowsPerPage,
-      onRowsPerPageChanged: widget.onRowsPerPageChanged != null
-          ? (value) {
+      onRowsPerPageChanged: (value) {
               setState(() {
                 _rowsPerPage = value!;
               });
               widget.onRowsPerPageChanged?.call(value);
-            }
-          : null,
+            },
       dragStartBehavior: widget.dragStartBehavior,
       arrowHeadColor: widget.arrowHeadColor,
       source: _source,
