@@ -11,7 +11,6 @@ class DynamicTableTextInput extends DynamicTableInputType<String> {
     TextDirection? textDirection,
     TextAlign textAlign = TextAlign.start,
     TextAlignVertical? textAlignVertical,
-    bool autofocus = false,
     bool readOnly = false,
     bool? showCursor,
     String obscuringCharacter = '•',
@@ -21,7 +20,7 @@ class DynamicTableTextInput extends DynamicTableInputType<String> {
     SmartQuotesType? smartQuotesType,
     bool enableSuggestions = true,
     MaxLengthEnforcement? maxLengthEnforcement,
-    int? maxLines = 1,
+    int maxLines = 1,
     int? minLines,
     bool expands = false,
     int? maxLength,
@@ -63,7 +62,6 @@ class DynamicTableTextInput extends DynamicTableInputType<String> {
         _obscuringCharacter = obscuringCharacter,
         _showCursor = showCursor,
         _readOnly = readOnly,
-        _autofocus = autofocus,
         _textAlignVertical = textAlignVertical,
         _textAlign = textAlign,
         _textDirection = textDirection,
@@ -86,7 +84,6 @@ class DynamicTableTextInput extends DynamicTableInputType<String> {
   final TextDirection? _textDirection;
   final TextAlign _textAlign;
   final TextAlignVertical? _textAlignVertical;
-  final bool _autofocus;
   final bool _readOnly;
   final bool? _showCursor;
   final String _obscuringCharacter;
@@ -96,7 +93,7 @@ class DynamicTableTextInput extends DynamicTableInputType<String> {
   final SmartQuotesType? _smartQuotesType;
   final bool _enableSuggestions;
   final MaxLengthEnforcement? _maxLengthEnforcement;
-  final int? _maxLines;
+  final int _maxLines;
   final int? _minLines;
   final bool _expands;
   final int? _maxLength;
@@ -117,66 +114,19 @@ class DynamicTableTextInput extends DynamicTableInputType<String> {
   final MouseCursor? _mouseCursor;
 
   @override
-  Widget displayWidget(String? value) {
-    return Text(value ?? "");
+  Widget displayWidget(String? value, bool focused, TouchEditCallBacks touchEditCallBacks) {
+    return DefaultDisplayWidget<String>(value: value, focused: focused, touchEditCallBacks: touchEditCallBacks);
   }
 
   @override
-  Widget editingWidget(
-      String? value,
-      Function(String? value, int row, int column)? onChanged,
-      int row,
-      int column) {
-    return TextFormField(
-      onChanged: (value) {
-        onChanged?.call(value, row, column);
-      },
-      controller: TextEditingController(text: value),
-      decoration: _decoration ??
-          const InputDecoration(
-            border: OutlineInputBorder(),
-            labelText: "Enter a value",
-          ),
-      keyboardType: _keyboardType,
-      textCapitalization: _textCapitalization,
-      textInputAction: _textInputAction,
-      style: _style,
-      strutStyle: _strutStyle,
-      textDirection: _textDirection,
-      textAlign: _textAlign,
-      textAlignVertical: _textAlignVertical,
-      autofocus: _autofocus,
-      readOnly: _readOnly,
-      showCursor: _showCursor,
-      obscuringCharacter: _obscuringCharacter,
-      obscureText: _obscureText,
-      autocorrect: _autocorrect,
-      smartDashesType: _smartDashesType,
-      smartQuotesType: _smartQuotesType,
-      enableSuggestions: _enableSuggestions,
-      maxLengthEnforcement: _maxLengthEnforcement,
-      maxLines: _maxLines,
-      minLines: _minLines,
-      expands: _expands,
-      maxLength: _maxLength,
-      // onTap: onTap,
-      // onTapOutside: onTapOutside,
-      // validator: validator,
-      inputFormatters: _inputFormatters,
-      enabled: _enabled,
-      cursorWidth: _cursorWidth,
-      cursorHeight: _cursorHeight,
-      cursorRadius: _cursorRadius,
-      cursorColor: _cursorColor,
-      keyboardAppearance: _keyboardAppearance,
-      scrollPadding: _scrollPadding,
-      scrollPhysics: _scrollPhysics,
-      autofillHints: _autofillHints,
-      autovalidateMode: _autovalidateMode,
-      mouseCursor: _mouseCursor,
-    );
+  Widget editingWidget(String? value,
+      Function(String? value)? onChanged,
+      TouchEditCallBacks touchEditCallBacks,
+      bool focused) {
+    return DynamicTableTextInputWidget(keyboardType: _keyboardType, maxLines: _maxLines, decoration: _decoration, textCapitalization: _textCapitalization, textInputAction: _textInputAction, style: _style, strutStyle: _strutStyle, textDirection: _textDirection, textAlign: _textAlign, textAlignVertical: _textAlignVertical, readOnly: _readOnly, showCursor: _showCursor, obscuringCharacter: _obscuringCharacter, obscureText: _obscureText, autocorrect: _autocorrect, smartDashesType: _smartDashesType, smartQuotesType: _smartQuotesType, enableSuggestions: _enableSuggestions, maxLengthEnforcement: _maxLengthEnforcement, minLines: _minLines, expands: _expands, maxLength: _maxLength, inputFormatters: _inputFormatters, enabled: _enabled, cursorWidth: _cursorWidth, cursorHeight: _cursorHeight, cursorRadius: _cursorRadius, cursorColor: _cursorColor, keyboardAppearance: _keyboardAppearance, scrollPadding: _scrollPadding, scrollPhysics: _scrollPhysics, autofillHints: _autofillHints, autovalidateMode: _autovalidateMode, mouseCursor: _mouseCursor, value: value, onChanged: onChanged, touchEditCallBacks: touchEditCallBacks, focused: focused);
   }
 
   @override
-  void dispose() {}
+  void dispose() {
+  }
 }
