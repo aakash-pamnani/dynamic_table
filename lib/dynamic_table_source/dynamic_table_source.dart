@@ -7,13 +7,10 @@ import 'package:dynamic_table/dynamic_table_source/dynamic_table_shiftable_data.
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_view.dart';
 import 'package:dynamic_table/dynamic_table_source/reference.dart';
 import 'package:dynamic_table/dynamic_table_source/sort_order.dart';
-import 'package:dynamic_table/dynamic_table_widget/logging.dart';
 import 'package:dynamic_table/utils/logging.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_column.dart';
-import 'package:logging/logging.dart';
 
 enum LoggerName implements LoggerNameBase {
   focusCache, focusing, editing;
@@ -105,30 +102,6 @@ class DynamicTableSource extends DataTableSource
   final DynamicTableEditingValues _editingValues;
   DynamicTableFocusData _focus = DynamicTableFocusData(row: 0, column: 0);
 
-  void _initialiseLogger() {
-    // root config
-    hierarchicalLoggingEnabled = true;
-    // ignore: curly_braces_in_flow_control_structures
-    Logger.root.onRecord.listen((event) { if (event.message.isNotEmpty) if (kDebugMode) {
-      print(event.message);
-    } });
-
-    // focus cache log
-    final Logger focusCacheLog = Logger(LoggerName.focusCache.name);
-    focusCacheLog.level = Level.OFF;
-
-    // focusing log
-    final Logger focusingLog = Logger(LoggerName.focusing.name);
-    focusingLog.level = Level.OFF;
-
-    // editing log
-    final Logger editingLog = Logger(LoggerName.focusing.name);
-    editingLog.level = Level.OFF;
-
-    Logger(LoggingWidget.loggingFocus.name).level = Level.OFF;
-    Logger(LoggingWidget.loggingKeyEvent.name).level = Level.OFF;
-  }
-
   void updateConfig({
     String? actionColumnTitle,
     bool? showActions,
@@ -189,7 +162,6 @@ class DynamicTableSource extends DataTableSource
             columnsQuery: DynamicTableColumnsQuery(columns)) {
     _data = DynamicTableShiftableData(data,
         onShift: _onShift, columnsQuery: _columnsQuery);
-    _initialiseLogger();
   }
 
   @override

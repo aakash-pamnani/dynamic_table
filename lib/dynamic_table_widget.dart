@@ -1,8 +1,11 @@
+import 'package:dynamic_table/dynamic_table_widget/logging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import 'package:dynamic_table/dynamic_table_data/dynamic_table_data_column.dart';
 import 'package:dynamic_table/dynamic_table_source/dynamic_table_source.dart';
+import 'package:logging/logging.dart';
 
 class DynamicTable extends StatefulWidget {
   /// Creates a widget describing a paginated [DataTable] on a [Card].
@@ -114,6 +117,31 @@ class DynamicTable extends StatefulWidget {
     if (columns.where((column) => column.isKeyColumn).length != 1) {
       throw Exception("One Column must be Key Column.");
     }
+    _initialiseLogger();
+  }
+
+void _initialiseLogger() {
+    // root config
+    hierarchicalLoggingEnabled = true;
+    // ignore: curly_braces_in_flow_control_structures
+    Logger.root.onRecord.listen((event) { if (event.message.isNotEmpty) if (kDebugMode) {
+      print(event.message);
+    } });
+
+    // focus cache log
+    final Logger focusCacheLog = Logger(LoggerName.focusCache.name);
+    focusCacheLog.level = Level.OFF;
+
+    // focusing log
+    final Logger focusingLog = Logger(LoggerName.focusing.name);
+    focusingLog.level = Level.OFF;
+
+    // editing log
+    final Logger editingLog = Logger(LoggerName.editing.name);
+    editingLog.level = Level.OFF;
+
+    Logger(LoggingWidget.loggingFocus.name).level = Level.OFF;
+    Logger(LoggingWidget.loggingKeyEvent.name).level = Level.OFF;
   }
 
   /// The table card's optional header.
