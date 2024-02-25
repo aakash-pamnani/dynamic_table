@@ -9,7 +9,6 @@ import 'package:dynamic_table/dynamic_table_widget/dynamic_table_date_input_widg
 import 'package:dynamic_table/dynamic_table_widget/dynamic_table_dependent_dropdown_widget.dart';
 import 'package:dynamic_table/dynamic_table_widget/dynamic_table_dropdown_widget.dart';
 import 'package:dynamic_table/dynamic_table_widget/dynamic_table_text_input_widget.dart';
-import 'package:intl/intl.dart' show DateFormat;
 
 part 'dynamic_table_date_input.dart';
 part 'dynamic_table_text_input.dart';
@@ -151,7 +150,7 @@ abstract class DynamicTableInputType<T extends Object> {
     required BuildContext context,
     required DateTime initialDate,
     required DateTime lastDate,
-    DateFormat? dateFormat,
+    InputDateFormat? inputDateFormat,
     InputDecoration? decoration = const InputDecoration(
       border: OutlineInputBorder(),
       suffixIcon: Icon(Icons.calendar_today),
@@ -171,7 +170,7 @@ abstract class DynamicTableInputType<T extends Object> {
     return DynamicTableDateInput(
       initialDate: initialDate,
       lastDate: lastDate,
-      dateFormat: dateFormat,
+      inputDateFormat: inputDateFormat??InputDateFormat(),
       decoration: decoration,
       style: style,
       strutStyle: strutStyle,

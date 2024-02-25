@@ -4,7 +4,7 @@ class DynamicTableDateInput extends DynamicTableInputType<DateTime> {
   DynamicTableDateInput(
       {required DateTime initialDate,
       required DateTime lastDate,
-      DateFormat? dateFormat,
+      InputDateFormat inputDateFormat = const InputDateFormat(),
       InputDecoration? decoration,
       TextStyle? style,
       StrutStyle? strutStyle,
@@ -23,12 +23,7 @@ class DynamicTableDateInput extends DynamicTableInputType<DateTime> {
         _lastDate = lastDate,
         _initialDate = initialDate,
         _readOnly = readOnly,
-        _displayBuilder = ((date) => date==null? "":getDateFormat(dateFormat).format(date)),
-        _tryParseDate = ((date) => (date==null || date.isEmpty)? null:getDateFormat(dateFormat).tryParse(date));
-  
-  static DateFormat getDateFormat(DateFormat? dateFormat) {
-    return dateFormat?? DateFormat("dd\\MM\\yy");
-  }
+        _inputDateFormat = (readOnly? inputDateFormat : InputDateFormat());
 
   final DateTime _initialDate;
   final DateTime _lastDate;
@@ -40,15 +35,14 @@ class DynamicTableDateInput extends DynamicTableInputType<DateTime> {
   final TextAlignVertical? _textAlignVertical;
   final MouseCursor? _mouseCursor;
   final bool _readOnly;
-  final String Function(DateTime?) _displayBuilder;
-  final DateTime? Function(String?) _tryParseDate;
+  final InputDateFormat _inputDateFormat;
 
   @override
   Widget displayWidget(DateTime? value, bool focused, TouchEditCallBacks touchEditCallBacks) {
     return DefaultDisplayWidget<DateTime>(
       value: value,
       focused: focused,
-      displayBuilder: _displayBuilder,
+      displayBuilder: _inputDateFormat.buildDisplay,
       touchEditCallBacks: touchEditCallBacks,
     );
   }
@@ -58,7 +52,7 @@ class DynamicTableDateInput extends DynamicTableInputType<DateTime> {
       Function(DateTime? value, )? onChanged,
       TouchEditCallBacks touchEditCallBacks,
       bool focused) {
-    return DynamicTableDateInputWidget(initialDate: _initialDate, lastDate: _lastDate, readOnly: _readOnly, decoration: _decoration, style: _style, strutStyle: _strutStyle, textDirection: _textDirection, textAlign: _textAlign, textAlignVertical: _textAlignVertical, mouseCursor: _mouseCursor, value: value, onChanged: onChanged, touchEditCallBacks: touchEditCallBacks, focused: focused, displayBuilder: _displayBuilder, tryParseDate: _tryParseDate,);
+    return DynamicTableDateInputWidget(initialDate: _initialDate, lastDate: _lastDate, readOnly: _readOnly, decoration: _decoration, style: _style, strutStyle: _strutStyle, textDirection: _textDirection, textAlign: _textAlign, textAlignVertical: _textAlignVertical, mouseCursor: _mouseCursor, value: value, onChanged: onChanged, touchEditCallBacks: touchEditCallBacks, focused: focused, inputDateFormat: _inputDateFormat);
   }
 
   @override
