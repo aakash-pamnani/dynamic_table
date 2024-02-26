@@ -10,7 +10,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart' show DateFormat;
 
-//TODO: make the selection movable with arrow keys
+typedef DatePart = (int, int, int);
+
+extension Equality on DatePart {
+  bool equals(DatePart? other) {
+    if (other == null) return false;
+    return this.$1 == other.$1 && this.$2 == other.$2 && this.$3 == other.$3;
+  }
+
+  bool partEquals(DatePart? other) {
+    if (other == null) return false;
+    return this.$1 == other.$1;
+  }
+}
 
 class InputDateParts {
   InputDateParts(
@@ -47,6 +59,10 @@ class InputDateParts {
   final partTwoEnd;
   final partThreeStart;
   final partThreeEnd;
+
+  DatePart get partOne => (1, partOneStart, partOneEnd);
+  DatePart get partTwo => (2, partTwoStart, partTwoEnd);
+  DatePart get partThree => (3, partThreeStart, partThreeEnd);
 }
 
 class InputDateFormat {
@@ -77,23 +93,64 @@ class InputDateFormat {
     return InputDateParts.fromText(text, separator);
   }
 
-  (int, int, int)? getSelectedPart(TextEditingValue text) {
+  DatePart? getApproachedPart(
+      TextEditingValue oldText, TextEditingValue newText) {
+    if (!(getSelection(oldText)?.partEquals(getSelection(newText)) ?? false))
+      return null;
+    if ((newText.selection.start != newText.selection.end)) return null;
+
+    final oldSelection = getSelection(oldText);
+    final oldParts = getParts(oldText.text);
+    if ((oldSelection?.partEquals(oldParts.partOne) ?? false) &&
+        !(oldSelection?.equals(oldParts.partOne) ?? false)) return null;
+    if ((oldSelection?.partEquals(oldParts.partTwo) ?? false) &&
+        !(oldSelection?.equals(oldParts.partTwo) ?? false)) return null;
+    if ((oldSelection?.partEquals(oldParts.partThree) ?? false) &&
+        !(oldSelection?.equals(oldParts.partThree) ?? false)) return null;
+
+    final parts = getParts(newText.text);
+    if (newText.selection.start == parts.partOneEnd) {
+      return parts.partTwo;
+    }
+    if (newText.selection.start == parts.partTwoStart) {
+      return parts.partOne;
+    }
+    if (newText.selection.start == parts.partTwoEnd) {
+      return parts.partThree;
+    }
+    if (newText.selection.start == parts.partThreeStart) {
+      return parts.partTwo;
+    }
+
+    return null;
+  }
+
+  DatePart? getSelection(TextEditingValue text) {
     final parts = getParts(text.text);
     if (parts.parts[0].isNotEmpty &&
         (parts.partOneStart <= text.selection.start &&
             parts.partOneEnd >= text.selection.end)) {
-      return (1, parts.partOneStart, parts.partOneEnd);
+      return (1, text.selection.start, text.selection.end);
     }
     if (parts.parts[1].isNotEmpty &&
         (parts.partTwoStart <= text.selection.start &&
             parts.partTwoEnd >= text.selection.end)) {
-      return (2, parts.partTwoStart, parts.partTwoEnd);
+      return (2, text.selection.start, text.selection.end);
     }
     if (parts.parts[2].isNotEmpty &&
         (parts.partThreeStart <= text.selection.start &&
             parts.partThreeEnd >= text.selection.end)) {
-      return (3, parts.partThreeStart, parts.partThreeEnd);
+      return (3, text.selection.start, text.selection.end);
     }
+    return null;
+  }
+
+  DatePart? getSelectedPart(TextEditingValue text) {
+    final parts = getParts(text.text);
+    final selection = getSelection(text);
+    if (parts.partOne.partEquals(selection)) return parts.partOne;
+    if (parts.partTwo.partEquals(selection)) return parts.partTwo;
+    if (parts.partThree.partEquals(selection)) return parts.partThree;
     return null;
   }
 
@@ -111,13 +168,15 @@ class InputDateFormat {
       int.tryParse(dateParts[2])
     ];
     if (!(dateParts[0].isEmpty ||
-        (intDateParts[0]?.isWithinInclusiveRange(0, 31) ?? false)))
+        (intDateParts[0]?.isWithinInclusiveRange(0, 31) ?? false))) {
       return false;
+    }
     if (!(dateParts[1].isEmpty ||
-        (intDateParts[1]?.isWithinInclusiveRange(0, 12) ?? false)))
+        (intDateParts[1]?.isWithinInclusiveRange(0, 12) ?? false))) {
       return false;
+    }
     if (!(dateParts[2].isEmpty ||
-        (intDateParts[2]?.isWithinInclusiveRange(0, 3000) ?? false))) {
+        (intDateParts[2]?.isWithinInclusiveRange(0, 9999) ?? false))) {
       return false;
     }
     return true;
@@ -256,17 +315,27 @@ class _DynamicTableDateInputWidgetState
         print("selection changed: " +
             ((controller?.value.selection.toString()) ?? "<<empty>>"));
         if (oldValue.text.isNotEmpty && newValue.text.isNotEmpty) {
-          final partOneSelectedPart =
+
+          final oldSelectedPart =
               widget.inputDateFormat.getSelectedPart(oldValue);
-          final partTwoSelectedPart =
+          final newSelectedPart =
               widget.inputDateFormat.getSelectedPart(newValue);
-          if (partOneSelectedPart != null &&
-              partTwoSelectedPart != null &&
-              partOneSelectedPart.$1 != partTwoSelectedPart.$1) {
+          if (oldSelectedPart != null &&
+              newSelectedPart != null &&
+              oldSelectedPart.$1 != newSelectedPart.$1) {
             controller?.value = newValue.copyWith(
                 selection: TextSelection(
-                    baseOffset: partTwoSelectedPart.$2,
-                    extentOffset: partTwoSelectedPart.$3));
+                    baseOffset: newSelectedPart.$2,
+                    extentOffset: newSelectedPart.$3));
+          }
+
+          final approachedPart =
+              widget.inputDateFormat.getApproachedPart(oldValue, newValue);
+          if (approachedPart != null) {
+            controller?.value = newValue.copyWith(
+                selection: TextSelection(
+                    baseOffset: approachedPart.$2,
+                    extentOffset: approachedPart.$3));
           }
         }
       }
@@ -290,9 +359,11 @@ class _DynamicTableDateInputWidgetState
     focusNode?.addListener(() {
       if (!widget._readOnly && !(focusNode?.hasFocus ?? false)) {
         var value = widget.inputDateFormat.tryParseDate(controller?.text);
-        if (value != null
-          && (value.isAtSameMomentAs(widget._initialDate) || value.isAfter(widget._initialDate))
-          && (value.isAtSameMomentAs(widget._lastDate) || value.isBefore(widget._lastDate))) {
+        if (value != null &&
+            (value.isAtSameMomentAs(widget._initialDate) ||
+                value.isAfter(widget._initialDate)) &&
+            (value.isAtSameMomentAs(widget._lastDate) ||
+                value.isBefore(widget._lastDate))) {
           print("value changed: " + ((controller?.text) ?? "<<empty>>"));
           widget.onChanged?.call(value);
           controller?.text = widget.inputDateFormat.buildDisplay(value);
