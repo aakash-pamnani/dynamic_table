@@ -95,9 +95,11 @@ class InputDateFormat {
 
   DatePart? getApproachedPart(
       TextEditingValue oldText, TextEditingValue newText) {
-    if (!(getSelection(oldText)?.partEquals(getSelection(newText)) ?? false))
+    if (!(getSelection(oldText)?.partEquals(getSelection(newText)) ?? false)) {
       return null;
+    }
     if ((newText.selection.start != newText.selection.end)) return null;
+    if (oldText.text != newText.text) return null;
 
     final oldSelection = getSelection(oldText);
     final oldParts = getParts(oldText.text);
@@ -312,8 +314,6 @@ class _DynamicTableDateInputWidgetState
           controller?.value != null) {
         final oldValue = previousValue!;
         final newValue = (controller?.value)!;
-        print("selection changed: " +
-            ((controller?.value.selection.toString()) ?? "<<empty>>"));
         if (oldValue.text.isNotEmpty && newValue.text.isNotEmpty) {
 
           final oldSelectedPart =
@@ -346,8 +346,6 @@ class _DynamicTableDateInputWidgetState
       if (!widget._readOnly && (focusNode?.hasFocus ?? false)) {
         previousDate = widget.inputDateFormat.tryParseDate(controller?.text);
         final newValue = (controller?.value)!;
-        print("initial selection: " +
-            ((controller?.value.selection.toString()) ?? "<<empty>>"));
         final parts = widget.inputDateFormat.getParts(newValue.text);
         controller?.value = newValue.copyWith(
             selection: TextSelection(
@@ -364,7 +362,6 @@ class _DynamicTableDateInputWidgetState
                 value.isAfter(widget._initialDate)) &&
             (value.isAtSameMomentAs(widget._lastDate) ||
                 value.isBefore(widget._lastDate))) {
-          print("value changed: " + ((controller?.text) ?? "<<empty>>"));
           widget.onChanged?.call(value);
           controller?.text = widget.inputDateFormat.buildDisplay(value);
         } else {
@@ -446,7 +443,6 @@ class _DynamicTableDateInputWidgetState
           //RegExp(r'^(\d{0,2}\/?){0,2}(\d{0,4}\/?){0,1}$')
           //        .hasMatch(newValue.text)
           if (!widget._readOnly) {
-            print('formatting: ' + newValue.text);
             return widget.inputDateFormat.validateIncrementally(newValue.text)
                 ? newValue
                 : oldValue;
