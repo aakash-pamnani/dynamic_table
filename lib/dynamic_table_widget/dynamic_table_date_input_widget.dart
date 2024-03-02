@@ -10,7 +10,55 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart' show DateFormat;
 
-typedef DatePart = (int, int, int);
+sealed class DatePartType {
+  final String format;
+  const DatePartType._({required this.format});
+  const factory DatePartType.DAY(String format) = Day;
+  const factory DatePartType.MONTH(String format) = Month;
+  const factory DatePartType.YEAR(String format) = Year;
+
+  bool _isEqual(DatePartType other) {
+    return ((this is Day && other is Day)
+    || (this is Month && other is Month)
+    || (this is Year && other is Year));
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (other is DatePartType) {
+      return _isEqual(other);
+    }
+    return false;
+  }
+
+  InclusiveRange get validRange;
+}
+
+class Day extends DatePartType {
+  const Day(String format) : super._(format: format);
+
+  InclusiveRange get validRange => (0, 31);
+}
+
+class Month extends DatePartType {
+  const Month(String format) : super._(format: format);
+
+  InclusiveRange get validRange => (0, 12);
+}
+
+class Year extends DatePartType {
+  const Year(String format) : super._(format: format);
+
+  InclusiveRange get validRange => (0, 9999);
+}
+
+typedef DatePart = (DatePartType, int, int);
+
+typedef DateOrder = (DatePartType, DatePartType, DatePartType);
+
+extension Format on DateOrder {
+  String format(String separator) => (this.$1.format + separator + this.$2.format + separator + this.$3.format);
+}
 
 extension Equality on DatePart {
   bool equals(DatePart? other) {
@@ -24,17 +72,26 @@ extension Equality on DatePart {
   }
 }
 
-class InputDateParts {
-  InputDateParts(
-      {this.parts,
-      this.partOneStart,
-      this.partOneEnd,
-      this.partTwoStart,
-      this.partTwoEnd,
-      this.partThreeStart,
-      this.partThreeEnd});
+typedef InclusiveRange = (int, int);
 
-  factory InputDateParts.fromText(String text, String separator) {
+extension RangeCheck on int {
+  bool isWithinInclusiveRange(InclusiveRange range) {
+    return range.$1 <= this && this <= range.$2;
+  }
+}
+
+class InputDateParts {
+  InputDateParts._(
+      {required this.parts,
+      required this.partOneStart,
+      required this.partOneEnd,
+      required this.partTwoStart,
+      required this.partTwoEnd,
+      required this.partThreeStart,
+      required this.partThreeEnd,
+      required this.order});
+
+  factory InputDateParts.fromText(String text, String separator, DateOrder order) {
     final parts = text.split(separator);
     final partOneStart = 0;
     final partOneEnd = text.indexOf(separator);
@@ -42,55 +99,53 @@ class InputDateParts {
     final partTwoEnd = text.lastIndexOf(separator);
     final partThreeStart = partTwoEnd + 1;
     final partThreeEnd = text.length;
-    return InputDateParts(
+    return InputDateParts._(
         parts: parts,
         partOneStart: partOneStart,
         partOneEnd: partOneEnd,
         partTwoStart: partTwoStart,
         partTwoEnd: partTwoEnd,
         partThreeStart: partThreeStart,
-        partThreeEnd: partThreeEnd);
+        partThreeEnd: partThreeEnd,
+        order: order);
   }
 
-  final parts;
-  final partOneStart;
-  final partOneEnd;
-  final partTwoStart;
-  final partTwoEnd;
-  final partThreeStart;
-  final partThreeEnd;
+  final List<String> parts;
+  final int partOneStart;
+  final int partOneEnd;
+  final int partTwoStart;
+  final int partTwoEnd;
+  final int partThreeStart;
+  final int partThreeEnd;
+  final DateOrder order;
 
-  DatePart get partOne => (1, partOneStart, partOneEnd);
-  DatePart get partTwo => (2, partTwoStart, partTwoEnd);
-  DatePart get partThree => (3, partThreeStart, partThreeEnd);
+  DatePart get partOne => (order.$1, partOneStart, partOneEnd);
+  DatePart get partTwo => (order.$2, partTwoStart, partTwoEnd);
+  DatePart get partThree => (order.$3, partThreeStart, partThreeEnd);
 }
 
 class InputDateFormat {
   const InputDateFormat(
       {this.separator = '/',
-      this.date = 'dd',
-      this.month = 'MM',
-      this.year = 'yyyy'});
+      this.order = const (DatePartType.DAY('dd'), DatePartType.MONTH('MM'), DatePartType.YEAR('yyyy'))});
 
   final String separator;
-  final String date;
-  final String month;
-  final String year;
+  final DateOrder order;
 
   String buildDisplay(DateTime? dateTime) {
     if (dateTime == null) return '';
-    return DateFormat(date + separator + month + separator + year)
+    return DateFormat(order.format(separator))
         .format(dateTime);
   }
 
   DateTime? tryParseDate(String? dateTime) {
     if (dateTime == null || dateTime.isEmpty) return null;
-    return DateFormat(date + separator + month + separator + year)
+    return DateFormat(order.format(separator))
         .tryParse(dateTime);
   }
 
   InputDateParts getParts(String text) {
-    return InputDateParts.fromText(text, separator);
+    return InputDateParts.fromText(text, separator, order);
   }
 
   DatePart? getApproachedPart(
@@ -132,17 +187,17 @@ class InputDateFormat {
     if (parts.parts[0].isNotEmpty &&
         (parts.partOneStart <= text.selection.start &&
             parts.partOneEnd >= text.selection.end)) {
-      return (1, text.selection.start, text.selection.end);
+      return (order.$1, text.selection.start, text.selection.end);
     }
     if (parts.parts[1].isNotEmpty &&
         (parts.partTwoStart <= text.selection.start &&
             parts.partTwoEnd >= text.selection.end)) {
-      return (2, text.selection.start, text.selection.end);
+      return (order.$2, text.selection.start, text.selection.end);
     }
     if (parts.parts[2].isNotEmpty &&
         (parts.partThreeStart <= text.selection.start &&
             parts.partThreeEnd >= text.selection.end)) {
-      return (3, text.selection.start, text.selection.end);
+      return (order.$3, text.selection.start, text.selection.end);
     }
     return null;
   }
@@ -158,7 +213,7 @@ class InputDateFormat {
 
   bool validateIncrementally(String? dateTime) {
     if (dateTime == null) return false;
-    var dateParts = dateTime.split(separator);
+    var dateParts = getParts(dateTime).parts;
     if (dateParts.length != 3) return false;
     if (!dateParts.every(
         (element) => (element.isEmpty || int.tryParse(element) != null))) {
@@ -170,24 +225,18 @@ class InputDateFormat {
       int.tryParse(dateParts[2])
     ];
     if (!(dateParts[0].isEmpty ||
-        (intDateParts[0]?.isWithinInclusiveRange(0, 31) ?? false))) {
+        (intDateParts[0]?.isWithinInclusiveRange(order.$1.validRange) ?? false))) {
       return false;
     }
     if (!(dateParts[1].isEmpty ||
-        (intDateParts[1]?.isWithinInclusiveRange(0, 12) ?? false))) {
+        (intDateParts[1]?.isWithinInclusiveRange(order.$2.validRange) ?? false))) {
       return false;
     }
     if (!(dateParts[2].isEmpty ||
-        (intDateParts[2]?.isWithinInclusiveRange(0, 9999) ?? false))) {
+        (intDateParts[2]?.isWithinInclusiveRange(order.$3.validRange) ?? false))) {
       return false;
     }
     return true;
-  }
-}
-
-extension RangeCheck on int {
-  bool isWithinInclusiveRange(int start, int end) {
-    return start <= this && this <= end;
   }
 }
 
