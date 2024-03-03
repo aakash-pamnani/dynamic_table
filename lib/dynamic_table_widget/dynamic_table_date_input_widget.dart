@@ -18,9 +18,9 @@ sealed class DatePartType {
   const factory DatePartType.YEAR(String format) = Year;
 
   bool _isEqual(DatePartType other) {
-    return ((this is Day && other is Day)
-    || (this is Month && other is Month)
-    || (this is Year && other is Year));
+    return ((this is Day && other is Day) ||
+        (this is Month && other is Month) ||
+        (this is Year && other is Year));
   }
 
   @override
@@ -57,7 +57,11 @@ typedef DatePart = (DatePartType, int, int);
 typedef DateOrder = (DatePartType, DatePartType, DatePartType);
 
 extension Format on DateOrder {
-  String format(String separator) => (this.$1.format + separator + this.$2.format + separator + this.$3.format);
+  String format(String separator) => (this.$1.format +
+      separator +
+      this.$2.format +
+      separator +
+      this.$3.format);
 }
 
 extension Equality on DatePart {
@@ -91,7 +95,8 @@ class InputDateParts {
       required this.partThreeEnd,
       required this.order});
 
-  factory InputDateParts.fromText(String text, String separator, DateOrder order) {
+  factory InputDateParts.fromText(
+      String text, String separator, DateOrder order) {
     final parts = text.split(separator);
     final partOneStart = 0;
     final partOneEnd = text.indexOf(separator);
@@ -127,59 +132,27 @@ class InputDateParts {
 class InputDateFormat {
   const InputDateFormat(
       {this.separator = '/',
-      this.order = const (DatePartType.DAY('dd'), DatePartType.MONTH('MM'), DatePartType.YEAR('yyyy'))});
+      this.order = const (
+        DatePartType.DAY('dd'),
+        DatePartType.MONTH('MM'),
+        DatePartType.YEAR('yyyy')
+      )});
 
   final String separator;
   final DateOrder order;
 
   String buildDisplay(DateTime? dateTime) {
     if (dateTime == null) return '';
-    return DateFormat(order.format(separator))
-        .format(dateTime);
+    return DateFormat(order.format(separator)).format(dateTime);
   }
 
   DateTime? tryParseDate(String? dateTime) {
     if (dateTime == null || dateTime.isEmpty) return null;
-    return DateFormat(order.format(separator))
-        .tryParse(dateTime);
+    return DateFormat(order.format(separator)).tryParse(dateTime);
   }
 
   InputDateParts getParts(String text) {
     return InputDateParts.fromText(text, separator, order);
-  }
-
-  DatePart? getApproachedPart(
-      TextEditingValue oldText, TextEditingValue newText) {
-    if (!(getSelection(oldText)?.partEquals(getSelection(newText)) ?? false)) {
-      return null;
-    }
-    if ((newText.selection.start != newText.selection.end)) return null;
-    if (oldText.text != newText.text) return null;
-
-    final oldSelection = getSelection(oldText);
-    final oldParts = getParts(oldText.text);
-    if ((oldSelection?.partEquals(oldParts.partOne) ?? false) &&
-        !(oldSelection?.equals(oldParts.partOne) ?? false)) return null;
-    if ((oldSelection?.partEquals(oldParts.partTwo) ?? false) &&
-        !(oldSelection?.equals(oldParts.partTwo) ?? false)) return null;
-    if ((oldSelection?.partEquals(oldParts.partThree) ?? false) &&
-        !(oldSelection?.equals(oldParts.partThree) ?? false)) return null;
-
-    final parts = getParts(newText.text);
-    if (newText.selection.start == parts.partOneEnd) {
-      return parts.partTwo;
-    }
-    if (newText.selection.start == parts.partTwoStart) {
-      return parts.partOne;
-    }
-    if (newText.selection.start == parts.partTwoEnd) {
-      return parts.partThree;
-    }
-    if (newText.selection.start == parts.partThreeStart) {
-      return parts.partTwo;
-    }
-
-    return null;
   }
 
   DatePart? getSelection(TextEditingValue text) {
@@ -211,8 +184,7 @@ class InputDateFormat {
     return null;
   }
 
-  bool validateIncrementally(String? dateTime) {
-    if (dateTime == null) return false;
+  bool validateIncrementally(String dateTime) {
     var dateParts = getParts(dateTime).parts;
     if (dateParts.length != 3) return false;
     if (!dateParts.every(
@@ -225,22 +197,76 @@ class InputDateFormat {
       int.tryParse(dateParts[2])
     ];
     if (!(dateParts[0].isEmpty ||
-        (intDateParts[0]?.isWithinInclusiveRange(order.$1.validRange) ?? false))) {
+        (intDateParts[0]?.isWithinInclusiveRange(order.$1.validRange) ??
+            false))) {
       return false;
     }
     if (!(dateParts[1].isEmpty ||
-        (intDateParts[1]?.isWithinInclusiveRange(order.$2.validRange) ?? false))) {
+        (intDateParts[1]?.isWithinInclusiveRange(order.$2.validRange) ??
+            false))) {
       return false;
     }
     if (!(dateParts[2].isEmpty ||
-        (intDateParts[2]?.isWithinInclusiveRange(order.$3.validRange) ?? false))) {
+        (intDateParts[2]?.isWithinInclusiveRange(order.$3.validRange) ??
+            false))) {
       return false;
     }
     return true;
   }
+
+  bool didTextChange(TextEditingValue oldValue, TextEditingValue newValue) {
+    return oldValue.text != newValue.text;
+  }
+
+  bool didSelectedPartChange(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    if (didTextChange(oldValue, newValue)) return false;
+    final oldSelection = getSelection(oldValue);
+    final newSelection = getSelection(newValue);
+    return (oldSelection != null &&
+        newSelection != null &&
+        !oldSelection.partEquals(newSelection));
+  }
+
+  DatePart? getApproachedPart(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    if (didTextChange(oldValue, newValue)) return null;
+    if (didSelectedPartChange(oldValue, newValue)) {
+      return null;
+    }
+
+    if ((newValue.selection.start != newValue.selection.end)) return null;
+
+    final oldSelection = getSelection(oldValue);
+    if (oldSelection == null) return null;
+    final oldParts = getParts(oldValue.text);
+    if ((oldSelection.partEquals(oldParts.partOne)) &&
+        !(oldSelection.equals(oldParts.partOne))) return null;
+    if ((oldSelection.partEquals(oldParts.partTwo)) &&
+        !(oldSelection.equals(oldParts.partTwo))) return null;
+    if ((oldSelection.partEquals(oldParts.partThree)) &&
+        !(oldSelection.equals(oldParts.partThree))) return null;
+
+    final parts = getParts(newValue.text);
+    if (newValue.selection.start == parts.partOneEnd) {
+      return parts.partTwo;
+    }
+    if (newValue.selection.start == parts.partTwoStart) {
+      return parts.partOne;
+    }
+    if (newValue.selection.start == parts.partTwoEnd) {
+      return parts.partThree;
+    }
+    if (newValue.selection.start == parts.partThreeStart) {
+      return parts.partTwo;
+    }
+
+    return null;
+  }
 }
 
 //TODO: remove previous listeners in _init()
+//TODO: give more freedom for date format in readonly mode
 class DynamicTableDateInputWidget extends StatefulWidget {
   const DynamicTableDateInputWidget(
       {super.key,
@@ -358,37 +384,47 @@ class _DynamicTableDateInputWidgetState
                 })));
 
     controller?.addListener(() {
-      if ((!widget._readOnly) &&
-          previousValue != null &&
-          controller?.value != null) {
-        final oldValue = previousValue!;
-        final newValue = (controller?.value)!;
-        if (oldValue.text.isNotEmpty && newValue.text.isNotEmpty) {
+      TextEditingValue generateEvents(
+          TextEditingValue oldValue, TextEditingValue newValue) {
+        if (widget.inputDateFormat.validateIncrementally(oldValue.text) &&
+            widget.inputDateFormat.validateIncrementally(newValue.text)) {
+          if (widget.inputDateFormat.didTextChange(oldValue, newValue)) {
+            return newValue;
+          }
 
-          final oldSelectedPart =
-              widget.inputDateFormat.getSelectedPart(oldValue);
-          final newSelectedPart =
-              widget.inputDateFormat.getSelectedPart(newValue);
-          if (oldSelectedPart != null &&
-              newSelectedPart != null &&
-              oldSelectedPart.$1 != newSelectedPart.$1) {
-            controller?.value = newValue.copyWith(
+          if (widget.inputDateFormat
+              .didSelectedPartChange(oldValue, newValue)) {
+            final newSelectedPart =
+                widget.inputDateFormat.getSelectedPart(newValue);
+            return newValue.copyWith(
                 selection: TextSelection(
-                    baseOffset: newSelectedPart.$2,
+                    baseOffset: newSelectedPart!.$2,
                     extentOffset: newSelectedPart.$3));
           }
 
           final approachedPart =
               widget.inputDateFormat.getApproachedPart(oldValue, newValue);
           if (approachedPart != null) {
-            controller?.value = newValue.copyWith(
+            return newValue.copyWith(
                 selection: TextSelection(
                     baseOffset: approachedPart.$2,
                     extentOffset: approachedPart.$3));
           }
+
+          return newValue;
+        } else {
+          return oldValue;
         }
       }
-      previousValue = controller?.value;
+
+      if (!widget._readOnly) {
+        if (previousValue != null && controller?.value != null) {
+          final oldValue = previousValue!;
+          final newValue = (controller?.value)!;
+          controller?.value = generateEvents(oldValue, newValue);
+        }
+        previousValue = controller?.value;
+      }
     });
 
     focusNode?.addListener(() {
@@ -487,18 +523,6 @@ class _DynamicTableDateInputWidgetState
     return TextFormField(
       controller: controller,
       focusNode: focusNode,
-      inputFormatters: [
-        TextInputFormatter.withFunction((oldValue, newValue) {
-          //RegExp(r'^(\d{0,2}\/?){0,2}(\d{0,4}\/?){0,1}$')
-          //        .hasMatch(newValue.text)
-          if (!widget._readOnly) {
-            return widget.inputDateFormat.validateIncrementally(newValue.text)
-                ? newValue
-                : oldValue;
-          }
-          return newValue;
-        })
-      ],
       keyboardType: TextInputType.datetime,
       decoration: widget._decoration?.copyWith(
         suffixIcon: InkWell(
