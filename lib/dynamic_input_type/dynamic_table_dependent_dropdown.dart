@@ -21,8 +21,6 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
     bool isExpanded = false,
     double? itemHeight,
     Color? focusColor,
-    FocusNode? focusNode,
-    bool autofocus = false,
     Color? dropdownColor,
     InputDecoration? decoration,
     double? menuMaxHeight,
@@ -30,7 +28,6 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
     AlignmentGeometry alignment = AlignmentDirectional.centerStart,
     BorderRadius? borderRadius,
   })  : _itemsBuilder = itemsBuilder,
-        _dependentOnColumn = dependentOnColumn,
         _displayBuilder = displayBuilder,
         _selectedItemBuilder = selectedItemBuilder,
         _hint = hint,
@@ -45,26 +42,76 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
         _isExpanded = isExpanded,
         _itemHeight = itemHeight,
         _focusColor = focusColor,
-        _focusNode = focusNode,
-        _autofocus = autofocus,
         _dropdownColor = dropdownColor,
         _decoration = decoration,
         _menuMaxHeight = menuMaxHeight,
         _enableFeedback = enableFeedback,
         _alignment = alignment,
         _borderRadius = borderRadius,
+        
         super(
         // dynamicTableInput: DynamicTableInput.dropdown,
-        ) {
-    dependentOn = _dependentOnColumn;
-  }
-  @override
-  Widget displayWidget(T? value) {
-    return Text((_displayBuilder ?? _defaultDisplayBuilder).call(value));
+        dependentOn: dependentOnColumn,
+        ) {;
   }
 
-  final String Function(T?)? _displayBuilder;
+  T? getFirstValue() {
+    if (_dependentValue == null) {
+      return null;
+    }
+    return _itemsBuilder(_dependentValue!).firstOrNull?.value;
+  }
+
+  bool hasSelectionValues(W dependentValue) {
+    return _itemsBuilder(dependentValue).isNotEmpty;
+  }
+
+  @override
+  Widget displayWidget(T? value, bool focused, TouchEditCallBacks touchEditCallBacks, ) {
+    return DefaultDisplayWidget<T>(
+      displayBuilder: _displayBuilder,
+      value: value,
+      focused: focused,
+      touchEditCallBacks: touchEditCallBacks,
+    );
+  }
+
+  @override
+  Widget editingWidget(
+      T? value,
+      Function(T? value)? onChanged,
+      TouchEditCallBacks touchEditCallBacks,
+      bool focused) {
+    return DynamicTableDependentDropdownWidget<T, W>(
+        dependentValue: _dependentValue,
+        itemsBuilder: _itemsBuilder,
+        selectedItemBuilder: _selectedItemBuilder,
+        hint: _hint,
+        disabledHint: _disabledHint,
+        elevation: _elevation,
+        style: _style,
+        icon: _icon,
+        iconDisabledColor: _iconDisabledColor,
+        iconEnabledColor: _iconEnabledColor,
+        iconSize: _iconSize,
+        isDense: _isDense,
+        isExpanded: _isExpanded,
+        itemHeight: _itemHeight,
+        focusColor: _focusColor,
+        dropdownColor: _dropdownColor,
+        decoration: _decoration,
+        menuMaxHeight: _menuMaxHeight,
+        enableFeedback: _enableFeedback,
+        alignment: _alignment,
+        borderRadius: _borderRadius,
+        value: value,
+        onChanged: onChanged,
+        touchEditCallBacks: touchEditCallBacks,
+        focused: focused);
+  }
+
   final List<DropdownMenuItem<T>> Function(W dependentValue) _itemsBuilder;
+  final String Function(T?)? _displayBuilder;
   final List<Widget> Function(BuildContext)? _selectedItemBuilder;
   final Widget? _hint;
   final Widget? _disabledHint;
@@ -78,8 +125,6 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
   final bool _isExpanded;
   final double? _itemHeight;
   final Color? _focusColor;
-  final FocusNode? _focusNode;
-  final bool _autofocus;
   final Color? _dropdownColor;
   final InputDecoration? _decoration;
   final double? _menuMaxHeight;
@@ -87,63 +132,18 @@ class DynamicTableDependentDropDownInput<T extends Object, W extends Object>
   final AlignmentGeometry _alignment;
   final BorderRadius? _borderRadius;
 
-  W? dependentValue;
-  int _dependentOnColumn;
-  List<DropdownMenuItem<T>> _items = [];
+  W? _dependentValue;
 
-  int get dependentOnColumn => _dependentOnColumn;
+  W? get dependentValue => _dependentValue;
 
-  String _defaultDisplayBuilder(T? value) {
-    return value.toString();
-  }
+  int get dependentOnColumn => _dependentOn!;
 
-  @override
-  Widget editingWidget(T? value,
-      Function(T value, int row, int column)? onChanged, int row, int column) {
-    assert(
-      _items.isEmpty ||
-          value == null ||
-          _items.where((DropdownMenuItem<T> item) {
-                return item.value == value;
-              }).length ==
-              1,
-      "There should be exactly one item with [DropdownButton]'s value: "
-      '$value. \n'
-      'Either zero or 2 or more [DropdownMenuItem]s were detected '
-      'with the same value',
-    );
-    _items =
-        dependentValue == null ? [] : _itemsBuilder(dependentValue!).toList();
-    // ?? _items.first.value;
-
-    return DropdownButtonFormField<T>(
-      value: value,
-      onChanged: (value) {
-        onChanged?.call(value as T, row, column);
-      },
-      items: _items,
-      selectedItemBuilder: _selectedItemBuilder,
-      hint: _hint,
-      disabledHint: _disabledHint,
-      elevation: _elevation,
-      style: _style,
-      icon: _icon,
-      iconDisabledColor: _iconDisabledColor,
-      iconEnabledColor: _iconEnabledColor,
-      iconSize: _iconSize,
-      isDense: _isDense,
-      isExpanded: _isExpanded,
-      itemHeight: _itemHeight,
-      focusColor: _focusColor,
-      focusNode: _focusNode,
-      autofocus: _autofocus,
-      dropdownColor: _dropdownColor,
-      decoration: _decoration,
-      menuMaxHeight: _menuMaxHeight,
-      enableFeedback: _enableFeedback,
-      alignment: _alignment,
-      borderRadius: _borderRadius,
-    );
+  bool setDefaultDependentValue(W? dependentValue) {
+    if (_dependentValue == null || _dependentValue != dependentValue) {
+      _dependentValue = dependentValue;
+      return true;
+    }
+    return false;
   }
 
   @override
